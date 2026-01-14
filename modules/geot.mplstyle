@@ -1,0 +1,16 @@
+## LINES
+lines.linewidth: 2
+## PATCHES, HATCHES, BOXPLOT
+## FONT
+font.family: sans-serif
+## TEXT
+text.usetex: True
+mathtext.fontset: cm
+## AXES
+axes.formatter.use_mathtext: True 
+axes.prop_cycle: cycler('color', ['4477aa', '66ccee', '228833', 'ccbb44', 'ee6677', 'aa3377', 'BBBBBB'])
+## DATES, TICKS, GRIDS
+## LEGEND
+## FIGURE
+figure.dpi: 200
+## IMAGES, CONTOUR, etc
