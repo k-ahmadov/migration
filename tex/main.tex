@@ -26,21 +26,21 @@
 
 % KEY POINTS
 \begin{keypoints}
-\item
-\item
-\item
+	\item
+	\item
+	\item
 \end{keypoints}
 
 %  ABSTRACT
 \begin{abstract}
 
-\begin{enumerate}
-    \item Bibliography
-    \begin{itemize}
-        \item Review of spatio-temporal seismicity migration data and the associated migration models
-        \item Review of models of fluid injection and the proposed physical mechanisms of induced seismicity
-    \end{itemize}
-\end{enumerate}
+	\begin{enumerate}
+		\item Bibliography
+		      \begin{itemize}
+			      \item Review of spatio-temporal seismicity migration data and the associated migration models
+			      \item Review of models of fluid injection and the proposed physical mechanisms of induced seismicity
+		      \end{itemize}
+	\end{enumerate}
 \end{abstract}
 
 \section*{Plain Language Summary}
@@ -58,87 +58,93 @@ The authors declare no conflicts of interest relevant to this study.
 
 \todo[inline]{TL;DR The seismicity migration analysis gives insight into the underlying mechanism for induced seismicity, therefore, it is of interest to compile and analyse such data}
 
-Studying how the seismicity migrates in time and space gives insights into the mechanisms behind the induced seismicity during fluid injection activities \cite{DeBarrosEtAl2021}. Such analysis could could also constrain the properties of the medium where seismicity occurs \cite{ShapiroEtAl1997}. A classical mechanism that is proposed to induce seismicity is fluid overpessure. According to Mohr-Coulomb failure criterion, an increase in fluid pressure decreases the effective stress acting on the fault, which brings the fault closer to failure \cite{king1959role}. In fractured rock systems, the fluid injected at a given position is proposed to propagate according to the diffusion law. The pressure perturbation front derived from the diffusion equation propagates proportionally to the square-root-of-time, with a proportionality constant defined as the diffusivity of the medium \cite{MurphyEtAl2004}. Such diffusive behavior has been observed in numerous cases of fluid injection-induced seismicity migration. The seismicity front, generally defined as the nearly farthest extent of seismicity at a given time \cite{DanreEtAl2024}, follows a square-root-of-time scaling at several injection sites (e.g., \citeA{ShapiroEtAl2002}), a characteristic of diffusion-controlled processes. This type of seismicity migration suggest that the injection-induced seismicity is mainly controlled by fluid overpressure and its spatio-temporal evolution.
+Spatio-temporal seismicity migration analysis is of interest in fluid injection induced seismicity because it provides insight into the mechanisms driving seismicity during injection activities \cite{DeBarrosEtAl2021}. Such analysis could also constrain the properties of the medium where seismicity occurs \cite{ShapiroEtAl1997}. Previous studies have established fluid overpressure as a classical mechanism of induced seismicity. According to the Mohr--Coulomb failure criterion, an increase in fluid pressure decreases the effective stress acting on a fault, which brings it closer to failure \cite{king1959role}. In fractured rock systems, the fluid injected at a given position propagates according to the diffusion law. The pressure perturbation front derived from the diffusion equation propagates proportionally to the square-root-of-time, with a proportionality constant defined as the diffusivity of the medium \cite{MurphyEtAl2004}. Researchers have observed such diffusive behavior in numerous cases of fluid injection-induced seismicity migration. The seismicity front, generally defined as the nearly farthest extent of seismicity at a given time \cite{DanreEtAl2024}, follows a square-root-of-time scaling at several injection sites (e.g., \citeA{ShapiroEtAl2002}), a characteristic of diffusion-controlled processes. This type of seismicity migration suggest that the injection-induced seismicity is mainly controlled by fluid overpressure and its spatio-temporal evolution.
 
-However, seismicity migration data obtained from multiple fluid injection sites exhibit features that cannot be explained by the classical linear diffusion law. This observation calls into question the commonly invoked mechanisms to explain induced seismicity~\cite{GeSaar2022}. Therefore, it is of interest to compile and compare the seismicity migration patterns observed at fluid injection sites worldwide. Previous studies have documented seismicity migration across multiple sites~\cite{GoebelBrodsky2018,DeBarrosEtAl2021}, as well as at individual sites~\cite{ShapiroEtAl2002,LenglineEtAl2017,DanreEtAl2024}. Notably, these studies examined the spatio-temporal evolution of the seismicity front and searched for a power-law relationship in time that best fits its evolution. For conciseness, we refer to this power-law relationship describing the evolution of the seismicity front as the seismicity migration model. Table~\ref{tab:migration-observations} summarizes the migration models and the exponents of time reported for several injection sites in the literature. The table shows that the evolution of seismicity front varies across injection sites and among different studies. The inferred time exponents range from approximately 1/3 to 1.
+Recently, considerable evidence has accumulated to show that seismicity migration data obtained from multiple fluid injection sites exhibit features that cannot be explained by the classical linear diffusion law (e.g. \citeA{ShapiroDinske2009, DeBarrosEtAl2021}). This observation calls into question the commonly invoked mechanisms to explain induced seismicity \cite{GeSaar2022}. Therefore, it is of interest to compile and compare the seismicity migration patterns observed at fluid injection sites worldwide. Previous studies have documented seismicity migration across multiple sites \cite{GoebelBrodsky2018,DeBarrosEtAl2021}, as well as at individual sites \cite{ShapiroEtAl2002,LenglineEtAl2017,DanreEtAl2024}. Notably, these studies examined the spatio-temporal evolution of the seismicity front and searched for a power-law relationship in time that best fits its evolution. For conciseness, we refer to this power-law relationship describing the evolution of the seismicity front as the seismicity migration model. Table~\ref{tab:migration-observations} summarizes the migration models and the exponents of time reported for several injection sites in the literature. The table shows that the evolution of seismicity front varies across injection sites and among different studies. The inferred time exponents range from approximately 1/3 to 1.
 
 \begin{table}[htbp]
-    \centering
-    \caption{Observed seismicity migration behavior at various injection sites, including the migration model type and associated time exponent, as reported by different studies.}\label{tab:migration-observations}
+	\centering
+	\caption{Observed seismicity migration behavior at various injection sites, including the migration model type and associated time exponent, as reported by different studies.}\label{tab:migration-observations}
 	\begin{tabular}{@{}lllc@{}}
-         \toprule
-         Site & Source & Migration model & Time exponent \\
-         \midrule
-         \multirow{4}{*}{Soultz 1993} & \cite{ShapiroEtAl2002} & Square root & 1/2 \\
-                   & \cite{GoebelBrodsky2018} & Square root & 1/2 \\
-                   & \cite{DeBarrosEtAl2021} & Custom fit$^{1}$ & 0.65 \\
-                   & \cite{DanreEtAl2024} & Linear & 1 \\
-         \midrule
-         \multirow{3}{*}{Basel 2006}& \cite{GoebelBrodsky2018}& Linear& 1 \\
-         & \cite{DeBarrosEtAl2021} & Custom fit & 0.7 \\
-         & \cite{DanreEtAl2024} & Linear & 1 \\
-         & \cite{JohannEtAl2016} & Custom fit & 0.49 \\
-         \midrule
-         \multirow{2}{*}{Cooper 2003}& \cite{GoebelBrodsky2018}& Square-root& 1/2 \\
-         & \cite{JohannEtAl2016} & Custom fit & 0.28 \\
-         \midrule
-         \multirow{2}{*}{Fenton Hill 1983}& \cite{ShapiroEtAl2002}& Square root& 1/2 \\
-         & \cite{GoebelEtAl2017}& Square root & 1/2 \\
-         \midrule
-         KTB 1997 &\cite{ShapiroEtAl1997} & Square root & 1/2\\
-         Barnett Shale &\cite{ShapiroDinske2009} & Cubic root  & 1/3\\
-         Rittershoffen &\cite{LenglineEtAl2017} & Linear & 1\\
-         St. Gallen &\cite{GoebelBrodsky2018} & Linear & 1\\
-         Paralana, Australia &\cite{GoebelBrodsky2018} & Linear & 1\\
-         Rustrel, France &\cite{GoebelBrodsky2018} & No migration & -\\
-         Landau &\cite{GoebelBrodsky2018} & No migration & -\\
-         Paradox, Colorado &\cite{GoebelBrodsky2018} & Linear & 1\\
-         Cooper 2012 &\cite{DeBarrosEtAl2021} & Custom fit & 0.5\\
-         \bottomrule
-         \multicolumn{2}{l}{$^{1}$ Fitting power law function to seismic front}
-    \end{tabular}
+		\toprule
+		Site                              & Source                   & Migration model  & Time exponent \\
+		\midrule
+		\multirow{4}{*}{Soultz 1993}      & \cite{ShapiroEtAl2002}   & Square root      & 1/2           \\
+		                                  & \cite{GoebelBrodsky2018} & Square root      & 1/2           \\
+		                                  & \cite{DeBarrosEtAl2021}  & Custom fit$^{1}$ & 0.65          \\
+		                                  & \cite{DanreEtAl2024}     & Linear           & 1             \\
+		\midrule
+		\multirow{3}{*}{Basel 2006}       & \cite{GoebelBrodsky2018} & Linear           & 1             \\
+		                                  & \cite{DeBarrosEtAl2021}  & Custom fit       & 0.7           \\
+		                                  & \cite{DanreEtAl2024}     & Linear           & 1             \\
+		                                  & \cite{JohannEtAl2016}    & Custom fit       & 0.49          \\
+		\midrule
+		\multirow{2}{*}{Cooper 2003}      & \cite{GoebelBrodsky2018} & Square-root      & 1/2           \\
+		                                  & \cite{JohannEtAl2016}    & Custom fit       & 0.28          \\
+		\midrule
+		\multirow{2}{*}{Fenton Hill 1983} & \cite{ShapiroEtAl2002}   & Square root      & 1/2           \\
+		                                  & \cite{GoebelEtAl2017}    & Square root      & 1/2           \\
+		\midrule
+		KTB 1997                          & \cite{ShapiroEtAl1997}   & Square root      & 1/2           \\
+		Barnett Shale                     & \cite{ShapiroDinske2009} & Cubic root       & 1/3           \\
+		Rittershoffen 2015                & \cite{LenglineEtAl2017}  & Linear           & 1             \\
+		Rittershoffen 2024                & \cite{LenglineEtAl2025}  & Square-root      & 1/2           \\
+		St. Gallen                        & \cite{GoebelBrodsky2018} & Linear           & 1             \\
+		Paralana, Australia               & \cite{GoebelBrodsky2018} & Linear           & 1             \\
+		Rustrel, France                   & \cite{GoebelBrodsky2018} & No migration     & -             \\
+		Landau                            & \cite{GoebelBrodsky2018} & No migration     & -             \\
+		Paradox, Colorado                 & \cite{GoebelBrodsky2018} & Linear           & 1             \\
+		Cooper 2012                       & \cite{DeBarrosEtAl2021}  & Custom fit       & 0.5           \\
+		\bottomrule
+		\multicolumn{2}{l}{$^{1}$ Fitting a power law function to the seismicity front}
+	\end{tabular}
 \end{table}
 
 \todo[inline]{TL;DR Differences in fitting methods and spatial reference choices can lead to different interpretations of seismicity migration.}
 
-Before examining seismicity migration analyses from previous studies, it is important to note that the inferred migration models and time exponents may depend on the methodology used, which can vary between studies. For example, \citeA{GoebelBrodsky2018} consider only three discrete models—no migration, square-root-of-time, and linear—whereas \citeA{DeBarrosEtAl2021} fit a power-law function with a best-fit prefactor and time exponent to the seismicity front. Some studies, such as \citeA{ShapiroEtAl2002, DanreEtAl2024}, derive the front evolution from theoretical or numerical models and then fit these predictions to the seismicity migration envelope. As a consequence, the inferred migration behavior differs with the fitting approach. This is illustrated by the Soultz 1993 fluid injection experiment, for which \citeA{GoebelBrodsky2018} identify a square-root-of-time model as the best fit, \citeA{DeBarrosEtAl2021} obtain a time exponent of approximately 0.65, and \citeA{DanreEtAl2024} find a linear migration model to fit the observations well, except at early times. Another factor that may influence the inferred seismicity migration pattern is the choice of the spatial origin, which is inherently subjective \citeA{DeBarrosEtAl2021}. For instance, \citeA{DanreEtAl2024} define the origin as the median location of the first ten events, \citeA{ShapiroEtAl1997} use the injection well as the origin, and \citeA{LenglineEtAl2017} select a point along the borehole trajectory at the depth of the first earthquake. Both the fitting methodology and the choice of origin can affect the analysis of seismicity migration.
+Before proceeding to examine the seismicity migration analyses from previous studies, it is important to note that the inferred migration models and time exponents may depend on the methodology used, which can vary between studies. For example, \citeA{GoebelBrodsky2018} consider only three discrete models—no migration, square-root-of-time, and linear—whereas \citeA{DeBarrosEtAl2021} fit a power-law function with a best-fit prefactor and time exponent to the seismicity front. Some studies, such as \citeA{ShapiroEtAl2002, DanreEtAl2024}, derive the front evolution from theoretical or numerical models and then fit these predictions to the seismicity migration envelope. As a consequence, the inferred migration behavior differs with the fitting approach. This is evident in the case of Soultz 1993 fluid injection experiment, for which \citeA{GoebelBrodsky2018} identify a square-root-of-time model as the best fit, \citeA{DeBarrosEtAl2021} obtain a time exponent of approximately 0.65, and \citeA{DanreEtAl2024} find a linear migration model to fit the observations well, except at early times. Another factor that may influence the inferred seismicity migration pattern is the choice of the spatial origin, which is inherently subjective \citeA{DeBarrosEtAl2021}. For instance, \citeA{DanreEtAl2024} define the origin as the median location of the first ten events, \citeA{ShapiroEtAl1997} use the injection well as the origin, and \citeA{LenglineEtAl2017} select a point along the borehole trajectory at the depth of the first earthquake. Both the fitting methodology and the choice of origin can affect the analysis of seismicity migration.
 
-\todo[inline]{TL;DR There are some observations that put in question the classical diffusion model}
-Nevertheless, the seismicity migration data clearly show that at numerous injection sites, seismicity front evolution deviates from the square-root-of-time (diffusion) scaling. This observation has raised questions about the mechanisms driving induced seismicity \cite{DeBarrosEtAl2021, DanreEtAl2024}. Consistent with this, several additional observations are not explained by classical diffusion models, including diffusivities inferred from seismicity migration that exceed in-situ measurements by 1–2 orders of magnitude \cite{GoebelEtAl2017, DanreEtAl2024, XueEtAl2013, doan2006situ}, earthquakes occurring at large distances \cite{GoebelEtAl2017}, and aseismic fault slip extending beyond the fluid overpressure region during injection \cite{GuglielmiEtAl2015b}. These observations have motivated researchers to explore physical mechanisms beyond classical diffusion \cite{GeSaar2022}. 
+\todo[inline]{TL;DR: Seismicity migration during fluid injection often deviates from diffusive scaling and exhibits sub-diffusive, linear, or no migration.}
+Nevertheless, the seismicity migration data show that, at numerous injection sites,the evolution of the seismicity front deviates from square-root-of-time (diffusion) scaling. In addition to the square-root-of-time scaling, three other seismicity migration behaviors exist: sub-1/2 time-exponent, quasi-linear or linear, and no migration (see Table~\ref{tab:migration-observations}). Researchers have proposed several mechanisms associated with fluid-induced seismicity that explain these departures from diffusive ($\sqrt{t}$) scaling. These mechanisms include aseismic slip, poroelastic effects, nonlinear pressure diffusion, and Coulomb stress transfer (Table~\ref{tab:induced-seismicity-mechanisms}). In the following, we briefly review the mechanisms that previous studies propose to explain each observed seismicity migration behavior.
 
-\todo[inline]{TL;DR Additional mechanisms can explain the seismicity migration features that are not explained by the diffusion model, however they complicate the problem and introduce new unknowns}
-According to the literature, fluid-induced seismicity migration is influenced not only by overpessure but also by additional mechanisms such as aseismic slip, poroelasticity and Coulomb stress transfer (Table~\ref{tab:induced-seismicity-mechanisms}). Numerous observations of aseismic slip in the field motivated researchers to study its role in injection-induced seismicity \cite{GuglielmiEtAl2015b, BhattacharyaViesca2019, DeBarrosEtAl2021}. \citeA{BhattacharyaViesca2019} built a numerical model with physical parameters inferred from an \textit{in-situ} fluid injection experiment carried out by \citeA{GuglielmiEtAl2015b}. Their numerical analysis showed that, in critically stressed faults, the rupture front can extend beyond the region of substantial increase of fluid pressure, leading to changes in the apparent diffusivity of induced micro-seismicity estimated from distance-time plots \cite{BhattacharyaViesca2019}. Similarly, \citeA{DeBarrosEtAl2021}, using the Distinct Element Method (DEM), showed that in initially highly critical faults, aseismic slip acceleration can cause the seismic front to propagate ahead of the fluid pressure front and to migrate at a constant-velocity or even accelerate with time. Based on these numerical results, they propose that aseismic slip is the mechanism responsible for the quasi-linear migration of seismicity observed at some fluid injection sites (e.g., Basel; Table~\ref{tab:migration-observations}). In addition to aseismic slip, seismicity migration patterns in injection-induced sequences are influenced by elastic stress transmission in the solid \cite{GoebelEtAl2017,SegallLu2015}. \citeA{GoebelEtAl2017} examined poroelastic stress changes as a mechanism for earthquakes triggered far from the injection zone during wastewater disposal in Oklahoma, USA. Their numerical analysis showed that such events may be driven by poroelastic stresses which extend beyond the fluid-pressure front and dominate in the far field. In fact, \citeA{GoebelBrodsky2018} propose that, injection-induced seismicity sequences that do not follow a migrational pattern (see~Table~\ref{tab:migration-observations}) may be a result of far-reaching significant poroelastic stress changes. The aforementioned mechanisms do explain the deviation from square root of migration seismicity front evolution. However, the additional mechanisms besides fluid diffusion add complexities to the problem. These complexities are additional physical parameters and laws that are poorly constrained. For example, considering aseismic slip during fluid injection requires the knowledge of fault friction law and parameters associated with it, which are poorly known. In conclusion, there are additional mechanisms besides fluid diffusion that explain the previously observed `non-diffusional' features in the data, but they add poorly known variables and degrees of freedom in the model. 
+\todo[inline]{TL;DR Additional mechanisms can explain the seismicity migration features that are not explained by the classical diffusion model}
+Observations from several injection-induced seismicity sequences show that earthquakes can occur at distances well beyond the region of elevated fluid pressure and, in some cases, without a clear migrational pattern \cite{GoebelBrodsky2018}. In particular, \citeA{GoebelEtAl2017} documented seismic events triggered far from the injection zone during wastewater disposal in Oklahoma, USA\@. Numerical analyses of these sequences indicate that stress perturbations extend beyond the fluid pressure front and dominate the far-field response. Based on such observations, \cite{GoebelBrodsky2018} suggest that injection-induced seismicity sequences lacking observable migration (Table~\ref{tab:migration-observations}) may result from far-reaching poroelastic stress changes.
+
+Injection-induced seismicity in the Barnett Shale and the Cooper Basin exhibits sub-diffusive migration characterized by time exponents smaller than 1/2. Studies attribute these observations to nonlinear diffusion processes \cite{ShapiroDinske2009, JohannEtAl2016}. The nonlinear diffusion of fluid pressure during injection arises due to the pressure-dependent hydraulic transport properties of the medium, such as permeability and diffusivity. In particular, \citeA{ShapiroDinske2009} showed that accounting for pressure-dependent diffusivity leads to a nonlinear diffusion equation, which in turn may alter the time scaling of the pressure front migration. They showed that the resulting scaling depends on the injection boundary condition, the dimensionality of fluid flow, and the degree of nonlinearity of the governing equation. Under conditions of strong nonlinearity and spherically symmetric (3D) diffusion, the model predicts a time exponent of 1/3, consistent with seismicity migration observed in the Barnett Shale (Table~\ref{tab:migration-observations}). However, observations from other injection sites indicate that nonlinear diffusion does not universally lead to sub-diffusive migration. \citeA{HummelMller2009} showed that, increasing the degree of nonlinearity, does not have an effect on the seismicity front evolution, instead, it primarily increases the seismic event density near the seismicity front. This behavior appears at the Fenton Hill injection site, where seismicity exhibits diffusive front migration but shows a pronounced concentration of events near the front. These observations demonstrate the influence of nonlinear diffusion on induced seismicity migration and seismic event density, and they highlight fracture opening as the dominant mechanism controlling fluid injection induced seismicity.
+
+Several injection induced seismicity sequences exhibit quasi-linear seismicity migration (Table~\ref{tab:migration-observations}). Such constant-velocity seismicity migration is characteristic of natural earthquake swarms where the seismicity is mainly driven by slow aseismic slip \cite{DeBarrosEtAl2021, DanreEtAl2024}. This fact coupled with the numerous observations of aseismic slip during field experiments of fluid injection have motivated researchers to investigate its role in injection-induced seismicity \cite{GuglielmiEtAl2015b, BhattacharyaViesca2019, DeBarrosEtAl2021}. \citeA{BhattacharyaViesca2019} developed a numerical model using physical parameters inferred from an \textit{in-situ} fluid injection experiment conducted by \citeA{GuglielmiEtAl2015b}. Their simulations showed that, on critically stressed faults, the rupture front can propagate beyond the region of significant fluid overpressure, thereby modifying the apparent diffusivity of induced microseismicity inferred from distance–time plots. Similarly, \citeA{DeBarrosEtAl2021}, using the Distinct Element Method (DEM), demonstrated that on initially highly critical faults, accelerated aseismic slip can drive the seismicity front ahead of the fluid pressure front, leading to constant-velocity migration or even a migration with increasing velocity. Consistent with these findings, a theoretical fracture mechanics model that incorporates slow slip predicts linear seismicity migration at the Basel and Soultz injection sites \cite{DanreEtAl2024}. The model represents slow (aseismic) slip as a quasi-static crack and fluid pressure distribution as a point force. Together, these results suggest that aseismic slip governs the quasi-linear migration of seismicity observed at some fluid injection sites.
+
+\todo[inline]{to be improved}
+Aseismic slip, as an additional mechanism, can explain the quasi-linear seismicity migration observed at several injection sites. However, this mechanism, along with other mechanisms discussed previously, introduce additional complexity into the problem. In particular, these mechanisms introduce extra physical parameters and governing laws that remain poorly constrained. Moreover, they require assumptions about medium properties that are not clearly justified. For example, considering aseismic slip during fluid injection requires knowledge of the fault friction law and its associated parameters, which are generally poorly known. In addition, aseismic slip as a mechanism for fluid-induced seismicity requires the fault to be initially critically stressed \cite{BhattacharyaViesca2019, DeBarrosEtAl2021}, which may not hold at some injection sites. In conclusion, although mechanisms other than fluid diffusion can explain the previously observed ``non-diffusional'' features in the data, they introduce poorly constrained variables and additional degrees of freedom into the model.
 
 \begin{table}
 	\centering
 	\caption{Fluid induced seismicity models with their associated mechanisms and results}\label{tab:induced-seismicity-mechanisms}
 	\begin{tabular}{lll}
 		\toprule
-		Mechanisms& Source& Site\\
+		Mechanisms                                    & Source                        & Site            \\
 		\midrule
-		\multirow{4}{*}{Nonlinear pressure diffusion}&
-        \cite{ShapiroDinske2009}& Barnett shale\\&
-        \cite{HummelMller2009}& Fenton Hill\\&
-        \cite{HummelShapiro2012}& Generic study\\&
-        \cite{JohannEtAl2016}& Multiple sites\\
+		\multirow{4}{*}{Nonlinear pressure diffusion} &
+		\cite{ShapiroDinske2009}                      & Barnett shale                                   \\&
+		\cite{HummelMller2009}                        & Fenton Hill                                     \\&
+		\cite{HummelShapiro2012}                      & Generic study                                   \\&
+		\cite{JohannEtAl2016}                         & Multiple sites                                  \\
 		\midrule
-		\multirow{4}{*}{Aseismic slip}& \cite{GuglielmiEtAl2015b}& Rustrel, France\\
-			&\cite{BhattacharyaViesca2019} & Rustrel, France\\
-			&\cite{DeBarrosEtAl2021} & Multiple sites\\
-			&\cite{SaezLecampion2023} & Generic study\\
-			&\cite{DanreEtAl2024} & Multiple sites\\
+		\multirow{4}{*}{Aseismic slip}                & \cite{GuglielmiEtAl2015b}     & Rustrel, France \\
+		                                              & \cite{BhattacharyaViesca2019} & Rustrel, France \\
+		                                              & \cite{DeBarrosEtAl2021}       & Multiple sites  \\
+		                                              & \cite{SaezLecampion2023}      & Generic study   \\
+		                                              & \cite{DanreEtAl2024}          & Multiple sites  \\
 		\midrule
-		Poroelasticity& \cite{GoebelEtAl2017}& Oklahoma, USA\\
+		Poroelasticity                                & \cite{GoebelEtAl2017}         & Oklahoma, USA   \\
 		\midrule
-		Coulomb stress transfer& \cite{YeoEtAl2020} & Pohang, Korea\\
+		Coulomb stress transfer                       & \cite{YeoEtAl2020}            & Pohang, Korea   \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
-\todo[inline]{TL;DR Previous studies show that nonlinear diffusion affects induced seismicity, but it remains unclear whether it can explain the quasi-linear migration observed at some injection sites}
-The aforementioned studies do not analyze how changes in permeability during fluid diffusion influence seismicity migration along a fault. Meanwhile, permeability changes within faults during fluid injection have been well documented (e.g., \citeA{GuglielmiEtAl2015b}). \citeA{ShapiroDinske2009} showed that accounting for pressure-dependent diffusivity leads to a nonlinear diffusion equation, which in turn alters the time scaling of the pressure front. This scaling depends on the injection boundary conditions, the dimensionality of fluid flow, and the degree of nonlinearity of the governing equation. For example, spherically symmetric (3D) diffusion with strong nonlinearity results in a time exponent of 1/3, which successfully explains the migration of injection-induced seismicity observed in the Barnett Shale (Table~\ref{tab:migration-observations}). However, the pressure-dependent diffusivity law adopted in that study is not supported by observational data. \citeA{HummelMller2009} conducted a similar investigation into the effects of nonlinear diffusion on induced seismicity, but employed a pressure-dependent permeability relationship constrained by observations. They considered constant-pressure injection and found that variations in the degree of nonlinearity do not significantly affect the evolution of the seismicity front. Nevertheless, increasing the degree of nonlinearity led to the formation of a high-density seismicity domain, which they observed in the Fenton Hill injection experiment. Together with other studies (e.g., \citeA{HummelShapiro2012}; \citeA{JohannEtAl2016}), this body of work clearly demonstrates the influence of nonlinear diffusion on induced seismicity and highlights fracture opening as the dominant mechanism controlling fluid injection.
+As discussed previously, nonlinear diffusion during fluid injection can alter seismicity migration behavior. Studies have examined this process primarily in the context of hydraulic fractures. Additionally, no discussion has been made on its role in the quasi-linear migration of induced seismicity sequences. Nevertheless, a semi-analytical study of nonlinear diffusion has shown that pressure diffusion in rock fractures can result in a time exponent of 4/5 \cite{MurphyEtAl2004}. In this context, we aim to use well-constrained fault physical parameters to simulate fluid injection into a deformable fault under various injection boundary conditions and to evaluate the resulting impact on seismicity migration through comparison with observations.
 
-However, these studies do not address whether nonlinear diffusion may contribute to the quasi-linear evolution of seismicity fronts observed at some injection sites. In this context, we aim to use well-constrained physical parameters of faults to simulate fluid injection into a deformable fault under various injection boundary conditions, and to evaluate its impact on seismicity migration through comparison with observations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -154,3 +160,4 @@ This work of the Interdisciplinary Thematic Institut Geosciences for the energy 
 \bibliography{references}
 
 \end{document}
+
