@@ -45,20 +45,20 @@
   doi           = {10.1029/2004wr003005}
 }
 @article{ChenEtAl2012,
-  title         = {Spatial Migration of Earthquakes within Seismic Clusters in {{Southern California}}: {{Evidence}} for Fluid Diffusion},
-  shorttitle    = {Spatial Migration of Earthquakes within Seismic Clusters in {{Southern California}}},
-  author        = {Chen, X. and Shearer, P. M. and Abercrombie, R. E.},
-  year          = 2012,
-  journal       = {Journal of Geophysical Research: Solid Earth},
-  volume        = {117},
-  number        = {B4},
-  issn          = {2156-2202},
-  doi           = {10.1029/2011JB008973},
-  urldate       = {2025-12-02},
-  abstract      = {Seismicity within many earthquake swarms is observed to migrate slowly with time, which may reflect event triggering due to slow fault slip or fluid flow. We search for this behavior in Southern California by applying a weighted least squares method to quantify event migration within 69 previously observed seismicity bursts. We obtain best-fitting migration directions and velocities, and compute a statistical migration significancesm for each burst using a bootstrap resampling method. We define 37 bursts with sm {$\geq$} 0.8 as the migration group, and 32 bursts with sm {$<$} 0.8 as the non-migration group. To explore differences between the two groups, for each burst we compute effective stress drop ({$\Delta\sigma$}quasi, the ratio between total moment and radius), the skew of the moment release time series ({$\mu$}), the timing of the largest event (tmax), and the distance separation between the first half and second half of the sequence (ds). As expected, the migration group features larger ds and lower {$\Delta\sigma$}quasi, consistent with higher migration significance. It also features lower {$\mu$} and higher tmax, similar to observations from swarms in the Salton Trough, while the non-migration group is more similar to main shock-aftershock sequences. To explore possible fluid involvement, we model the migration behavior with the fluid diffusion equation, and identify 18 bursts with diffusion coefficients ranging from 0.01 to 0.8 m2/s, with the majority below 0.16 m2/s. The obtained diffusion coefficients and migration behavior are similar to the Reservoir-induced seismicity beneath the A\c cu reservoir in Brazil. The majority of normal faulting events are associated with these 18 bursts, while the non-migration group has the most reverse faulting events, indicating a possible link between sequence type and focal mechanism.},
-  copyright     = {Copyright 2012 by the American Geophysical Union},
-  langid        = {english},
-  keywords      = {,earthquake migration,slow slip}
+  title = {Spatial Migration of Earthquakes within Seismic Clusters in {{Southern California}}: {{Evidence}} for Fluid Diffusion},
+  shorttitle = {Spatial Migration of Earthquakes within Seismic Clusters in {{Southern California}}},
+  author = {Chen, X. and Shearer, P. M. and Abercrombie, R. E.},
+  year = 2012,
+  journal = {Journal of Geophysical Research: Solid Earth},
+  volume = {117},
+  number = {B4},
+  issn = {2156-2202},
+  doi = {10.1029/2011JB008973},
+  urldate = {2025-12-02},
+  abstract = {Seismicity within many earthquake swarms is observed to migrate slowly with time, which may reflect event triggering due to slow fault slip or fluid flow. We search for this behavior in Southern California by applying a weighted least squares method to quantify event migration within 69 previously observed seismicity bursts. We obtain best-fitting migration directions and velocities, and compute a statistical migration significancesm for each burst using a bootstrap resampling method. We define 37 bursts with sm {$\geq$} 0.8 as the migration group, and 32 bursts with sm {$<$} 0.8 as the non-migration group. To explore differences between the two groups, for each burst we compute effective stress drop ({$\Delta\sigma$}quasi, the ratio between total moment and radius), the skew of the moment release time series ({$\mu$}), the timing of the largest event (tmax), and the distance separation between the first half and second half of the sequence (ds). As expected, the migration group features larger ds and lower {$\Delta\sigma$}quasi, consistent with higher migration significance. It also features lower {$\mu$} and higher tmax, similar to observations from swarms in the Salton Trough, while the non-migration group is more similar to main shock-aftershock sequences. To explore possible fluid involvement, we model the migration behavior with the fluid diffusion equation, and identify 18 bursts with diffusion coefficients ranging from 0.01 to 0.8 m2/s, with the majority below 0.16 m2/s. The obtained diffusion coefficients and migration behavior are similar to the Reservoir-induced seismicity beneath the A\c cu reservoir in Brazil. The majority of normal faulting events are associated with these 18 bursts, while the non-migration group has the most reverse faulting events, indicating a possible link between sequence type and focal mechanism.},
+  copyright = {Copyright 2012 by the American Geophysical Union},
+  langid = {english},
+  keywords = {,earthquake migration,slow slip},
 }
 @article{ShapiroDinske2009,
   title         = {Fluid-induced Seismicity: {{Pressure}} Diffusion and Hydraulic Fracturing},
@@ -236,23 +236,6 @@
   doi           = {10.1029/2023JB027276}
 }
 # I have note read these papers
-@article{HsiehBredehoeft1981,
-  title = {A Reservoir Analysis of the {{Denver}} Earthquakes: {{A}} Case of Induced Seismicity},
-  shorttitle = {A Reservoir Analysis of the {{Denver}} Earthquakes},
-  author = {Hsieh, Paul A. and Bredehoeft, John D.},
-  year = 1981,
-  journal = {Journal of Geophysical Research: Solid Earth},
-  volume = {86},
-  number = {B2},
-  pages = {903--920},
-  issn = {2156-2202},
-  doi = {10.1029/JB086iB02p00903},
-  urldate = {2025-12-10},
-  abstract = {Injection of fluid wastes into the fractured Precambrian crystalline bedrock beneath the Rocky Mountain Arsenal near Denver triggered earthquakes in the 1960's. An analysis, based on the assumption that fluid flow in the fractured reservoir can be approximated by flow in a porous medium, is presented. The configuration and hydrologic properties of the reservoir are determined from two lines of evidence: (1) locations of earthquake hypocenters determined by seismic arrays installed at the Arsenal and (2) observed long-term decline in fluid levels in the injection well. Together these two sets of data indicate that a long, narrow reservoir, aligned in the direction N 60{$^\circ$}W, exists. The reservoir is 3.35 km in width, extends 30.5 km to the northwest and infinitely to the southeast, and spans a depth interval from 3.7 to 7.0 km below land surface. It has a transmissivity of 1.08 \texttimes{} 10-5 m2/s and a storage coefficient of 1.0 \texttimes{} 10-5. Computed pressure buildup along the length of the reservoir is compared with the spatial distribution of earthquake epicenters. The comparison shows that earthquakes are confined to that part of the reservoir where the pressure buildup exceeds 32 bars. This critical value is interpreted as the pressure buildup above which earthquakes occur. The migration of earthquake epicenters away from the injection well, a phenomenon noted by previous investigators, can be accounted for by the outward propagation of the critical pressure buildup. The analysis is extended to examining the effects of rapid flow in fractures opened by high injection pressure. The results show that the effect is confined to a small region within 1 km of the injection well. The existence of a critical pressure buildup above which earthquakes occur is completely consistent with the theory on the role of fluid pressure in fault movement as presented by Hubbert and Rubey.},
-  copyright = {This paper is not subject to U.S. copyright. Published in 1981 by the American Geophysical Union.},
-  langid = {english},
-  file = {/home/kahmadov/SeaDrive/My Libraries/mylib/zotero-files/induced-seismicity/Hsieh and Bredehoeft - 1981 - A reservoir analysis of the Denver earthquakes A case of induced seismicity 1.pdf;/home/kahmadov/Zotero/storage/DQIZGHZV/JB086iB02p00903.html}
-}
 @article{YeoEtAl2020,
   title         = {Causal Mechanism of Injection-Induced Earthquakes through the {{Mw}} 5.5 {{Pohang}} Earthquake Case Study},
   author        = {Yeo, I. W. and Brown, M. R. M. and Ge, S. and Lee, K. K.},
@@ -271,25 +254,14 @@
   langid        = {english},
   keywords      = {,Geophysics,Geothermal energy,Seismology}
 }
-@phdthesis{SaezUribe2023,
-  address       = {Lausanne},
-  title         = {Three-dimensional fluid-driven frictional ruptures: theory and applications},
-  url           = {https://infoscience.epfl.ch/handle/20.500.14299/202333},
-  doi           = {10.5075/epfl-thesis-10303},
-  abstractnote  = {
-    Fluid-driven frictional ruptures are important in a broad range of subsurface engineering technologies and natural earthquake-related phenomena. Some examples of subsurface operations where borehole fluid injections can induce frictional slip are deep geothermal energy, CO2 and hydrogen geological storage, and wastewater disposal from oil and gas production, among many others. On the other hand, natural phenomena such as seismic swarms, aftershock sequences, and slow earthquakes, are often associated with transients of pore-fluid pressure and fault slip. Motivated by the aforementioned applications and phenomena, this doctoral thesis aims to mechanistically understand how pre-existing geological structural discontinuities such as fractures and faults slide due to the pressurization of pore fluids, in a three-dimensional configuration that can be used for quantitative comparisons with field observations and preliminary engineering designs.
+@phdthesis{SaezUribe2023, 
+  address={Lausanne}, title={Three-dimensional fluid-driven frictional ruptures: theory and applications}, url={https://infoscience.epfl.ch/handle/20.500.14299/202333}, DOI={10.5075/epfl-thesis-10303}, abstractNote={Fluid-driven frictional ruptures are important in a broad range of subsurface engineering technologies and natural earthquake-related phenomena. Some examples of subsurface operations where borehole fluid injections can induce frictional slip are deep geothermal energy, CO2 and hydrogen geological storage, and wastewater disposal from oil and gas production, among many others. On the other hand, natural phenomena such as seismic swarms, aftershock sequences, and slow earthquakes, are often associated with transients of pore-fluid pressure and fault slip. Motivated by the aforementioned applications and phenomena, this doctoral thesis aims to mechanistically understand how pre-existing geological structural discontinuities such as fractures and faults slide due to the pressurization of pore fluids, in a three-dimensional configuration that can be used for quantitative comparisons with field observations and preliminary engineering designs.
 
-    We first develop a numerical solver for frictional slip and fault opening along pre-existing networks of discontinuities in 3D elastic media. We then examine a model with Coulomb\^{a}  s friction to reproduce the initiation, propagation, and arrest of fluid-driven stable frictional ruptures. We show that a dimensionless number containing information about the initial stress state of the fault and the intensity of the injection governs the dynamics and shape of the ruptures in all its stages. Next, we extend the model to account for a friction coefficient that weakens with slip. This results in a broader range of fault slip behaviors, from unconditionally stable slip to dynamic instabilities. We quantify the conditions controlling both the propagation of stable slip and the nucleation of earthquakes. It is shown that the Coulomb\^{a}  s friction model is both an early-time and late-time asymptotic solution of the more general slip-weakening model. After, we generalize some important fault rupture regimes to account for fairly arbitrary fluid injections. In particular, the connection between the expansion rate of the slipping surface and the history of injection volume rate is established.
+  We first develop a numerical solver for frictional slip and fault opening along pre-existing networks of discontinuities in 3D elastic media. We then examine a model with Coulombâ  s friction to reproduce the initiation, propagation, and arrest of fluid-driven stable frictional ruptures. We show that a dimensionless number containing information about the initial stress state of the fault and the intensity of the injection governs the dynamics and shape of the ruptures in all its stages. Next, we extend the model to account for a friction coefficient that weakens with slip. This results in a broader range of fault slip behaviors, from unconditionally stable slip to dynamic instabilities. We quantify the conditions controlling both the propagation of stable slip and the nucleation of earthquakes. It is shown that the Coulombâ  s friction model is both an early-time and late-time asymptotic solution of the more general slip-weakening model. After, we generalize some important fault rupture regimes to account for fairly arbitrary fluid injections. In particular, the connection between the expansion rate of the slipping surface and the history of injection volume rate is established. 
 
-    Using field observations, we then apply and explore the implications of our modeling results to injection-induced seismicity \^{a}  a critical concern in the geo-energy industry. We show how the history of injection rate may control the migration patterns of micro-seismicity, and how these patterns may contain important information about in-situ conditions such as the fault stress state. Further, we elaborate on how post-injection pulses of stable slip can continue triggering seismicity due to stress-transfer effects, long after fluid injections stop. Finally, we propose a theoretical scaling relation for the maximum magnitude of injection-induced slow slip events, which sheds light on how aseismic motions release potential energy during injection operations.
+  Using field observations, we then apply and explore the implications of our modeling results to injection-induced seismicity â  a critical concern in the geo-energy industry. We show how the history of injection rate may control the migration patterns of micro-seismicity, and how these patterns may contain important information about in-situ conditions such as the fault stress state. Further, we elaborate on how post-injection pulses of stable slip can continue triggering seismicity due to stress-transfer effects, long after fluid injections stop. Finally, we propose a theoretical scaling relation for the maximum magnitude of injection-induced slow slip events, which sheds light on how aseismic motions release potential energy during injection operations.
 
-    This doctoral research offers for the first time a quantitative and conceptual framework for understanding various subsurface and earthquake-science problems associated with frictional ruptures induced by fluid injections. While some implications of our findings are already explored in detail here, this work opens the possibility of understanding a much broader range of field observations. Moreover, our research paves the way for designing laboratory experiments, which is the next step to ground the theory we develop.
-  },
-  school        = {EPFL},
-  author        = {S\'{a}ez Uribe, Alexis Alejandro},
-  year          = {2023},
-  keywords      = {Fracture \vert{} friction \vert{} geological material \vert{} injection-induced aseismic slip \vert{} geo-energy applications \vert{} injection-induced seismicity \vert{} post-injection seismicity \vert{} earthquake swarms \vert{} geothermal energy \vert{} hydraulic stimulation technique},
-  language      = {en}
+  This doctoral research offers for the first time a quantitative and conceptual framework for understanding various subsurface and earthquake-science problems associated with frictional ruptures induced by fluid injections. While some implications of our findings are already explored in detail here, this work opens the possibility of understanding a much broader range of field observations. Moreover, our research paves the way for designing laboratory experiments, which is the next step to ground the theory we develop.}, school={EPFL}, author={Sáez Uribe, Alexis Alejandro}, year={2023}, keywords={Fracture | friction | geological material | injection-induced aseismic slip | geo-energy applications | injection-induced seismicity | post-injection seismicity | earthquake swarms | geothermal energy | hydraulic stimulation technique}, language={en} 
 }
 @article{LenglineEtAl2025,
   title         = {Intermittent Induced Seismicity during the Multiyear Operation of a Geothermal Reservoir},
@@ -304,20 +276,4 @@
   doi           = {10.1093/gji/ggaf160},
   urldate       = {2025-12-12},
   abstract      = {Understanding the mechanical behaviour of a fractured geothermal reservoir during its operation phase, when a sustained circulation of fluid is taking place, is of crucial importance for the appraisal of this technology. This knowledge is also essential for understanding natural fault systems that exhibit fluid-induced seismicity, as the geothermal reservoir serves as a small-scale analogue to these systems. Here, we analyse the seismicity of a geothermal reservoir in France, which has been the primary target for heat exploitation over the last 8~yr. Fluid circulation in the granite has been maintained along a main fractured zone through pathways with enhanced permeability thanks to the continuous injection of fluid from a single well. We show that the seismicity occurring during the operation of this reservoir exhibits a progressive expansion outpacing the zone initially activated during the hydraulic stimulation. We also show that most recorded earthquakes are clustered in time within discrete bursts that activate different portions of the fault system. The migration of the events included in these bursts indicates that they are likely related to aseismic transients developing over the creeping fault interfaces. It therefore demonstrates that the intermittency of the seismic activity characterizing earthquake swarms can arise naturally as the complex hydro-thermo-mechanical response of a system under continuous forcing conditions.}
-}
-@article{DuboeufEtAl2017,
-  title = {Aseismic {{Motions Drive}} a {{Sparse Seismicity During Fluid Injections Into}} a {{Fractured Zone}} in a {{Carbonate Reservoir}}},
-  author = {Duboeuf, Laure and De Barros, Louis and Cappa, Fr{\'e}d{\'e}ric and Guglielmi, Yves and Deschamps, Anne and Seguy, Simon},
-  year = 2017,
-  journal = {Journal of Geophysical Research: Solid Earth},
-  volume = {122},
-  number = {10},
-  pages = {8285--8304},
-  issn = {2169-9356},
-  doi = {10.1002/2017JB014535},
-  urldate = {2026-01-21},
-  abstract = {An increase in fluid pressure in faults can trigger seismicity and large aseismic motions. Understanding how fluid and faults interact is an essential goal for seismic hazard and reservoir monitoring, but this key relation remains unclear. We developed an in situ experiment of fluid injections at a 10 meter scale. Water was injected at high pressure in different geological structures inside a fault damaged zone, in limestone at 280 m depth in the Low Noise Underground Laboratory (France). Induced seismicity, as well as strains, pressure, and flow rate, was continuously monitored during the injections. Although nonreversible deformations related to fracture reactivations were observed for all injections, only a few tests generated seismicity. Events are characterized by a 0.5-to-4 kHz content and a small magnitude (approximately -3.5). They are located within 1.5 m accuracy between 1 and 12 m from the injections. Comparing strain measurements and seismicity shows that more than 96\% of the deformation is aseismic. The seismic moment is also small compared to the one expected from the injected volume. Moreover, a dual seismic behavior is observed as (1) the spatiotemporal distribution of some cluster of events is clearly independent from the fluid diffusion (2) while a diffusion-type pattern can be observed for some others clusters. The seismicity might therefore appear as an indirect effect to the fluid pressure, driven by aseismic motion and related stress perturbation transferred through failure.},
-  copyright = {\copyright 2017. American Geophysical Union. All Rights Reserved.},
-  langid = {english},
-  keywords = {aseismic motions,fluid injections,fractured zone,hydromechanics,induced seismicity,meter-scale in situ experiments},
 }

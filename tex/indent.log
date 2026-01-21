@@ -1,24 +1,26 @@
-INFO:  latexindent version 3.24.4, 2024-07-18, a script to indent .tex files
-       latexindent lives here: /home/kahmadov/.local/share/nvim/mason/packages/latexindent/
-       Mon Jan 19 23:19:03 2026
-       Reading input from STDIN
-INFO:  Processing switches:
-INFO:  Directory for backup files and log file indent.log:
-       .
-INFO:  YAML settings read: defaultSettings.yaml
-       Reading defaultSettings.yaml from /home/kahmadov/.local/share/nvim/mason/packages/latexindent/defaultSettings.yaml
-       Reading defaultSettings.yaml (2nd attempt) from /home/kahmadov/.local/share/nvim/mason/packages/latexindent/../../texmf-dist/scripts/latexindent/defaultSettings.yaml
-       and then, if necessary, /home/kahmadov/.local/share/nvim/mason/packages/latexindent/LatexIndent/defaultSettings.yaml
-INFO:  YAML reading settings
-       Home directory is /home/kahmadov
-       latexindent.pl didn't find indentconfig.yaml or .indentconfig.yaml
-       see all possible locations: https://latexindentpl.readthedocs.io/en/latest/sec-appendices.html#indentconfig-options)
-INFO:  Phase 1: searching for objects
-INFO:  Phase 2: finding surrounding indentation
-INFO:  Phase 3: indenting objects
-INFO:  Phase 4: final indentation check
-INFO:  Output routine:
-       Not outputting to file; see -w and -o switches for more options.
-       --------------
-INFO:  Please direct all communication/issues to:
-        https://github.com/cmhughes/latexindent.pl
+INFO: latexindent version 3.7.1, 2019-09-07, a script to indent .tex files
+      latexindent lives here: /usr/share/texlive/texmf-dist/scripts/latexindent/
+      Wed Jan 21 16:05:07 2026
+      Filename: main.tex
+INFO: Processing switches:
+      -w|--overwrite: Overwrite mode active, will make a back up of main.tex first
+INFO: Directory for backup files and indent.log: .
+INFO: YAML settings read: defaultSettings.yaml
+      Reading defaultSettings.yaml from /usr/share/texlive/texmf-dist/scripts/latexindent/defaultSettings.yaml
+INFO: YAML settings read: indentconfig.yaml or .indentconfig.yaml
+      Home directory is /home/kahmadov (didn't find either indentconfig.yaml or .indentconfig.yaml)
+      To specify user settings you would put indentconfig.yaml here: /home/kahmadov/indentconfig.yaml
+      Alternatively, you can use the hidden file .indentconfig.yaml as: /home/kahmadov/.indentconfig.yaml
+INFO: Backup procedure (-w flag active):
+      copying main.tex to ./main.bak0
+      Backup file: ./main.bak0
+      main.tex will be overwritten after indentation
+INFO: Phase 1: searching for objects
+INFO: Phase 2: finding surrounding indentation
+INFO: Phase 3: indenting objects
+INFO: Phase 4: final indentation check
+INFO: Output routine:
+      Overwriting file main.tex
+      --------------
+INFO: Please direct all communication/issues to:
+      https://github.com/cmhughes/latexindent.pl
