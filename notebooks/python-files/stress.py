@@ -17,17 +17,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-import sys
-work_dir = '/home/kahmadov/phd/migration'
-sys.path.append(f'{work_dir}/modules')
-import aperture_solver
-import elastic_solution
+from scipy.optimize import curve_fit
+
+# import sys
 
 # %%
-with open(f'{work_dir}/results/results_fvm.pkl', 'rb') as f:
+work_dir = "/home/kahmadov/phd/migration"
+# sys.path.append(f"{work_dir}/modules")
+# import aperture_solver
+# import elastic_solution
+from modules import aperture_solver, elastic_solution
+
+# %%
+with open(f"{work_dir}/results/results_fvm.pkl", "rb") as f:
     results_fvm = pickle.load(f)
 
-with open(f'{work_dir}/results/parameters.pkl', 'rb') as f:
+with open(f"{work_dir}/results/parameters.pkl", "rb") as f:
     parameters = pickle.load(f)
 
 # %%
@@ -39,6 +44,7 @@ def symmetrize(x_data, y_data):
     x_sym = np.concatenate((-x_data[::-1][:-1], x_data))
     y_sym = np.concatenate((y_data[::-1][:-1], y_data))
     return x_sym, y_sym
+
 
 def make_RHS(P_xt_data, t, t_fin):
     x_arr = np.linspace(0, 100, P_xt_data.shape[1])
@@ -52,14 +58,14 @@ def make_RHS(P_xt_data, t, t_fin):
         # symmetrize
         x_sym, P_sym = symmetrize(x_arr, P_x)
         # interpolate normalize by an order of magnitude
-        return np.interp(s*parameters["L"], x_sym, P_sym)/1e6
+        return np.interp(s * parameters["L"], x_sym, P_sym) / 1e6
+
     return RHS
 
 
-
 # %%
-E_ = parameters['E']/ (1-parameters['nu']**2)
-lam = 4/np.pi * parameters['k_n'] * parameters['L'] / E_
+E_ = parameters["E"] / (1 - parameters["nu"] ** 2)
+lam = 4 / np.pi * parameters["k_n"] * parameters["L"] / E_
 
 # %%
 sn_data = {}
@@ -67,20 +73,20 @@ p_sn_data = {}
 t_sn_data = {}
 
 for q_0, t_fin in zip(results_fvm.keys(), t_fin_vals):
-    P_xt_fvm = results_fvm[q_0]['p']
+    P_xt_fvm = results_fvm[q_0]["p"]
     Nt_sn = 50
-    dt_sn = t_fin/Nt_sn
+    dt_sn = t_fin / Nt_sn
     t_vals = np.linspace(dt_sn, t_fin, Nt_sn)
     sn_xt = []
     p_sn_xt = []
     for t in t_vals:
         RHS = make_RHS(P_xt_fvm, t, t_fin)
         x_hat, sn_hat, p_hat = elastic_solution.FIE_log_sing(lam, RHS)
-        mask = x_hat>=0
-        sn_xt.append(sn_hat[mask]*1e6)
-        p_sn_xt.append(p_hat[mask]*1e6)
-        x_sn = x_hat[mask]*parameters["L"]
-        
+        mask = x_hat >= 0
+        sn_xt.append(sn_hat[mask] * 1e6)
+        p_sn_xt.append(p_hat[mask] * 1e6)
+        x_sn = x_hat[mask] * parameters["L"]
+
     sn_xt = np.array(sn_xt)
     p_sn_xt = np.array(p_sn_xt)
     sn_data[q_0] = sn_xt
@@ -91,26 +97,30 @@ for q_0, t_fin in zip(results_fvm.keys(), t_fin_vals):
 q_0 = 1e-3
 t_fin = 25
 q_0_vals = [1e-3, 1e-4, 1e-5, 1e-6]
-t_vals_for_q = [[1, 10, 25],
-                  [1, 10, 25, 80],
-                  [1, 10, 25, 80, 100],
-                  [1, 10, 25, 80, 100, 120]]
+t_vals_for_q = [
+    [1, 10, 25],
+    [1, 10, 25, 80],
+    [1, 10, 25, 80, 100],
+    [1, 10, 25, 80, 100, 120],
+]
 t_fin_vals = [25, 80, 100, 120]
 
-fig,axes = plt.subplots(2, 2, constrained_layout=True)
-for i, (ax, q_0, t_vals, t_fin) in enumerate(zip(axes.flatten(), q_0_vals, t_vals_for_q, t_fin_vals)):
+fig, axes = plt.subplots(2, 2, constrained_layout=True)
+for i, (ax, q_0, t_vals, t_fin) in enumerate(
+    zip(axes.flatten(), q_0_vals, t_vals_for_q, t_fin_vals)
+):
     sn_xt = sn_data[q_0]
     Nt = sn_xt.shape[0]
     dt = t_fin / Nt
     for t in t_vals:
-        idx_t = int(t / dt) - 1 
-        ax.plot(x_sn, -sn_xt[idx_t]/1e5, label=fr'$t={(idx_t+1)*dt:.1f}$ s')
-    ax.set_title(f'Injection rate $q_0={q_0:.0e}~\mathsf{{m^2/s}}$')
+        idx_t = int(t / dt) - 1
+        ax.plot(x_sn, -sn_xt[idx_t] / 1e5, label=rf"$t={(idx_t+1)*dt:.1f}$ s")
+    ax.set_title(f"Injection rate $q_0={q_0:.0e}~\mathsf{{m^2/s}}$")
     ax.legend()
 
-axes[0,0].set_ylabel(r"Tensile stress $-\sigma_n$, [bar]")
-axes[1,0].set_xlabel(r"Distance $x$, [m]")
-plt.savefig(f'{work_dir}/figures/stress-profiles.png', dpi=300)
+axes[0, 0].set_ylabel(r"Tensile stress $-\sigma_n$, [bar]")
+axes[1, 0].set_xlabel(r"Distance $x$, [m]")
+# plt.savefig(f"{work_dir}/figures/stress-profiles.png", dpi=300)
 plt.show()
 
 # %%
@@ -123,38 +133,42 @@ for q_0, t_fin in zip(q_0_vals, t_fin_vals):
     dt = t_fin / Nt
     x_f_for_q = []
     for idx, sn_x in enumerate(sn_xt):
-        t = (idx+1)*dt
+        t = (idx + 1) * dt
         sn_max = np.max(-sn_x)
         x_f = x_sn[np.argmax(-sn_x)]
         x_f_for_q.append(x_f)
     x_f_data[q_0] = np.array(x_f_for_q)
 
-# %%
-from scipy.optimize import curve_fit
-def power_law(x, a,b):
-    return a*x**b
-    
-fig,axes = plt.subplots(2, 2, constrained_layout=True)
 
-for i, (ax, q_0) in enumerate(zip(axes.flatten(), q_0_vals)):
+# %%
+def power_law(x, a, b):
+    return a * x**b
+
+
+# %%
+fig, axes = plt.subplots(2, 2, constrained_layout=True)
+
+for i, (ax, q_0) in enumerate(zip(axes.flatten(), q_0_vals[::-1])):
 
     popt, pcov = curve_fit(power_law, t_sn_data[q_0], x_f_data[q_0], p0=(1, 1))
     a_fit, b_fit = popt
-    
+
     x_f_fit = power_law(t_sn_data[q_0], a_fit, b_fit)
-    
-    ax.plot(t_sn_data[q_0], x_f_data[q_0], '.')
-    ax.plot(t_sn_data[q_0], x_f_fit, '-', label=fr'Fit: $x_f = {a_fit:.2f} ~ t^{{{b_fit:.2f}}}$')
-    
-    ax.set_title(f'Injection rate $q_0={q_0:.0e}~\mathsf{{m^2/s}}$')
+
+    ax.plot(t_sn_data[q_0], x_f_data[q_0], ".")
+    ax.plot(
+        t_sn_data[q_0],
+        x_f_fit,
+        "-",
+        label=rf"$x_f = {a_fit:.2f} ~ t^{{{b_fit:.2f}}}$",
+    )
+
+    ax.set_title(f"Injection rate $q_0={q_0:.0e}~\\mathsf{{m^2/s}}$")
     ax.legend()
 
-axes[0,0].set_ylabel(r'Tensile peak position $x_f$, [m]')
-axes[1,0].set_xlabel(r'Time $t$, [s]')
-plt.savefig(f'{work_dir}/figures/stress-migration.png', dpi=300)
+    ax.set_ylabel(r"Tensile peak position $x_f$, [m]")
+    ax.set_xlabel(r"Time $t$, [s]")
+# plt.savefig(f"{work_dir}/figures/stress-migration.png", dpi=300)
 plt.show()
-
-# %%
-np.linspace(0.05, 25, 50)
 
 # %%
