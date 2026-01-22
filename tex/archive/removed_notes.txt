@@ -5,3 +5,13 @@ Recently, considerable evidence has accumulated to show that seismicity migratio
 
 The inferred time exponents range from approximately 1/3 to 1. Additionally, seismic activity at some injection sites lack observable migration behavior. The classical and commonly used power-law relationship to describe the evolution of the seismic front is the square-root relationship \cite{ShapiroEtAl1997, ShapiroEtAl2002}.
 
+However , the seismicity migration data show that, at numerous injection sites,the evolution of the seismicity front deviates from square-root-of-time (diffusion) scaling. In addition to the square-root-of-time scaling, three other seismicity migration behaviors exist: sub-1/2 time exponent, quasi-linear or linear, and no migration (see Table~\ref{tab:migration-observations}). Researchers have proposed several mechanisms associated with fluid-induced seismicity that explain these departures from diffusive ($\sqrt{t}$) scaling. These mechanisms include aseismic slip, poroelastic effects, nonlinear pressure diffusion, and Coulomb stress transfer (Table~\ref{tab:induced-seismicity-mechanisms}). In the following, we briefly review the mechanisms that previous studies propose to explain each observed seismicity migration behavior.
+
+\todo[inline]{TL;DR Additional mechanisms can explain the seismicity migration features that are not explained by the classical diffusion model}
+
+In addition to the diffusive migration of seimicity, observations from several injection-induced seismicity sequences show that earthquakes can occur at distances well beyond the region of elevated fluid pressure and, in some cases, without a clear migrational pattern \cite{GoebelBrodsky2018}. In particular, \citeA{GoebelEtAl2017} documented seismic events triggered far from the injection zone during wastewater disposal in Oklahoma, USA\@. Numerical analyses of these sequences indicate that stress perturbations extend beyond the fluid pressure front and dominate the far-field response. Based on such observations, \cite{GoebelBrodsky2018} suggest that injection-induced seismicity sequences lacking observable migration (Table~\ref{tab:migration-observations}) may result from far-reaching poroelastic stress changes.
+
+These observations demonstrate the influence of nonlinear diffusion on induced seismicity migration and seismic event density, and they highlight fracture opening as the dominant mechanism controlling fluid injection induced seismicity.
+
+These observations indicate seismicity migration following cubic root scaling is the signature of nonlinear diffusion, but square root may also arise from nonlinear diffusion 
+
