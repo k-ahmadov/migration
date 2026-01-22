@@ -62,7 +62,7 @@ Spatial migration is a common feature of earthquake sequences induced by fluid i
 \begin{equation}\label{seismic-front-vs-time}
 	d(t) \propto t^{\alpha}
 \end{equation}
-where $d$ is the distance of seismic events relative to the origin position, $t$ is time, and $\alpha$ is the exponent of time.
+where $d$ is the distance of seismic events relative to the origin position, $t$ is time, and $\alpha$ is the exponent of time.	
 
 \todo[inline]{Reported exponents of time $\alpha$ range between 0 and 1. Often, $\alpha$ varies between injection sites and among different studies of the same site}
 
@@ -82,7 +82,7 @@ Early studies that identified and analyzed the power-law scaling in seismic fron
 		                                  & \cite{DanreEtAl2024}     & 1                       \\
 		\midrule
 		\multirow{4}{*}{Basel 2006}       & \cite{JohannEtAl2016}    & 0.49                    \\
-		                                  & \cite{GoebelBrodsky2018} & 1                       \\
+										  & \cite{GoebelBrodsky2018} & 1                       \\
 		                                  & \cite{DeBarrosEtAl2021}  & 0.7                     \\
 		                                  & \cite{DanreEtAl2024}     & 1                       \\
 		\midrule
@@ -135,24 +135,24 @@ Aseismic slip, as an additional mechanism, can explain the quasi-linear seismici
 	\caption{Fluid induced seismicity models with their associated mechanisms and results}\label{tab:induced-seismicity-mechanisms}
 	\begin{tabular}{lllc}
 		\toprule
-		Mechanisms                           & Source                     & Site            & $\alpha$             \\
+		Mechanisms                                    & Source                        & Site                    & $\alpha$ \\
 		\midrule
-		\multirow{3}{*}{Linear diffusion}    & \cite{HsiehBredehoeft1981} & Denver          & \multirow{3}{*}{1/2} \\
-		                                     & \cite{ShapiroEtAl1997}     & KTB, Germany                           \\
-		                                     & \cite{ShapiroEtAl2002}     & Soultz, France                         \\
+		\multirow{3}{*}{Linear diffusion}             & \cite{HsiehBredehoeft1981}	  & Denver                  & \multirow{3}{*}{1/2} \\
+													  & \cite{ShapiroEtAl1997}        & KTB, Germany			\\
+		                                              & \cite{ShapiroEtAl2002}        & Soultz, France			\\
 		\midrule
-		\multirow{3}{*}{Nonlinear diffusion} & \cite{ShapiroDinske2009}   & Barnett shale   & 1/3                  \\
-		                                     & \cite{HummelMller2009}     & Fenton Hill     & 1/2                  \\
-		                                     & \cite{JohannEtAl2016}      & Multiple sites  & 1/2--1/3             \\
+		\multirow{3}{*}{Nonlinear diffusion}          & \cite{ShapiroDinske2009}      & Barnett shale			& 1/3 \\
+													  & \cite{HummelMller2009}        & Fenton Hill				& 1/2 \\
+													  & \cite{JohannEtAl2016}         & Multiple sites			& 1/2--1/3\\
 		\midrule
-		\multirow{4}{*}{Aseismic slip}       & \cite{DuboeufEtAl2017}     & Rustrel, France & 0                    \\
-		                                     & \cite{DeBarrosEtAl2021}    & Multiple sites  & 0.7--1               \\
-		                                     & \cite{SaezUribe2023}       & Multiple sites  & 1                    \\
-		                                     & \cite{DanreEtAl2024}       & Multiple sites  & 1                    \\
+		\multirow{4}{*}{Aseismic slip}                & \cite{DuboeufEtAl2017} & Rustrel, France				&0\\
+													  & \cite{DeBarrosEtAl2021}       & Multiple sites			&0.7--1	\\
+													  & \cite{SaezUribe2023}      & Multiple sites				& 1\\
+													  & \cite{DanreEtAl2024}          & Multiple sites			& 1	\\
 		\midrule
-		Poroelasticity                       & \cite{GoebelEtAl2017}      & Oklahoma, USA   & 0                    \\
+		Poroelasticity                                & \cite{GoebelEtAl2017}         & Oklahoma, USA			& 0	\\
 		\midrule
-		Coulomb stress transfer              & \cite{YeoEtAl2020}         & Pohang, Korea                          \\
+		Coulomb stress transfer                       & \cite{YeoEtAl2020}            & Pohang, Korea			\\
 		\bottomrule
 	\end{tabular}
 \end{table}
