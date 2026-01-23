@@ -4,43 +4,48 @@ from scipy.sparse.linalg import factorized
 from scipy.stats import hmean
 
 
-def n3_flux(Nx, Nt, ui_hat, T_hat):
+def solve_dimless_nonlinear_diffusion_n3_constant_flux(Nx, Nt, ui_hat, T_hat):
     """
-    Solve the nonlinear diffusion equation (n = 3)
-    using the Finite Volume Method (FVM) in dimensionless form.
+        Solve the nonlinear diffusion equation (n = 3)
+        using the Finite Volume Method (FVM) in dimensionless form.
 
-    Equation (dimensionless form):
-        ∂û/∂t̂ = ∂/∂x̂ (û³ ∂û/∂x̂)
+        Equation (dimensionless form):
+            ∂û/∂t̂ = ∂/∂x̂ (û³ ∂û/∂x̂)
 
-    Dimensionless variables:
-        x̂ = x / L
-        û = u / U*,     where U* = (L·q₀ / a)^(1/4)
-        t̂ = t / T*,     where T* = L² / (a·U*³)
+        Dimensionless variables:
+            x̂ = x / L
+            û = u / U*,     where U* = (L·q₀ / a)^(1/4)
+            t̂ = t / T*,     where T* = L² / (a·U*³)
 
-    Parameters
-    ----------
-    Nx : int
-        Number of spatial cells.
-    Nt : int
-        Number of time steps.
-    ui_hat : array_like
-        Initial condition (dimensionless) for û at t̂ = 0.
-    T_hat : float
-        Final dimensionless simulation time.
+        Parameters
+        ----------
+        Nx : int
+            Number of spatial cells.
+        Nt : int
+            Number of time steps.
+        ui_hat : array_like
+            Initial condition (dimensionless) for û at t̂ = 0.
+        T_hat : float
+            Final dimensionless simulation time.
 
-    Returns
-    -------
-    u_hat : ndarray of shape (Nt, Nx)
-        Dimensionless solution û(x̂, t̂) at each time step and spatial cell.
+        Returns
+        -------
+        u_hat : ndarray of shape (Nt, Nx)
+            Dimensionless solution û(x̂, t̂) at each time step and spatial cell.
 
-    Notes
-    -----
-    - The scheme uses harmonic means for flux interpolation at cell interfaces.
+        Notes
+        -----
+        - The scheme uses harmonic means for flux interpolation at cell interfaces.
     """
+    # mesh size
     dx_hat = 1 / Nx
+    # time step
     dt_hat = T_hat / Nt
+    # gamma is for convenience
     gamma = dt_hat / dx_hat**2
+    # initialize the matrix of size (Nt, Nx)
     u_hat = np.zeros((Nt, Nx))
+    # apply initial condition
     u_hat[0, :] = ui_hat
     # building and solving the matrix for each timestep
     for k in range(Nt - 1):
@@ -59,14 +64,14 @@ def n3_flux(Nx, Nt, ui_hat, T_hat):
         # RHS vector
         b = u_hat[k, :].copy()
         b[0] += gamma * dx_hat
-        # inverse of matrix with function adapted for sparse matrix
+        # inverse of matrix with a method adapted for sparse matrix
         A = csc_array(diags([lower, main, upper], [-1, 0, 1]))
         solve = factorized(A)
         u_hat[k + 1, :] = solve(b)
     return u_hat
 
 
-def solve_fdm_diffusion_flux(Nx, Nt, T_hat, ui_hat=0):
+def solve_linear_diffusion_BC_constant_flux(Nx, Nt, T_hat, ui_hat=0):
     x_hat = np.linspace(0, 1, Nx)
     dx_hat = 1 / Nx
     dt_hat = T_hat / Nt
