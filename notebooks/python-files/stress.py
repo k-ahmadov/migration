@@ -23,6 +23,7 @@ from scipy.optimize import curve_fit
 
 # %%
 work_dir = "/home/kahmadov/phd/migration"
+work_dir = "/Users/kahmadov/phd/migration"
 # sys.path.append(f"{work_dir}/modules")
 # import aperture_solver
 # import elastic_solution
@@ -168,7 +169,7 @@ for i, (ax, q_0) in enumerate(zip(axes.flatten(), q_0_vals[::-1])):
 
     ax.set_ylabel(r"Tensile peak position $x_f$, [m]")
     ax.set_xlabel(r"Time $t$, [s]")
-# plt.savefig(f"{work_dir}/figures/stress-migration.png", dpi=300)
+plt.savefig(f"{work_dir}/figures/stress-migration.png", dpi=300)
 plt.show()
 
 # %%
