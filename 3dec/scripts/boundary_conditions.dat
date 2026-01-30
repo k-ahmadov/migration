@@ -1,0 +1,13 @@
+program call 'scripts/properties.dat'
+
+; fixing the bottom and injection face with roller boundary 
+block gridpoint apply velocity-z 0    range position-z [-L//2]
+block gridpoint apply velocity-x 0    range position-x 0
+
+
+; stress boundary condition on top
+;block face apply stress-zz  -5e6  range pos-z [L//2]
+
+; zero displacement roller boundary conditions on top
+block gridpoint apply velocity-z 0    range position-z 50
+
