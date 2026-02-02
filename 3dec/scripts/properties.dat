@@ -1,0 +1,22 @@
+fish define convert_to_modulus_(E, nu)
+    global rho = 2500
+    global K;
+    global G;
+    K = E/(3*(1 - 2*nu))
+    G = E/(2*(1 + nu))
+end
+[convert_to_modulus_(60e9, 0.25)]
+; matrix properties
+block zone cmodel assign elastic
+block zone prop density [rho] bulk [K] shear [G]
+; fluid properties
+; the bulk modulus (K_w) of water is 2e9
+; choose smaller bulk modulus value (K_w/w_i >> k_n)
+block fluid property bulk 5e8 density 1000 viscosity 1e-3
+; fracture properties
+[global kn = 50e9]
+block contact jmodel assign elastic
+block contact property stiffness-normal [kn]
+flowplane vertex property aperture-initial 1e-4 &
+                          aperture-minimum 1e-5 &
+                          aperture-maximum 1e-3

@@ -1,0 +1,18 @@
+model new 
+model deterministic off
+model config fluid
+model large-strain off
+
+program threads 12
+
+[global L=100]
+block create brick 0 [L] -5 5 [-L//2] [L//2]
+
+block cut joint-set dip 0 dip-direction 90 origin 0, 0, 0
+
+block densify segments 5 1 5 join
+
+block zone size edgelength 3 range pos-x 0 [L] pos-z [-L//10] [L//10] 
+block zone generate-new min-edge 3 max-edge 8 grad-surface 0.1
+
+model save "../saves/geometry"

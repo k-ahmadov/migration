@@ -8,6 +8,9 @@
 % \linenumbers
 \usepackage{multirow}
 \usepackage[colorinlistoftodos]{todonotes}
+\usepackage{pdfpages}
+\usepackage{import}
+% paragraph paragraph name (end)
 % \draftfalse
 \journalname{JGR: Solid Earth}
 % As of 2018 we recommend use of the TrackChanges package to mark revisions.
@@ -132,6 +135,7 @@ The fluid overpressure is a classical mechanism that is proposed to induce seism
 
 In addition to the diffusive migration of seismicity, observations show that, at some injection sites, the seismicity lacks a clear migrational pattern (Table~\ref{tab:migration-observations}). \citeA{GoebelBrodsky2018} suggest that injection-induced seismicity sequences lacking observable migration may result from far-reaching poroelastic stress changes. In particular, \citeA{GoebelEtAl2017} documented seismic events triggered far from the injection zone during wastewater disposal in Oklahoma, USA\@. Numerical analyses of these sequences indicate that stress perturbations extend beyond the fluid pressure front and dominate the far-field response.
 
+\todo{maybe we should remove the Site column?}
 \begin{table}[htbp]
 	\centering
 	\caption{Triggering mechanisms for injection-induced seismicity reported in the literature with their associated exponents of time and the injection sites.}\label{tab:induced-seismicity-mechanisms}
@@ -147,8 +151,7 @@ In addition to the diffusive migration of seismicity, observations show that, at
 		                                     & \cite{HummelMller2009}        & Fenton Hill    & 1/2                  \\
 		                                     & \cite{JohannEtAl2016}         & Multiple sites & 1/2--1/3             \\
 		\midrule
-		\multirow{4}{*}{Aseismic slip}       & \cite{DuboeufEtAl2017}        & LSBB, France   & 0                    \\
-		                                     & \cite{BhattacharyaViesca2019} & LSBB, France   & 1/2                  \\
+		\multirow{4}{*}{Aseismic slip}       & \cite{BhattacharyaViesca2019} & LSBB, France   & 1/2                  \\
 		                                     & \cite{DeBarrosEtAl2021}       & Multiple sites & 0.7--1               \\
 		                                     & \cite{SaezUribe2023}          & Multiple sites & 1/2--1               \\
 		                                     & \cite{DanreEtAl2024}          & Multiple sites & 1                    \\
@@ -178,8 +181,16 @@ In view of this conclusion of strong dependence of predicted exponent of time on
 
 \section{Methods}
 
-We use a similar model setup as \citeA{AhmadovEtAlInPrep}. This model uses 3-D Distinct Element Code (3DEC, \citeA{Itasca3DEC2024}) to simulate fluid injection into a deformable pre-existing planar fracture. This model is hydromechanically fully coupled, in the way that fluid pressure, stress and hydraulic parameters of the model interact with each other during the numerical experiment.  The model is a 3-D model with dimensions of 100\,m\,×\,100\,m\,×\,100\,m. The horizontal fracture is contained in the middle of the elastic, homogeneous, isotropic, and impermeable rock block. We set the rock properties to typical values for a basement rock. We do not apply stress boundary conditions on the rock block, instead the block is under roller boundary condition on all edges except the right edge which is opposite to the injector. The fracture is not under initial stress and initial fluid pressure before the numerical experiment. We consider a fracture with a constant normal stiffness value that corresponds to large fractures ($k_{n}=50~\mathrm{GPa/m}$). The fracture has an initial aperture ($w_{i}$) of 0.1 mm. According to the cubic law \cite{WitherspoonEtAl1980}, the permeability corresponding to this initial aperture equals to $k=8.3 \times  10^{-10}~\mathrm{m^2}$. The properties of the fluid are same as of water. We inject the fluid along a line boundary of the fracture with constant injection rate, simplifying the model into a 2-D problem with 1-D fluid flow. We test the model's response to the applied injection rates by simulating injection with various injection rate.
+We use a similar model setup as \citeA{AhmadovEtAlInPrep}. This model uses 3-D Distinct Element Code (3DEC, \citeA{Itasca3DEC2024}) \todo{Why we chose 3DEC?} to simulate fluid injection into a deformable pre-existing planar fracture. This model is hydromechanically fully coupled, in the way that fluid pressure, stress and hydraulic parameters of the model interact with each other during the numerical experiment.  The model is a 3-D model \todo{Should we avoid saying 3-D?} with dimensions of 100\,m\,×\,100\,m\,×\,100\,m (Figure~\ref{fig:model-schematic}). The horizontal fracture is contained in the middle of the elastic, homogeneous, isotropic, and impermeable rock block. We set the rock properties to typical values for a basement rock. We do not apply stress boundary conditions on the rock block, instead the block is under roller boundary condition on all edges except the right edge which is opposite to the injector. The fracture is not under initial stress and initial fluid pressure before the numerical experiment. We consider a fracture with a constant normal stiffness value that corresponds to large fractures ($k_{n}=50~\mathrm{GPa/m}$). The fracture has an initial aperture ($w_{i}$) of 0.1 mm \todo{This represent highly conductive fracture?} (Figure~\ref{fig:model-schematic}). According to the cubic law \cite{WitherspoonEtAl1980}, the permeability corresponding to this initial aperture equals to $k=8.3 \times  10^{-10}~\mathrm{m^2}$. The properties of the fluid are same as of water. We inject the fluid along a line boundary at the onset of the fracture with a constant injection rate per fracture unit width \todo{How to convert from m$^2$/s to m$^3$/s?}. This simplifies the model into a 2-D problem with 1-D fluid flow. We analyze the effect of injection rate on the response of the model with multiple numerical experiment where we change the applied injection rate (Figure~\ref{fig:model-schematic}c) \todo{How to improve Figure 1c?}.
 
+\begin{figure}[htb!]
+	\centering
+	\import{figures_main/}{model-schematic.pdf_tex}
+	\caption{(a) The sketch of the numerical model with an elastic rock block with roller boundaries on all edges except the right one, including a horizontal parallel-plate fracture in the middle. The fluid injection is applied at the inset of the fracture. The sketch draws the fluid overpressure induced relative opening of the fracture at the injection point during the simulation. (b) The drawing of the physical parameters of the fracture with a constant normal ($k_{n}$) and shear stiffness ($k_{s}$). The fracture has an initial aperture $w_{i}$. (c) Applied injection rate per simulation.}
+	\label{fig:model-schematic}
+\end{figure}
+
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % DATA SECTION and ACKNOWLEDGMENTS

@@ -1,0 +1,4 @@
+model restore 'saves/geometry.sav'
+
+program call 'scripts/properties.dat'
+program call 'scripts/boundary_conditions.dat'
