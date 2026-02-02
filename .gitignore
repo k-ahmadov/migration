@@ -2,5 +2,6 @@ data/
 results/
 tex/out/
 tex/aux/
-figures/
+figure*/**
 .DS_Store
+*.temp
