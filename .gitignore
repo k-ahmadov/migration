@@ -1,3 +1,4 @@
+.archive/**
 data/
 results/
 tex/out/
@@ -5,3 +6,4 @@ tex/aux/
 figure*/**
 .DS_Store
 *.temp
+3dec/saves/*

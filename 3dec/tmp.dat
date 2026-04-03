@@ -1,0 +1,5 @@
+;[global T=50]
+;[global q_0=1e-4]
+;[global fluid_time=0]
+;program call "scripts/store_coordinates.py"
+;program call "scripts/store_results.py"

@@ -5,7 +5,7 @@
         "Version" : 9.0000000e+00 ,
         "Update" : 176 ,
         "Binary" : false ,
-        "DateTime" : "2026-03-20T10:58:46" ,
+        "DateTime" : "2026-02-03T18:12:59" ,
         "Format" : 0 ,
         "Dimension" : 3 
     },
@@ -34,6 +34,9 @@
                 },
                 "SaveFiles" : {
                     "Files" : [ 
+                        "scripts/geometry_coarse.sav" ,
+                        "scripts/geometry.sav" ,
+                        "saves/geometry.dat" ,
                         "saves/geometry.sav" 
                     ]
                 },
@@ -58,11 +61,7 @@
                         "scripts/initial.dat" ,
                         "scripts/properties.dat" ,
                         "scripts/boundary_conditions.dat" ,
-                        "scripts/geometry.dat" ,
-                        "scripts/inject.dat" ,
-                        "scripts/store_results.py" ,
-                        "scripts/store_coordinates.py" ,
-                        "tmp.dat" 
+                        "scripts/geometry.dat" 
                     ]
                 },
                 "OpenFiles" : [  ]
@@ -284,16 +283,16 @@
                         "View" : {
                             "Locked" : false ,
                             "Perspective" : true ,
-                            "EyePosition" : { "x" : -5.688577139876570e+01  , "y" : -9.993443070466749e+01  , "z" : 3.214879454138273e+01 } ,
-                            "ViewCenter" : { "x" : 4.787909318984894e+01  , "y" : 6.329650979842774e+00  , "z" : 1.220602033429884e+00 } ,
-                            "Up" : { "x" : 1.170748761998009e-01  , "y" : 1.693901330267709e-01  , "z" : 9.785706189110596e-01 } ,
+                            "EyePosition" : { "x" : 5.000000000000001e+01  , "y" : -1.458743503477614e+02  , "z" : 0.000000000000000e+00 } ,
+                            "ViewCenter" : { "x" : 5.000000000000001e+01  , "y" : 4.862478344925379e+01  , "z" : 0.000000000000000e+00 } ,
+                            "Up" : { "x" : 0.000000000000000e+00  , "y" : 0.000000000000000e+00  , "z" : 1.000000000000000e+00 } ,
                             "Magnification" : 1.000000000000000e+00 ,
                             "FirstViewAuto" : false ,
                             "MinClipPlaneDist" : -1.000000000000000e+10 ,
                             "MaxClipPlaneDist" : 1.000000000000000e+10 ,
                             "SpecAsOrientation" : false ,
                             "OrientationIn" : { "x" : 0.000000000000000e+00  , "y" : 0.000000000000000e+00  , "z" : 0.000000000000000e+00 } ,
-                            "SyncToName" : "Unsynced" 
+                            "SyncToName" : "" 
                         },
                         "Properties" : {
                             "AutoUpdate" : true ,
@@ -441,7 +440,7 @@
                                     "Active" : true ,
                                     "Type" : 0 ,
                                     "PIActive" : true ,
-                                    "ShowCaption" : true ,
+                                    "ShowCaption" : false ,
                                     "Title" : {
                                         "Active" : true ,
                                         "Enabled" : true ,
@@ -543,7 +542,7 @@
                                             "Text" : "" 
                                         }
                                     },
-                                    "ColorScheme" : 1 ,
+                                    "ColorScheme" : 0 ,
                                     "ColorBy" : {
                                         "Active" : true ,
                                         "Enabled" : true ,
@@ -569,18 +568,18 @@
                                     "Contour" : {
                                         "Active" : true ,
                                         "Enabled" : true ,
-                                        "RampKeyword" : "bwr" ,
-                                        "Minimum" : -2.669428755462811e-04 ,
-                                        "Maximum" : 2.669253933774426e-04 ,
-                                        "Interval" : 5.000000000000000e-05 ,
+                                        "RampKeyword" : "rainbow" ,
+                                        "Minimum" : 1.797693134862316e+308 ,
+                                        "Maximum" : -1.797693134862316e+308 ,
+                                        "Interval" : 0.000000000000000e+00 ,
                                         "MinAuto" : true ,
                                         "MaxAuto" : true ,
                                         "IntAuto" : true ,
                                         "Reversed" : false ,
                                         "AboveAuto" : true ,
                                         "BelowAuto" : true ,
-                                        "Above" : "#960000FF" ,
-                                        "Below" : "#000096FF" ,
+                                        "Above" : "#ff0000FF" ,
+                                        "Below" : "#0000ffFF" ,
                                         "MaxCaption" : 20 ,
                                         "Log" : false ,
                                         "Caption" : {
@@ -597,36 +596,36 @@
                                         "Format" : 0 
                                     },
                                     "Data" : {
-                                        "Active" : true ,
+                                        "Active" : false ,
                                         "Enabled" : true ,
                                         "Data" : [ 
                                             {
-                                                "Component" : 2 ,
-                                                "Quantity" : 4 ,
+                                                "Component" : 3 ,
+                                                "Quantity" : 0 ,
                                                 "Type" : 0 ,
                                                 "Extra" : 1 ,
                                                 "Stress" : false ,
                                                 "Log" : false ,
-                                                "Active" : true ,
+                                                "Active" : false ,
                                                 "Keyword" : "displacement" ,
                                                 "GpData" : {
-                                                    "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Component" : 3 ,
+                                                    "Quantity" : 0 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Keyword" : "displacement" 
                                                 },
                                                 "ZoneData" : {
-                                                    "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Component" : 3 ,
+                                                    "Quantity" : 0 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Keyword" : "" ,
                                                     "Property" : "" 
                                                 },
@@ -640,13 +639,13 @@
                                                 },
                                                 "Source" : 1 ,
                                                 "FaceData" : {
-                                                    "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Component" : 3 ,
+                                                    "Quantity" : 0 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Keyword" : "" 
                                                 }
                                             }
@@ -656,13 +655,13 @@
                                             "Enabled" : true ,
                                             "Data" : [ 
                                                 {
-                                                    "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Component" : 3 ,
+                                                    "Quantity" : 0 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Keyword" : "displacement" 
                                                 }
                                             ]
@@ -672,13 +671,13 @@
                                             "Enabled" : true ,
                                             "Data" : [ 
                                                 {
-                                                    "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Component" : 3 ,
+                                                    "Quantity" : 0 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Keyword" : "" ,
                                                     "Property" : "" 
                                                 }
@@ -710,13 +709,13 @@
                                             "Enabled" : true ,
                                             "Data" : [ 
                                                 {
-                                                    "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Component" : 3 ,
+                                                    "Quantity" : 0 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Keyword" : "" 
                                                 }
                                             ]
@@ -756,10 +755,10 @@
                             {
                                 "Name" : "Joints" ,
                                 "Item" : {
-                                    "Active" : false ,
+                                    "Active" : true ,
                                     "Type" : 0 ,
-                                    "PIActive" : false ,
-                                    "ShowCaption" : true ,
+                                    "PIActive" : true ,
+                                    "ShowCaption" : false ,
                                     "Title" : {
                                         "Active" : true ,
                                         "Enabled" : true ,
@@ -846,7 +845,7 @@
                                     },
                                     "ShowCracked" : false ,
                                     "CrackThreshold" : 0.000000000000000e+00 ,
-                                    "ColorScheme" : 1 ,
+                                    "ColorScheme" : 0 ,
                                     "ColorBy" : {
                                         "Active" : true ,
                                         "Enabled" : true ,
@@ -869,10 +868,10 @@
                                         "ContactsOnly" : true 
                                     },
                                     "Polygons" : {
-                                        "Active" : false ,
+                                        "Active" : true ,
                                         "AttPoly" : [ 
                                             {
-                                                "Active" : false ,
+                                                "Active" : true ,
                                                 "Enabled" : true ,
                                                 "Fill" : true ,
                                                 "Offset1" : 5.0000000e-01 ,
@@ -881,7 +880,7 @@
                                                 "PolyTrans" : 0 ,
                                                 "WireTrans" : 50 ,
                                                 "Line" : {
-                                                    "Active" : false ,
+                                                    "Active" : true ,
                                                     "Enabled" : true ,
                                                     "Width" : 1 ,
                                                     "Style" : 1 ,
@@ -903,10 +902,10 @@
                                         ],
                                         "CutLine" : [ 
                                             {
-                                                "Active" : false ,
+                                                "Active" : true ,
                                                 "AttLine" : [ 
                                                     {
-                                                        "Active" : false ,
+                                                        "Active" : true ,
                                                         "Enabled" : true ,
                                                         "Width" : 1 ,
                                                         "Style" : 1 ,
@@ -932,7 +931,7 @@
                                                                     "Alias" : "" ,
                                                                     "Label" : "None" ,
                                                                     "Bool" : true ,
-                                                                    "Used2" : false ,
+                                                                    "Used2" : true ,
                                                                     "Default" : false 
                                                                 }
                                                             ],
@@ -977,10 +976,10 @@
                                         ]
                                     },
                                     "Contour" : {
-                                        "Active" : true ,
+                                        "Active" : false ,
                                         "AttPoly" : [ 
                                             {
-                                                "Active" : true ,
+                                                "Active" : false ,
                                                 "Enabled" : true ,
                                                 "Fill" : true ,
                                                 "Offset1" : 5.0000000e-01 ,
@@ -989,7 +988,7 @@
                                                 "PolyTrans" : 0 ,
                                                 "WireTrans" : 50 ,
                                                 "Line" : {
-                                                    "Active" : true ,
+                                                    "Active" : false ,
                                                     "Enabled" : true ,
                                                     "Width" : 1 ,
                                                     "Style" : 1 ,
@@ -1011,10 +1010,10 @@
                                         ],
                                         "CutLine" : [ 
                                             {
-                                                "Active" : true ,
+                                                "Active" : false ,
                                                 "AttLine" : [ 
                                                     {
-                                                        "Active" : true ,
+                                                        "Active" : false ,
                                                         "Enabled" : true ,
                                                         "Width" : 1 ,
                                                         "Style" : 1 ,
@@ -1026,11 +1025,11 @@
                                         ],
                                         "AttCont" : [ 
                                             {
-                                                "Active" : true ,
+                                                "Active" : false ,
                                                 "Enabled" : true ,
-                                                "RampKeyword" : "bwr" ,
+                                                "RampKeyword" : "rainbow" ,
                                                 "Minimum" : 1.797693134862316e+308 ,
-                                                "Maximum" : 1.797693134862316e+308 ,
+                                                "Maximum" : -1.797693134862316e+308 ,
                                                 "Interval" : 0.000000000000000e+00 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
@@ -1038,8 +1037,8 @@
                                                 "Reversed" : false ,
                                                 "AboveAuto" : true ,
                                                 "BelowAuto" : true ,
-                                                "Above" : "#960000FF" ,
-                                                "Below" : "#000096FF" ,
+                                                "Above" : "#ff0000FF" ,
+                                                "Below" : "#0000ffFF" ,
                                                 "MaxCaption" : 20 ,
                                                 "Log" : false ,
                                                 "Caption" : {
@@ -1058,9 +1057,9 @@
                                         ]
                                     },
                                     "Data" : {
-                                        "Active" : true ,
+                                        "Active" : false ,
                                         "Enabled" : true ,
-                                        "Index" : 8 ,
+                                        "Index" : 0 ,
                                         "Extra" : 1 ,
                                         "Caption" : {
                                             "Active" : true ,
@@ -1151,545 +1150,6 @@
                                     },
                                     "LineOn" : true 
                                 }
-                            }, 
-                            {
-                                "Name" : "Boundary-Condition" ,
-                                "Item" : {
-                                    "Active" : false ,
-                                    "Type" : 0 ,
-                                    "PIActive" : false ,
-                                    "ShowCaption" : true ,
-                                    "Title" : {
-                                        "Active" : true ,
-                                        "Enabled" : true ,
-                                        "Size" : 55 ,
-                                        "Family" : "Times New Roman" ,
-                                        "Style" : 1 ,
-                                        "Color" : "#000000FF" ,
-                                        "Bool" : true ,
-                                        "Text" : "" 
-                                    },
-                                    "CutPlaneInfo" : {
-                                        "Active" : false ,
-                                        "On" : true ,
-                                        "Front" : false ,
-                                        "Back" : false ,
-                                        "Caption" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "Size" : 44 ,
-                                            "Family" : "Arial" ,
-                                            "Style" : 0 ,
-                                            "Color" : "#000000FF" ,
-                                            "Bool" : true ,
-                                            "Text" : "" 
-                                        },
-                                        "TypeName" : "None" ,
-                                        "SyncName" : "" ,
-                                        "Plane" : [  ]
-                                    },
-                                    "ClipBoxInfo" : {
-                                        "Active" : false ,
-                                        "Center" : { "x" : 0.000000000000000e+00  , "y" : 0.000000000000000e+00  , "z" : 0.000000000000000e+00 } ,
-                                        "Dip" : 0.000000000000000e+00 ,
-                                        "DipDir" : 0.000000000000000e+00 ,
-                                        "Roll" : 0.000000000000000e+00 ,
-                                        "Radius" : { "x" : 1.000000000000000e+00  , "y" : 1.000000000000000e+00  , "z" : 1.000000000000000e+00 } ,
-                                        "Axis1Active" : true ,
-                                        "Axis2Active" : true ,
-                                        "Axis3Active" : true 
-                                    },
-                                    "Transparency" : 70 ,
-                                    "TransActive" : false ,
-                                    "TransLocked" : true ,
-                                    "Range" : [ 
-                                        {
-                                            "Active" : true ,
-                                            "RenderModeSpecific" : true ,
-                                            "ExtentModel" : true ,
-                                            "Type" : 1322073594 ,
-                                            "RangePlotItem" : [  ],
-                                            "Range" : [ 
-                                                {
-                                                    "SelfIndex" : 0 ,
-                                                    "ID" : 0 ,
-                                                    "Name" : "" ,
-                                                    "Union" : false ,
-                                                    "Selected" : false ,
-                                                    "Deselected" : false ,
-                                                    "UseHidden" : true ,
-                                                    "Elements" : [  ]
-                                                }
-                                            ]
-                                        }
-                                    ],
-                                    "Marks" : {
-                                        "Active" : true ,
-                                        "ColorByMagnitude" : false ,
-                                        "Scale" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "UsesBool" : false ,
-                                            "UsesScaleAuto" : true ,
-                                            "Target" : 5.000000074505806e-02 ,
-                                            "Scale" : 3.544361772504562e+00 ,
-                                            "ScaleAuto" : true ,
-                                            "Bool" : true 
-                                        },
-                                        "Contour" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "RampKeyword" : "rainbow" ,
-                                            "Minimum" : 1.797693134862316e+308 ,
-                                            "Maximum" : 1.797693134862316e+308 ,
-                                            "Interval" : 0.000000000000000e+00 ,
-                                            "MinAuto" : true ,
-                                            "MaxAuto" : true ,
-                                            "IntAuto" : true ,
-                                            "Reversed" : false ,
-                                            "AboveAuto" : true ,
-                                            "BelowAuto" : true ,
-                                            "Above" : "#ff0000FF" ,
-                                            "Below" : "#0000ffFF" ,
-                                            "MaxCaption" : 20 ,
-                                            "Log" : false ,
-                                            "Caption" : {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Size" : 44 ,
-                                                "Family" : "Arial" ,
-                                                "Style" : 0 ,
-                                                "Color" : "#000000FF" ,
-                                                "Bool" : true ,
-                                                "Text" : "" 
-                                            },
-                                            "Precision" : 2 ,
-                                            "Format" : 0 
-                                        },
-                                        "Mark" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "Color" : "#000000FF" ,
-                                            "Type2" : 1 ,
-                                            "On" : true 
-                                        },
-                                        "PixelSize" : 5 ,
-                                        "ColorMap" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "Global" : false ,
-                                            "MapSto" : [ 
-                                                {
-                                                    "Key" : "Default" ,
-                                                    "Value" : {
-                                                        "Array" : [ 
-                                                            
-                                                            {
-                                                                "Color" : "#2e8b56FF" ,
-                                                                "Alias" : "" ,
-                                                                "Label" : "Velocity" ,
-                                                                "Bool" : true ,
-                                                                "Used2" : true ,
-                                                                "Default" : false 
-                                                            }
-                                                        ],
-                                                        "Index" : false 
-                                                    }
-                                                }
-                                            ],
-                                            "Category" : "Default" ,
-                                            "CLabel" : {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Size" : 44 ,
-                                                "Family" : "Arial" ,
-                                                "Style" : 0 ,
-                                                "Color" : "#000000FF" ,
-                                                "Bool" : true ,
-                                                "Text" : "" 
-                                            },
-                                            "Heading" : {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Size" : 44 ,
-                                                "Family" : "Arial" ,
-                                                "Style" : 0 ,
-                                                "Color" : "#000000FF" ,
-                                                "Bool" : true ,
-                                                "Text" : "BC Mechanical" 
-                                            }
-                                        }
-                                    },
-                                    "Map" : {
-                                        "Active" : true ,
-                                        "Enabled" : true ,
-                                        "Map" : 0 ,
-                                        "Rotate" : { "x" : 0.000000000000000e+00  , "y" : 0.000000000000000e+00  , "z" : 0.000000000000000e+00 } ,
-                                        "Translate" : { "x" : 0.000000000000000e+00  , "y" : 0.000000000000000e+00  , "z" : 0.000000000000000e+00 } ,
-                                        "Scale" : { "x" : 1.000000000000000e+00  , "y" : 1.000000000000000e+00  , "z" : 1.000000000000000e+00 } ,
-                                        "Caption" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "Size" : 44 ,
-                                            "Family" : "Arial" ,
-                                            "Style" : 0 ,
-                                            "Color" : "#000000FF" ,
-                                            "Bool" : true ,
-                                            "Text" : "" 
-                                        }
-                                    },
-                                    "Deformation" : {
-                                        "Active" : false ,
-                                        "Enabled" : true ,
-                                        "ADActive" : false ,
-                                        "Factor" : 0.000000000000000e+00 ,
-                                        "Caption" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "Size" : 44 ,
-                                            "Family" : "Arial" ,
-                                            "Style" : 0 ,
-                                            "Color" : "#000000FF" ,
-                                            "Bool" : true ,
-                                            "Text" : "" 
-                                        }
-                                    },
-                                    "ComponentCaption" : {
-                                        "Active" : true ,
-                                        "Enabled" : true ,
-                                        "Size" : 44 ,
-                                        "Family" : "Arial" ,
-                                        "Style" : 0 ,
-                                        "Color" : "#000000FF" ,
-                                        "Bool" : true ,
-                                        "Text" : "" 
-                                    },
-                                    "Component" : 4 
-                                }
-                            }, 
-                            {
-                                "Name" : "Flow-Planes" ,
-                                "Item" : {
-                                    "Active" : false ,
-                                    "Type" : 0 ,
-                                    "PIActive" : false ,
-                                    "ShowCaption" : true ,
-                                    "Title" : {
-                                        "Active" : true ,
-                                        "Enabled" : true ,
-                                        "Size" : 55 ,
-                                        "Family" : "Times New Roman" ,
-                                        "Style" : 1 ,
-                                        "Color" : "#000000FF" ,
-                                        "Bool" : true ,
-                                        "Text" : "" 
-                                    },
-                                    "CutPlaneInfo" : {
-                                        "Active" : false ,
-                                        "On" : true ,
-                                        "Front" : false ,
-                                        "Back" : false ,
-                                        "Caption" : {
-                                            "Active" : true ,
-                                            "Enabled" : true ,
-                                            "Size" : 44 ,
-                                            "Family" : "Arial" ,
-                                            "Style" : 0 ,
-                                            "Color" : "#000000FF" ,
-                                            "Bool" : true ,
-                                            "Text" : "" 
-                                        },
-                                        "TypeName" : "None" ,
-                                        "SyncName" : "" ,
-                                        "Plane" : [  ]
-                                    },
-                                    "ClipBoxInfo" : {
-                                        "Active" : false ,
-                                        "Center" : { "x" : 0.000000000000000e+00  , "y" : 0.000000000000000e+00  , "z" : 0.000000000000000e+00 } ,
-                                        "Dip" : 0.000000000000000e+00 ,
-                                        "DipDir" : 0.000000000000000e+00 ,
-                                        "Roll" : 0.000000000000000e+00 ,
-                                        "Radius" : { "x" : 1.000000000000000e+00  , "y" : 1.000000000000000e+00  , "z" : 1.000000000000000e+00 } ,
-                                        "Axis1Active" : true ,
-                                        "Axis2Active" : true ,
-                                        "Axis3Active" : true 
-                                    },
-                                    "Transparency" : 70 ,
-                                    "TransActive" : false ,
-                                    "TransLocked" : true ,
-                                    "Range" : [ 
-                                        {
-                                            "Active" : true ,
-                                            "RenderModeSpecific" : true ,
-                                            "ExtentModel" : true ,
-                                            "Type" : 1391635680 ,
-                                            "RangePlotItem" : [  ],
-                                            "Range" : [ 
-                                                {
-                                                    "SelfIndex" : 0 ,
-                                                    "ID" : 0 ,
-                                                    "Name" : "" ,
-                                                    "Union" : false ,
-                                                    "Selected" : false ,
-                                                    "Deselected" : false ,
-                                                    "UseHidden" : false ,
-                                                    "Elements" : [  ]
-                                                }
-                                            ]
-                                        }
-                                    ],
-                                    "ExtraIndex" : {
-                                        "Active" : true ,
-                                        "Enabled" : true ,
-                                        "Index" : 0 ,
-                                        "PieceName" : "" ,
-                                        "UsePiece" : false 
-                                    },
-                                    "GroupSlot" : {
-                                        "Active" : true ,
-                                        "Enabled" : true ,
-                                        "Slot" : "Any" ,
-                                        "PieceName" : "" ,
-                                        "UsePiece" : false 
-                                    },
-                                    "ColorBy" : 0 ,
-                                    "ContourBy" : 1 ,
-                                    "Property" : "" ,
-                                    "Cracked" : false ,
-                                    "Scheme" : 1 ,
-                                    "Polygons" : {
-                                        "Active" : true ,
-                                        "AttPoly" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Fill" : true ,
-                                                "Offset1" : 5.0000000e-01 ,
-                                                "Offset2" : 2.0000000e+00 ,
-                                                "Culling" : false ,
-                                                "PolyTrans" : 0 ,
-                                                "WireTrans" : 50 ,
-                                                "Line" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Width" : 1 ,
-                                                    "Style" : 1 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : true 
-                                                },
-                                                "Lighting" : true ,
-                                                "Count" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Size" : 44 ,
-                                                    "Family" : "Arial" ,
-                                                    "Style" : 0 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : false ,
-                                                    "Text" : "" 
-                                                }
-                                            }
-                                        ],
-                                        "CutLine" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "AttLine" : [ 
-                                                    {
-                                                        "Active" : true ,
-                                                        "Enabled" : true ,
-                                                        "Width" : 1 ,
-                                                        "Style" : 1 ,
-                                                        "Color" : "#000000FF" ,
-                                                        "Bool" : true 
-                                                    }
-                                                ]
-                                            }
-                                        ],
-                                        "ColorList" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Global" : false ,
-                                                "MapSto" : [ 
-                                                    {
-                                                        "Key" : "Default" ,
-                                                        "Value" : {
-                                                            "Array" : [  ],
-                                                            "Index" : false 
-                                                        }
-                                                    }, 
-                                                    {
-                                                        "Key" : "Flow Plane" ,
-                                                        "Value" : {
-                                                            "Array" : [ 
-                                                                
-                                                                {
-                                                                    "Color" : "#2e8b56FF" ,
-                                                                    "Alias" : "" ,
-                                                                    "Label" : "3" ,
-                                                                    "Bool" : true ,
-                                                                    "Used2" : false ,
-                                                                    "Default" : false 
-                                                                }
-                                                                , 
-                                                                {
-                                                                    "Color" : "#ff0000FF" ,
-                                                                    "Alias" : "" ,
-                                                                    "Label" : "13" ,
-                                                                    "Bool" : true ,
-                                                                    "Used2" : false ,
-                                                                    "Default" : false 
-                                                                }
-                                                                , 
-                                                                {
-                                                                    "Color" : "#ff00d5FF" ,
-                                                                    "Alias" : "" ,
-                                                                    "Label" : "23" ,
-                                                                    "Bool" : true ,
-                                                                    "Used2" : false ,
-                                                                    "Default" : false 
-                                                                }
-                                                                , 
-                                                                {
-                                                                    "Color" : "#ff4000FF" ,
-                                                                    "Alias" : "" ,
-                                                                    "Label" : "33" ,
-                                                                    "Bool" : true ,
-                                                                    "Used2" : false ,
-                                                                    "Default" : false 
-                                                                }
-                                                                , 
-                                                                {
-                                                                    "Color" : "#0080ffFF" ,
-                                                                    "Alias" : "" ,
-                                                                    "Label" : "42" ,
-                                                                    "Bool" : true ,
-                                                                    "Used2" : false ,
-                                                                    "Default" : false 
-                                                                }
-                                                            ],
-                                                            "Index" : false 
-                                                        }
-                                                    }
-                                                ],
-                                                "Category" : "Flow Plane" ,
-                                                "CLabel" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Size" : 44 ,
-                                                    "Family" : "Arial" ,
-                                                    "Style" : 0 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : true ,
-                                                    "Text" : "" 
-                                                },
-                                                "Heading" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Size" : 44 ,
-                                                    "Family" : "Arial" ,
-                                                    "Style" : 0 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : true ,
-                                                    "Text" : "" 
-                                                }
-                                            }
-                                        ],
-                                        "CountText" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Size" : 44 ,
-                                                "Family" : "Arial" ,
-                                                "Style" : 0 ,
-                                                "Color" : "#000000FF" ,
-                                                "Bool" : false ,
-                                                "Text" : "" 
-                                            }
-                                        ]
-                                    },
-                                    "Contour" : {
-                                        "Active" : true ,
-                                        "AttPoly" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "Fill" : true ,
-                                                "Offset1" : 5.0000000e-01 ,
-                                                "Offset2" : 2.0000000e+00 ,
-                                                "Culling" : false ,
-                                                "PolyTrans" : 0 ,
-                                                "WireTrans" : 50 ,
-                                                "Line" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Width" : 1 ,
-                                                    "Style" : 1 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : true 
-                                                },
-                                                "Lighting" : false ,
-                                                "Count" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Size" : 44 ,
-                                                    "Family" : "Arial" ,
-                                                    "Style" : 0 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : false ,
-                                                    "Text" : "" 
-                                                }
-                                            }
-                                        ],
-                                        "CutLine" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "AttLine" : [ 
-                                                    {
-                                                        "Active" : true ,
-                                                        "Enabled" : true ,
-                                                        "Width" : 1 ,
-                                                        "Style" : 1 ,
-                                                        "Color" : "#000000FF" ,
-                                                        "Bool" : true 
-                                                    }
-                                                ]
-                                            }
-                                        ],
-                                        "AttCont" : [ 
-                                            {
-                                                "Active" : true ,
-                                                "Enabled" : true ,
-                                                "RampKeyword" : "bwr" ,
-                                                "Minimum" : 1.797693134862316e+308 ,
-                                                "Maximum" : 1.797693134862316e+308 ,
-                                                "Interval" : 0.000000000000000e+00 ,
-                                                "MinAuto" : true ,
-                                                "MaxAuto" : true ,
-                                                "IntAuto" : true ,
-                                                "Reversed" : false ,
-                                                "AboveAuto" : true ,
-                                                "BelowAuto" : true ,
-                                                "Above" : "#960000FF" ,
-                                                "Below" : "#000096FF" ,
-                                                "MaxCaption" : 20 ,
-                                                "Log" : false ,
-                                                "Caption" : {
-                                                    "Active" : true ,
-                                                    "Enabled" : true ,
-                                                    "Size" : 44 ,
-                                                    "Family" : "Arial" ,
-                                                    "Style" : 0 ,
-                                                    "Color" : "#000000FF" ,
-                                                    "Bool" : true ,
-                                                    "Text" : "" 
-                                                },
-                                                "Precision" : 2 ,
-                                                "Format" : 0 
-                                            }
-                                        ]
-                                    }
-                                }
                             }
                         ],
                         "ID" : 1 ,
@@ -1727,25 +1187,127 @@
     ],
     "Terminal" : {
         "MoveLists" : true ,
-        "LineLimit" : 9 
+        "LineLimit" : 12 
     },
     "ColorMap" : {
         "EMaps" : [ 
             {
                 "Key" : "ID" ,
-                "Value" : [  ]
+                "Value" : [ 
+                    {
+                        "Key" : "10" ,
+                        "Value" : {
+                            "Color" : "#0000ffFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "4" ,
+                        "Value" : {
+                            "Color" : "#4f632dFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "15" ,
+                        "Value" : {
+                            "Color" : "#6666ffFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "23" ,
+                        "Value" : {
+                            "Color" : "#663333FF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "9" ,
+                        "Value" : {
+                            "Color" : "#ff8000FF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "11" ,
+                        "Value" : {
+                            "Color" : "#aa00ffFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "7" ,
+                        "Value" : {
+                            "Color" : "#b7001fFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "19" ,
+                        "Value" : {
+                            "Color" : "#5500ffFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "3" ,
+                        "Value" : {
+                            "Color" : "#ff4000FF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "2" ,
+                        "Value" : {
+                            "Color" : "#ff00d5FF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "1" ,
+                        "Value" : {
+                            "Color" : "#ff0000FF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "18" ,
+                        "Value" : {
+                            "Color" : "#50755eFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "50" ,
+                        "Value" : {
+                            "Color" : "#bfbfbfFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "17" ,
+                        "Value" : {
+                            "Color" : "#0080ffFF" ,
+                            "Alias" : "" 
+                        }
+                    }, 
+                    {
+                        "Key" : "25" ,
+                        "Value" : {
+                            "Color" : "#bfbfbfFF" ,
+                            "Alias" : "" 
+                        }
+                    }
+                ]
             }, 
             {
                 "Key" : "Default" ,
-                "Value" : [  ]
-            }, 
-            {
-                "Key" : "Uniform" ,
                 "Value" : [ 
                     {
                         "Key" : "None" ,
                         "Value" : {
-                            "Color" : "#ffffffFF" ,
+                            "Color" : "#00ffffFF" ,
                             "Alias" : "" 
                         }
                     }
@@ -1755,16 +1317,16 @@
     },
     "Layout3" : {
         "PaneAction" : [  ],
-        "State" : "AAAA/wAAAAD9AAAAAQAAAAAAAAoAAAAFIPwCAAAAAfsAAAAaAFcAbwByAGsAcwBwAGEAYwBlAEQAbwBjAGsBAAAAKAAABSAAAAFUAP///gAAAAAAAAUgAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAwAE0AYQBpAG4AVwBpAG4AZABvAHcAQwBhAHAAdABpAG8AbgBXAHIAYQBwAHAAZQByAQAAAAD/////AAAAAAAAAAA=" ,
-        "Splitter1" : "AAAA/wAAAAEAAAACAAABDwAACOwA/////wEAAAABAA==" ,
-        "Splitter2" : "AAAA/wAAAAEAAAACAAADkwAAAYUA/////wEAAAACAA==" ,
-        "Splitter3" : "AAAA/wAAAAEAAAADAAAGfgAAAmkAAAAYAP////8BAAAAAQA=" ,
+        "State" : "AAAA/wAAAAD9AAAAAQAAAAAAAAdsAAAEQ/wCAAAAAfsAAAAaAFcAbwByAGsAcwBwAGEAYwBlAEQAbwBjAGsBAAAAKAAABEMAAAC+AP///gAAAAAAAARDAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAwAE0AYQBpAG4AVwBpAG4AZABvAHcAQwBhAHAAdABpAG8AbgBXAHIAYQBwAHAAZQByAQAAAAD/////AAAAAAAAAAA=" ,
+        "Splitter1" : "AAAA/wAAAAEAAAACAAAAZAAAA+gA/////wEAAAABAA==" ,
+        "Splitter2" : "AAAA/wAAAAEAAAACAAADRAAAAPoA/////wEAAAACAA==" ,
+        "Splitter3" : "AAAA/wAAAAEAAAADAAAHFQAAAeoAAAAYAP////8BAAAAAQA=" ,
         "Viewer" : {
             "Info" : [ 
                 
                 {
                     "Name" : "Viewer-ROOT #2" ,
-                    "Geom" : [ 1662  ],
+                    "Geom" : [ 1352  ],
                     "Child1" : "Plot_Plot01" ,
                     "Child2" : "" ,
                     "Hor" : true ,
@@ -1777,24 +1339,17 @@
         },
         "Recent" : {
             "MRUMagic" : [ 
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/initial.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/inject.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_coordinates.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_results.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/boundary_conditions.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/tmp.dat" 
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" 
             ]
         },
         "ProjVis" : true ,
-        "ConsVis" : true ,
+        "ConsVis" : false ,
         "Splitter4" : "AAAA/wAAAAEAAAACAAACpAAAAqQA/////wEAAAABAA==" ,
         "PanelVis" : true ,
         "ViewerVis" : true ,
         "RightTabs" : [  ],
         "RightCI" : -1 ,
-        "LeftCI" : 1 
+        "LeftCI" : 0 
     },
     "PaneContents" : { }
 }

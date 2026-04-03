@@ -5,18 +5,39 @@ fish define convert_to_modulus_(E, nu)
     K = E/(3*(1 - 2*nu))
     G = E/(2*(1 + nu))
 end
-[convert_to_modulus_(60e9, 0.25)]
+; Young's modulus
+[global E = 60e9]
+; Poisson's ratio
+[global nu = 0.25]
+[convert_to_modulus_(E, nu)]
+
 ; matrix properties
 block zone cmodel assign elastic
 block zone prop density [rho] bulk [K] shear [G]
+
 ; fluid properties
 ; the bulk modulus (K_w) of water is 2e9
-; choose smaller bulk modulus value (K_w/w_i >> k_n)
-block fluid property bulk 5e8 density 1000 viscosity 1e-3
+; choose smaller bulk modulus value 
+; but keep it large enough so that K_w/w_i >> k_n
+[global mu = 1e-3]
+[global K_w = 2e8]
+block fluid property bulk [K_w] density 1000 viscosity [mu]
+
 ; fracture properties
-[global kn = 50e9]
+; normal stiffness
+[global k_n = 50e9]
+; shear stiffness
+[global k_s = 50e9]
+; initial aperture
+[global w_i = 1e-5]
+; maximum aperture
+[global w_max = 1e-4]
+; minimum aperture
+[global w_min = 1e-6]
+; constant stiffness (elastic) constituve model for fracture
 block contact jmodel assign elastic
-block contact property stiffness-normal [kn]
-flowplane vertex property aperture-initial 1e-4 &
-                          aperture-minimum 1e-5 &
-                          aperture-maximum 1e-3
+block contact property stiffness-normal [k_n] &
+                        stiffness-shear [k_s]
+flowplane vertex property aperture-initial [w_i]    &
+                          aperture-minimum [w_min] &
+                          aperture-maximum [w_max]

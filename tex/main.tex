@@ -37,6 +37,14 @@
 %  ABSTRACT
 \begin{abstract}
 
+	Fluid-injection–induced seismic swarms commonly migrate following a power-law relationship in time. While classical models predict square-root-of-time migration consistent with fluid diffusion, recent field observations show time exponents that deviate from 1/2 at several injection sites, suggesting additional controlling mechanisms.
+
+	Fractures play a central role in fluid flow and seismicity migration during injection operations. Here, we investigate fluid-driven reopening of a preexisting fracture when significant fracture deformation occurs, a process with important implications for the initiation and propagation of induced seismicity. We compare semi-analytical solutions for pressure propagation in a deformable fracture with numerical simulations using the Distinct Element Method (DEM) implemented in 3DEC (ITASCA). We examine the influence of injection conditions, including constant-pressure and constant-rate scenarios.
+
+	For low fracture stiffness, a sharp pressure front attached to a tensional stress pulse emerges. Under constant-pressure injection, this pulse propagates with square-root-of-time scaling, mimicking a pseudo-diffusive process, with slower migration as stiffness decreases. In contrast, constant-rate injection produces tensile stress peak migration with time exponents greater than 1/2. Increasing the injection rate further raises the exponent, approaching quasi-linear propagation.
+
+	These results provide a mechanical explanation for the non-diffusive migration patterns observed at several fluid-injection sites and highlight the critical role of fracture deformability and injection protocol in controlling induced seismicity migration.
+
 	\begin{enumerate}
 		\item Bibliography
 		      \begin{itemize}
@@ -62,14 +70,14 @@ The authors declare no conflicts of interest relevant to this study.
 \todo[inline]{TL;DR Fluid injection induced seismicity generally migrates and follows a power-law relationship in time}
 
 Seismic swarms are sequences of earthquakes that cluster in time and space. Contrary to main shock-aftershock sequences, seismic swarms do not have distinct large earthquakes at the beginning of the sequence. Swarms either occur naturally in diverse tectonic settings or can be induced by humans during industrial activities that involve the injection or extraction of fluids from the subsurface. The comparable behavior of induced seismicity and natural earthquake swarms (excluding those driven by slow slip) suggests the involvement of fluid flow in these types of seismic sequences \cite{ChenEtAl2012, DanreEtAl2024a}. Another common feature in both natural and human-induced earthquake swarms is the migration of seismicity. Indeed, observations show that, during most seismic swarms, the hypocenters migrate away from the first events and exhibit a temporal dependence \cite{ShapiroEtAl2002, ChenEtAl2012, DeBarrosEtAl2021, DanreEtAl2024}. The spatial-temporal migration of these earthquakes is commonly analyzed in distance-time plots where the distance of each seismic event relative to the origin position is linked with the elapsed time. An important feature that often emerges from these plots is the seismic front, generally defined as the nearly farthest extent of seismicity at a given time \cite{GoebelBrodsky2018, DanreEtAl2024}. The evolution of the seismic front can be described by the following power-law relationship in time:
-\begin{equation}\label{seismic-front-vs-time}
+\begin{equation}\label{eq:seismic-front-vs-time}
 	d(t) \propto t^{\alpha}
 \end{equation}
 where $d$ is the distance of seismic events relative to the origin position, $t$ is time, and $\alpha$ is the exponent of time.
 
 \todo[inline]{TL;DR Reported exponents of time $\alpha$ range between 0 and 1. Often, $\alpha$ varies between injection sites and among different studies of the same site (Table 1)}
 
-Early studies that identified and analyzed the power-law scaling in seismic front migration during earthquake swarms found that a square-root-of-time relationship ($\alpha=1/2$) best fits the observed seismic front evolution \cite{ShapiroEtAl1997, ShapiroEtAl2002}. Since then, a growing body of literature has examined the spatial migration of the seismic front during both natural and human-induced swarms. Particularly, these works have searched for a power-law relationship in time (Eq.~\ref{seismic-front-vs-time}) that describes the evolution of seismic front during such swarms. It is important to note that, in contrast to human-induced seismic swarms, the analysis of the natural swarms introduces several unknowns, including the volume of injected fluid and the origin of the naturally injected fluid. \todo[size=\tiny]{TODO: provide literature for these claims} Moreover, as these sequences occur at a relatively greater depth, the level of uncertainty in the location of the events may also be higher. Therefore, our focus here is on studies of anthropogenic earthquake swarms.
+Early studies that identified and analyzed the power-law scaling in seismic front migration during earthquake swarms found that a square-root-of-time relationship ($\alpha=1/2$) best fits the observed seismic front evolution \cite{ShapiroEtAl1997, ShapiroEtAl2002}. Since then, a growing body of literature has examined the spatial migration of the seismic front during both natural and human-induced swarms. Particularly, these works have searched for a power-law relationship in time (Eq.~\ref{eq:seismic-front-vs-time}) that describes the evolution of seismic front during such swarms. It is important to note that, in contrast to human-induced seismic swarms, the analysis of the natural swarms introduces several unknowns, including the volume and source of fluid. \todo[size=\tiny]{TODO: provide literature for these claims} Moreover, as these sequences occur at a relatively greater depth, the level of uncertainty in the location of the events may also be higher. Therefore, our focus here is on studies of anthropogenic earthquake swarms.
 
 Numerous studies of anthropogenic seismic swarms have investigated the migration of seismicity across multiple sites worldwide \cite{GoebelBrodsky2018,DeBarrosEtAl2021}, and at individual sites \cite{ShapiroEtAl2002,LenglineEtAl2017,DanreEtAl2024}. Table~\ref{tab:migration-observations} summarizes exponents of time $\alpha$ for seismic front migration reported for injection sites from these sources. At many sites, the inferred exponents deviate from the classical square-root-of-time scaling and range between 0 and 1. Four general migration patterns emerge: square-root-of-time, sub-1/2 exponents, quasi-linear or linear migration, and the lack of observable migration ($\alpha=0$). The reported time exponents describing the seismic front evolution vary across injection sites. Notably, $\alpha$ also varies among different studies of the same site.  This is evident in the case of Soultz 1993 fluid injection experiment, for which \citeA{GoebelBrodsky2018} identify a square-root-of-time relationship as the best fit, \citeA{DeBarrosEtAl2021} estimate $\alpha$ to be approximately 0.65, and \citeA{SaezUribe2023, DanreEtAl2024} find linear pattern of migration in time to fit the observations well, except at early times. Another example of heterogeneity in exponents of time reported by different authors for the same dataset is the Basel injection site (Table~\ref{tab:migration-observations}). In conclusion, the literature of the analysis of seismicity migration data suggests that the seismic front evolution does not follow a single relationship in time, instead it changes with different injection sites and among different researchers for the same site.
 
@@ -135,7 +143,6 @@ The fluid overpressure is a classical mechanism that is proposed to induce seism
 
 In addition to the diffusive migration of seismicity, observations show that, at some injection sites, the seismicity lacks a clear migrational pattern (Table~\ref{tab:migration-observations}). \citeA{GoebelBrodsky2018} suggest that injection-induced seismicity sequences lacking observable migration may result from far-reaching poroelastic stress changes. In particular, \citeA{GoebelEtAl2017} documented seismic events triggered far from the injection zone during wastewater disposal in Oklahoma, USA\@. Numerical analyses of these sequences indicate that stress perturbations extend beyond the fluid pressure front and dominate the far-field response.
 
-\todo{maybe we should remove the Site column?}
 \begin{table}[htbp]
 	\centering
 	\caption{Triggering mechanisms for injection-induced seismicity reported in the literature with their associated exponents of time and the injection sites.}\label{tab:induced-seismicity-mechanisms}
@@ -162,10 +169,11 @@ In addition to the diffusive migration of seismicity, observations show that, at
 		\bottomrule
 	\end{tabular}
 \end{table}
+\todo{maybe we should remove the Site column in table 2?}
 
 \todo[inline]{TL;DR Seismicity that migrates with cubic-root-of-time is linked with nonlinear diffusion, nonetheless, such process may also result in square-root-of-time migration depending on the boundary conditions, the dimensionality of flow and the degree of nonlinearity}
 
-Injection-induced seismicity in the Barnett Shale and the Cooper Basin exhibits sub-diffusive migration characterized by time exponents $\alpha$ smaller than 1/2. Studies attribute these observations to nonlinear diffusion processes \cite{ShapiroDinske2009, JohannEtAl2016}. The nonlinear diffusion of fluid pressure during injection arises when the hydraulic transport properties of the medium, such as permeability and diffusivity, are pressure-dependent. In particular, \citeA{ShapiroDinske2009} showed that accounting for pressure-dependent diffusivity leads to a nonlinear diffusion equation, which in turn may alter the time scaling of the pressure front migration. They showed that the resulting scaling depends on the injection boundary condition, the dimensionality of fluid flow, and the degree of nonlinearity of the governing equation. Under conditions of strong nonlinearity and spherically symmetric (3D) diffusion, the model predicts $\alpha=1/3$, consistent with seismicity migration pattern observed in the Barnett Shale (Table~\ref{tab:migration-observations}).  However, observations from other injection sites indicate that nonlinear diffusion does not universally lead to sub-diffusive migration. In another study on the effect of nonlinear diffusion, \citeA{HummelMller2009} showed that, when constant injection pressure is applied, increasing the degree of nonlinearity does not have an effect on the seismicity front evolution. Instead, it primarily increases the seismic event density near the seismicity front. This behavior appears at the Fenton Hill injection site, where seismicity exhibits diffusive front migration ($\alpha=1 / 2$) but shows a pronounced concentration of events near the front. These observations indicate that seismicity migrating with cubic-root or square-root-of-time may both be linked with nonlinear diffusion process.
+Injection-induced seismicity in the Barnett Shale and the Cooper Basin exhibits sub-diffusive migration characterized by time exponents $\alpha$ smaller than 1/2. Studies attribute these observations to nonlinear diffusion processes \cite{ShapiroDinske2009, JohannEtAl2016}. The nonlinear diffusion of fluid pressure during injection arises when the hydraulic transport properties of the medium, such as permeability and diffusivity, are pressure-dependent. In particular, \citeA{ShapiroDinske2009} showed that accounting for pressure-dependent diffusivity leads to a nonlinear diffusion equation, which in turn may alter the time scaling of the pressure front migration. They showed that the resulting scaling depends on the injection boundary condition, the dimensionality of fluid flow, and the degree of nonlinearity of the governing equation. Under conditions of strong nonlinearity and spherically symmetric (3D) diffusion, the model predicts $\alpha=1/3$, consistent with seismicity migration pattern observed in the Barnett Shale (Table~\ref{tab:migration-observations}).  However, observations from other injection sites indicate that nonlinear diffusion does not universally lead to exponents lower than 1/2. Indeed, in another study on the effect of nonlinear diffusion, \citeA{HummelMller2009} showed that, when constant injection pressure is applied, the seismicity front evolution still follows square-root-of-time migration. Instead, it primarily increases the seismic event density near the seismicity front. This behavior appears at the Fenton Hill injection site, where seismicity exhibits diffusive front migration ($\alpha=1 / 2$) but shows a pronounced concentration of events near the front. These observations indicate that seismicity migrating with cubic-root or square-root-of-time may both be linked with nonlinear diffusion process.
 
 \todo[inline]{TL;DR Aseismic slip during fluid injection may propagate with $1/2 \leq \alpha \leq 1$, depending on the injection boundary condition}
 
@@ -177,11 +185,98 @@ Overall, Table~\ref{tab:induced-seismicity-mechanisms} shows that the predicted 
 
 \todo[inline]{TL;DR The objective of this work is to analyze the effect of the injection condition on the seismicity migration during fluid injection into a deformable pre-existing fracture}
 
-In view of this conclusion of strong dependence of predicted exponent of time on the loading conditions, we aim to explore its effect for a deformable pre-existing fracture. The specific objective to study how the coupling between fracture opening and fluid pressure influence the time dependence of the pressure front migration and hence the seismicity migration. A similar work has been done by \citeA{MurphyEtAl2004} where they predict $\alpha=4/5$ for a deformable fracture. This results aligns with some of the observations of seismicity migration seen in the literature (Table~\ref{tab:migration-observations}. Despite this fact, researchers have not treated the implications of such mechanisms on seismicity migration. Therefore, this study set out to investigate the effect of pressure-dependent fracture opening on the fluid pressure migration. For this purpose, when possible, we are going to partly use the semi-analytical solutions provided by \citeA{MurphyEtAl2004, AhmadovEtAlInPrep} (\textit{in case it gets published}), otherwise, we will perform numerical simulations of this problem using the Distinct Element Method (DEM). This will enable us to analyze the effect of injection rate on the pressure front migration and its scaling with time.
+In view of this conclusion of strong dependence of predicted exponent of time on the loading conditions. This dependence of the predicted exponent on the loading condition is what we aim to explore for a deformable pre-existing fracture. Our specific objective is to study how the coupling between fracture opening and fluid pressure influence the time dependence of the pressure front migration and hence the seismicity migration. For this purpose, we are going to extend the semi-analytical solutions provided by \citeA{MurphyEtAl2004, AhmadovEtAlInPrep} (\textit{in case it gets published}), combined with the numerical simulations using the Distinct Element Method (DEM). This will enable us to analyze the effect of injection rate on the pressure front migration and its scaling with time.
+
+% A similar work has been done by \citeA{MurphyEtAl2004} where they predict $\alpha=4/5$ for a deformable fracture.This results aligns with some of the observations of seismicity migration seen in the literature (Table~\ref{tab:migration-observations}.Despite this fact, researchers have not treated the implications of such mechanisms on seismicity migration. Therefore, this study set out to investigate the effect of pressure-dependent fracture opening on the fluid pressure migration.
 
 \section{Methods}
+\subsection{Semi-analytical solution for aperture front migration}
 
-We use a similar model setup as \citeA{AhmadovEtAlInPrep}. This model uses 3-D Distinct Element Code (3DEC, \citeA{Itasca3DEC2024}) \todo{Why we chose 3DEC?} to simulate fluid injection into a deformable pre-existing planar fracture. This model is hydromechanically fully coupled, in the way that fluid pressure, stress and hydraulic parameters of the model interact with each other during the numerical experiment.  The model is a 3-D model \todo{Should we avoid saying 3-D?} with dimensions of 100\,m\,×\,100\,m\,×\,100\,m (Figure~\ref{fig:model-schematic}). The horizontal fracture is contained in the middle of the elastic, homogeneous, isotropic, and impermeable rock block. We set the rock properties to typical values for a basement rock. We do not apply stress boundary conditions on the rock block, instead the block is under roller boundary condition on all edges except the right edge which is opposite to the injector. The fracture is not under initial stress and initial fluid pressure before the numerical experiment. We consider a fracture with a constant normal stiffness value that corresponds to large fractures ($k_{n}=50~\mathrm{GPa/m}$). The fracture has an initial aperture ($w_{i}$) of 0.1 mm \todo{This represent highly conductive fracture?} (Figure~\ref{fig:model-schematic}). According to the cubic law \cite{WitherspoonEtAl1980}, the permeability corresponding to this initial aperture equals to $k=8.3 \times  10^{-10}~\mathrm{m^2}$. The properties of the fluid are same as of water. We inject the fluid along a line boundary at the onset of the fracture with a constant injection rate per fracture unit width \todo{How to convert from m$^2$/s to m$^3$/s?}. This simplifies the model into a 2-D problem with 1-D fluid flow. We analyze the effect of injection rate on the response of the model with multiple numerical experiment where we change the applied injection rate (Figure~\ref{fig:model-schematic}c) \todo{How to improve Figure 1c?}.
+The governing equation for aperture propagation in a deformable, parallel-plate, one-dimensional fracture subjected to fluid injection is the nonlinear diffusion equation \cite{MurphyEtAl2004}
+\begin{equation}
+	\frac{k_n}{12 \mu} \frac{\partial}{\partial x}\left(w^3 \frac{\partial w}{\partial x}\right)
+	= \frac{\partial w}{\partial t},
+	\label{eq:aperture-n3}
+\end{equation}
+where $w(x,t)$ denotes the fracture aperture, $k_n$ is the fracture normal stiffness, $\mu$ is the fluid viscosity, $x$ is the distance from the injection point, and $t$ is time.
+
+\citeA{MurphyEtAl2004} derived a similarity solution to Eq.~\ref{eq:aperture-n3} for a semi-infinite fracture subject to constant injection rate $q_0$, assuming zero initial aperture. Under these assumptions, the problem admits self-similarity. That is, there exist dimensionless variables that transform Eq.~\ref{eq:aperture-n3} to an ordinary differential equation (ODE). The similarity variables are
+\begin{equation}
+	\theta(\zeta) = \frac{w(x,t)}{(q_0^2 t / a)^{1/5}},
+	\qquad
+	\zeta = \frac{x}{(a q_0^3 t^4)^{1/5}},
+	\label{eq:dimensionless-variables-n3}
+\end{equation}
+where $\theta$ is the dimensionless aperture, $\zeta$ is the similarity coordinate, and 
+\[
+a = \frac{k_n}{12\mu}.
+\]
+
+If the aperture gradient is small such that $\left(\partial w / \partial x\right)^2 \approx 0$, Eq.~\ref{eq:aperture-n3} reduces to a linear diffusion equation. In this regime, the appropriate similarity variables become
+\begin{equation}
+	\theta(\zeta) = 
+	\frac{w(x,t)-w_i}{\left(q_0^2 t / (a w_i^3)\right)^{1/2}},
+	\qquad
+	\zeta = \frac{x}{(a w_i^3 t)^{1/2}},
+	\label{eq:dimensionless-variables-n0}
+\end{equation}
+where $w_i$ denotes the initial aperture.
+
+For the linear diffusion equation, solving for the difference between the aperture profile and initial aperture $w-w_i$ is equivalent to solving for $w$ and subsequently subtracting $w_i$. Therefore, the initial aperture in the numerator of $\theta$ in Eq.~\ref{eq:dimensionless-variables-n0} is subtracted from the aperture profile.
+
+The fluid injection model under conditions described above is an idealized case for which a self-similarity exists. One of these conditions is that the fracture has zero initial aperture prior to injection. If $w_i \neq 0$, strict self-similarity is lost because the far-field boundary condition becomes time-dependent. For a semi-infinite fracture, the initial aperture condition must be satisfied at infinity:
+\begin{equation}
+	\lim_{\zeta \to \infty} \theta(\zeta) 
+	= \frac{w_i}{(q_0^2 t / a)^{1/5}}.
+	\label{eq:initial-aperture-boundary-condition}
+\end{equation}
+
+When $w_i = 0$, the far-field condition is identically zero and independent of time, preserving self-similarity. In contrast, if $w_i \neq 0$, the boundary condition varies with time and the problem is no longer exactly self-similar.
+
+Nevertheless, approximate self-similar solutions can be recovered in the early- and late-time limits. For this purpose, we define the critical (characteristic) time to be
+\begin{equation}
+	t_c = \frac{a w_i^5}{q_0^2}.
+	\label{eq:critical-time}
+\end{equation}
+Using Eq.~\ref{eq:critical-time}, the far-field condition becomes
+\begin{equation}
+	\lim_{\zeta \to \infty} \theta(\zeta)
+	= \left( \frac{t_c}{t} \right)^{1/5}.
+	\label{eq:critical-time-boundary-condition}
+\end{equation}
+
+When $t \gg t_c$, the aperture near the injection point greatly exceeds the far-field aperture. The influence of the initial aperture becomes negligible and the boundary condition effectively approaches zero. The problem asymptotically recovers the self-similar solution of nonlinear diffusion defined by the similarity variables in Eq.~\ref{eq:dimensionless-variables-n3}. In this regime, the aperture (or pressure) front position scales as
+\begin{equation}
+	d(t) \sim a^{1/5} q_0^{3/5} t^{4/5}.
+	\label{eq:late-time-scaling}
+\end{equation}
+
+When $t \ll t_c$, the aperture remains close to its initial value and aperture gradients are small. The linear diffusion approximation applies (Eq.~\ref{eq:dimensionless-variables-n0}), yielding
+\begin{equation}
+	d(t) \sim (a w_i^3 t)^{1/2}.
+	\label{eq:early-time-scaling}
+\end{equation}
+
+In summary, the fracture aperture (and equivalently pressure, due to their linear relationship) exhibits two asymptotic propagation regimes. At early times,
+\[
+d(t) \propto t^{1/2},
+\]
+corresponding to diffusion-dominated behavior with exponent $\alpha = 1/2$. At late times,
+\[
+d(t) \propto t^{4/5},
+\]
+corresponding to nonlinear aperture-controlled propagation with exponent $\alpha = 4/5$.
+
+For intermediate times $t \sim t_c$, the effective scaling exponent satisfies
+\[
+\frac{1}{2} < \alpha < \frac{4}{5},
+\]
+and increases monotonically from the diffusion-dominated limit toward the nonlinear asymptotic value.
+
+
+\subsection{Numerical simulation}
+
+We use a similar model setup as \citeA{AhmadovEtAlInPrep}. This model uses 3-D Distinct Element Code (3DEC, \citeA{Itasca3DEC2024}) to simulate fluid injection into a deformable pre-existing planar fracture. This model is hydromechanically fully coupled, in the way that fluid pressure, stress and hydraulic parameters of the model interact with each other during the numerical experiment.  The model is a 3-D model with dimensions of 100\,m\,×\,100\,m\,×\,100\,m (Figure~\ref{fig:model-schematic}). The horizontal fracture is contained in the middle of the elastic, homogeneous, isotropic, and impermeable rock block. We set the rock properties to typical values for a basement rock. We do not apply stress boundary conditions on the rock block, instead the block is under roller boundary condition on all edges except the right edge which is opposite to the injector. The fracture is not under initial stress and initial fluid pressure before the numerical experiment. We consider a fracture with a constant normal stiffness value that corresponds to large fractures ($k_{n}=50~\mathrm{GPa/m}$). The fracture has an initial aperture ($w_{i}$) of 0.1 mm (Figure~\ref{fig:model-schematic}). According to the cubic law \cite{WitherspoonEtAl1980}, the permeability corresponding to this initial aperture equals to $k=8.3 \times  10^{-10}~\mathrm{m^2}$. The properties of the fluid are same as of water. We inject the fluid along a line boundary at the onset of the fracture with a constant injection rate per fracture unit width. This simplifies the model into a 2-D problem with 1-D fluid flow. We analyze the effect of injection rate on the response of the model with multiple numerical experiment where we change the applied injection rate (Figure~\ref{fig:model-schematic}c).
 
 \begin{figure}[htb!]
 	\centering
@@ -190,6 +285,65 @@ We use a similar model setup as \citeA{AhmadovEtAlInPrep}. This model uses 3-D D
 	\label{fig:model-schematic}
 \end{figure}
 
+\newpage
+
+\section{Results}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.95\textwidth]{figures_main/early-time-similarity.png}
+    \end{center}
+    \caption{Aperture profiles obtained at relatively early-times of the 3DEC simulation where applied injection flow rate equals $q_0=10^{-4}~\mathrm{m^2/s}$. (a) Dimensional aperture profiles obtained at multiple early-time steps (b) Dimensionless aperture profiles obtained using the self-similar variables (Eq.~\ref{eq:dimensionless-variables-n0}) approximated by early-time behavior}\label{fig:early-time-similarity}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.95\textwidth]{figures_main/late-time-similarity.png}
+    \end{center}
+    \caption{Aperture profiles obtained at late-times ($t\gg t_c$) of the 3DEC simulation where applied injection flow rate equals $q_0=10^{-4}~\mathrm{m^2/s}$. (a) Dimensional aperture profiles obtained at multiple late-time steps (b) Dimensionless aperture profiles obtained using the self-similar variables (Eq.~\ref{eq:dimensionless-variables-n3}) approximated by late-time behavior}\label{fig:late-time-similarity}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=0.95\textwidth]{figures_main/early-and-late-time-front-migration.png}
+    \end{center}
+    \caption{The migration of the position of 1 bar overpressure (pressure front) in time (blue dots) obtained from 3DEC simulation where applied injection flow rate equals $q_0=10^{-4}~\mathrm{m^2/s}$. Blue curve is the power-law fit to the front migration that gives best-fit prefactor of $A=5.32 $ and exponent of time $\alpha=0.65$. The orange curve is the front migration scaling in time obtained from the early-time approximation (Eq.~\ref{eq:early-time-scaling}) and the green curve is obtained from the late-time approximation (Eq.~\ref{eq:late-time-scaling})}\label{fig:pressure-front-migration}
+\end{figure}
+
+\begin{figure}[htbp]
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{figures_main/alpha_vs_q0.png}
+	\end{center}
+    \caption{Exponent of time $\alpha$ for front migration increases with applied injection flow rate. Critical time $t_c$ (Eq~\ref{eq:critical-time}) decreases with applied injection flow rate.}\label{fig:alpha-vs-q0}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{figures_main/pressure-normal-shear-stresses.png}
+	\end{center}
+	\caption{Fluid pressure, tensile normal stress and shear stress along the fracture at $t=10~\mathrm{s}$}\label{fig:pressure-stress-profiles}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{figures_main/CFF.png}
+	\end{center}
+	\caption{Coulomb Failure Function ($\mathrm{CFF}= \tau(x) - \mu (\sigma_n(x) - P(x))$) along the fracture at time $t=10~\mathrm{s}$}\label{fig:CFF}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=0.95\textwidth]{figures_main/contribution-analysis.png}
+	\end{center}
+	\caption{Relative contribution of fluid pressure ($\frac{\mu P(x)}{\mathrm{CFF}(x)}$), normal stress ($\frac{-\mu \sigma_n(x)}{\mathrm{CFF}(x)}$), and shear stress ($\frac{\tau(x)}{\mathrm{CFF}(x)}$) to the Coulomb stress change}\label{fig:contribution-analysis}
+\end{figure}
+
+% \begin{figure}[htbp]
+% 	\begin{center}
+% 		\includegraphics[width=0.95\textwidth]{figures_main/comparison-scaling-numerical-analytical.png}
+% 	\end{center}
+% 	\caption{Tensile stress peak distance in function of time obtained from numerical FVM simulation. The best fit power law exponent is $\alpha=0.82$ and a prefactor of $A=0.32$. A similarity scaling for initially impermeable fracture from \citeA{MurphyEtAl2004} predicts exponent of $\alpha=0.8$ with a prefactor determined by model parameters $A = \left( \frac{k_n q_0^3}{12 \mu} \right)^{1/5} = 0.33$ }\label{fig:comparison-with-analytical-scaling}
+% \end{figure}
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

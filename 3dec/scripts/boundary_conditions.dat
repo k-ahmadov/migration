@@ -1,13 +1,30 @@
 program call 'scripts/properties.dat'
 
-; fixing the bottom and injection face with roller boundary 
+; roller boundary at the bottom and injection face with roller boundary 
 block gridpoint apply velocity-z 0    range position-z [-L//2]
 block gridpoint apply velocity-x 0    range position-x 0
-
-
-; stress boundary condition on top
-;block face apply stress-zz  -5e6  range pos-z [L//2]
+; roller boundary at the face looking towards us and the one opposite to it
+block gridpoint apply velocity-y 0    range position-y 5
+block gridpoint apply velocity-y 0    range position-y -5
 
 ; zero displacement roller boundary conditions on top
 block gridpoint apply velocity-z 0    range position-z 50
 
+; in-situ stress condition - sigma_zz = -10 MPa
+block insitu stress 0 0 -10e6 0 0 0
+; stress boundary condition on top
+block face apply stress-zz  -10e6  range pos-z [L//2]
+
+
+; solving for the initial state
+; initial equilibrium - mechanical
+model fluid active off
+block fluid property bulk 0.0
+model history mechanical unbalanced-maximum
+model cycle 100
+
+; inital equilibrium - fluid
+model fluid active on
+model mechanical active off
+block fluid property bulk [K_w]
+model cycle 100
