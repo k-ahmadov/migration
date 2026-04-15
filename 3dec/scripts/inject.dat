@@ -1,32 +1,45 @@
+; geometry, properties, boundary and initial conditions
 program call "scripts/initial.dat"
 
-program threads 24
-[global q_0 = 1e-3]
-flowplane edge apply discharge [q_0] range pos-x 0
+; import the halt function, callback functions for storing results and linear injection rate
+program call 'scripts/fish-support.dat'
 
+; parallel computing
+program threads 24
+
+; fully coupled solution
 model fluid active on
-model mech active on
+model mechanical active on
+; number of mechanical steps at each fluid step 
 model mechanical substep 200
 model mechanical slave on
 
-; simulation duration
-[global T = 50]
-
-program call 'scripts/store_coordinates.py'
-fish define store_results
-    global fluid_time = fluid.time.total
-    command
-        program call 'scripts/store_results.py'
-    endcommand
-end
-
-fish callback add store_results -1 interval-time 0.1 process fluid
-model solve fluid time-total [T] mechanical ratio 1e-5
-[store_results]
-
-;model save "kn-2000e9"
 ; injection condition - constant pressure
 ; [global P_0 = 9e6]
 ; flowknot apply p-p [P0] range pos-x 0
-;model cycle 100
-;[global interval = math.floor(0.1/fluid.timestep)]
+
+; inject fluid at x=0 with constant discharge rate (unit m^2/s)
+; [global q = 1e-2]
+; flowplane edge apply discharge [q] range pos-x 0
+
+; slope of the linearly increasing injection rate
+[global q = 1e-5]
+; callback to cumulatively add discharge rate at each fluid time step
+; callback added at the step in cycle sequence after timestep determination (a value between 1 and 10)
+; callback function is in fish-support.dat
+fish callback add linearly_increasing_discharge 1 process fluid
+
+; file to save results
+[global filepath = "/home/kahmadov/phd/migration/results/3dec/runs-linear/run-q-1e-05.hdf5"]
+; initiate the file for storing the results and store the coordinates
+program call 'scripts/store_coordinates.py'
+; callback to store results every given fluid time interval
+; step is at cycle sequence is after fluid calculations (value higher than 80)
+fish callback add store_results 81 interval-time 0.5 process fluid
+
+; simulation stops when significant disturbance reaches the end of the fracture
+model solve fish-halt [halt_on_pressure_at_pos]
+
+; simulation stops based on the duration given by the user
+; model solve fluid time-total [T] mechanical ratio 1e-5
+; [store_results]

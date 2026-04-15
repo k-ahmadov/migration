@@ -99,7 +99,7 @@ p_x = p_tx[idx_t]
 sn_x = sn_tx[idx_t]
 tau_x = tau_tx[idx_t]
 w_x = w_tx[idx_t]
-
+print(p_x)
 # %%
 # -----------------------------------------------------------------------------
 # Plot pressure and stresses along the fracture
@@ -108,10 +108,11 @@ w_x = w_tx[idx_t]
 fig, ax = plt.subplots()
 
 ax.plot(x_subcontacts, p_x, "o", label="fluid pressure")
-ax.plot(x_subcontacts, sn_x, "^", label="tensile normal stress")
+ax.plot(x_subcontacts, -sn_x, "^", label="tensile normal stress")
 # ax.plot(x_subcontacts, tau_x, "x", label="shear stress")
 
 ax.set_yscale("log")
+plt.show()
 
 # # Create inset (position in axes coordinates 0–1)
 # axins = ax.inset_axes((0.5, 0.35, 0.4, 0.4))

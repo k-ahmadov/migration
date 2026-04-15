@@ -1,8 +1,9 @@
+from pathlib import Path
+
 import h5py
 import itasca as it
 import numpy as np
 from scripts.helpers import apply_function_to_iterable
-from pathlib import Path
 
 
 class Fields:
@@ -14,13 +15,13 @@ class Fields:
             count=it.block.subcontact.count(),
         )
 
-        self.pore_pressure = apply_function_to_iterable(
+        self.fluid_pressure = apply_function_to_iterable(
             func=it.block.subcontact.Subcontact.pp,
             iterable=it.block.subcontact.list(),
             count=it.block.subcontact.count(),
         )
 
-        self.sn = self.sn_eff + self.pore_pressure
+        self.sn = self.sn_eff + self.fluid_pressure
 
         self.tau = apply_function_to_iterable(
             func=it.block.subcontact.Subcontact.stress_shear,
@@ -80,7 +81,7 @@ def _require_scalar(group, name: str, dtype=np.float64):
     return group.create_dataset(name, shape=(0,), maxshape=(None,), dtype=dtype)
 
 
-def append_results_hdf5(filepath: str | Path, fields: Fields, t: float):
+def append_results_hdf5(filepath: str | Path, fields: Fields, t: np.float64):
     """
     Call this every given time interval. It appends results of one timestep (time + profiles).
     Assumes x-coordinate arrays are already stored elsewhere in the file.
@@ -91,7 +92,7 @@ def append_results_hdf5(filepath: str | Path, fields: Fields, t: float):
 
         g_fields = f.require_group("fields")
         ds_p = _require_profile_1d(
-            g_fields, "fluid_pressure", len(fields.pore_pressure)
+            g_fields, "fluid_pressure", len(fields.fluid_pressure)
         )
         ds_sn = _require_profile_1d(g_fields, "stress_normal", len(fields.sn))
         ds_tau = _require_profile_1d(g_fields, "stress_shear", len(fields.tau))
@@ -107,7 +108,7 @@ def append_results_hdf5(filepath: str | Path, fields: Fields, t: float):
 
         # assign obtained profile to new row
         for ds, arr in [
-            (ds_p, fields.pore_pressure),
+            (ds_p, fields.fluid_pressure),
             (ds_sn, fields.sn),
             (ds_tau, fields.tau),
             (ds_w, fields.w),
@@ -119,11 +120,9 @@ def append_results_hdf5(filepath: str | Path, fields: Fields, t: float):
 
 
 def main():
-    out_dir = Path.cwd().parent / "results" / "3dec" / "runs"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir / "run-q-1e-03.hdf5"
+    out_file = it.fish.get("filepath")
     fields = Fields()
-    t = np.float64(it.fish.get("fluid_time"))
+    t = np.float64(it.fish.get("t"))
     append_results_hdf5(out_file, fields, t)
 
 

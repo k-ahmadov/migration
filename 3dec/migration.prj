@@ -5,7 +5,7 @@
         "Version" : 9.0000000e+00 ,
         "Update" : 176 ,
         "Binary" : false ,
-        "DateTime" : "2026-03-20T10:58:46" ,
+        "DateTime" : "2026-04-15T10:22:24" ,
         "Format" : 0 ,
         "Dimension" : 3 
     },
@@ -62,7 +62,8 @@
                         "scripts/inject.dat" ,
                         "scripts/store_results.py" ,
                         "scripts/store_coordinates.py" ,
-                        "tmp.dat" 
+                        "scripts/fish-support.dat" ,
+                        "scripts/tmp.dat" 
                     ]
                 },
                 "OpenFiles" : [  ]
@@ -284,9 +285,9 @@
                         "View" : {
                             "Locked" : false ,
                             "Perspective" : true ,
-                            "EyePosition" : { "x" : -5.688577139876570e+01  , "y" : -9.993443070466749e+01  , "z" : 3.214879454138273e+01 } ,
-                            "ViewCenter" : { "x" : 4.787909318984894e+01  , "y" : 6.329650979842774e+00  , "z" : 1.220602033429884e+00 } ,
-                            "Up" : { "x" : 1.170748761998009e-01  , "y" : 1.693901330267709e-01  , "z" : 9.785706189110596e-01 } ,
+                            "EyePosition" : { "x" : 4.763426661874428e+01  , "y" : -1.178042852263864e+02  , "z" : 5.940574766781218e+01 } ,
+                            "ViewCenter" : { "x" : 5.000000000000000e+01  , "y" : -2.842161961405379e-14  , "z" : 7.105428592738637e-14 } ,
+                            "Up" : { "x" : 1.236060077281124e-02  , "y" : 4.500323316132022e-01  , "z" : 8.929267137068529e-01 } ,
                             "Magnification" : 1.000000000000000e+00 ,
                             "FirstViewAuto" : false ,
                             "MinClipPlaneDist" : -1.000000000000000e+10 ,
@@ -438,9 +439,9 @@
                             {
                                 "Name" : "3dec-block" ,
                                 "Item" : {
-                                    "Active" : true ,
+                                    "Active" : false ,
                                     "Type" : 0 ,
-                                    "PIActive" : true ,
+                                    "PIActive" : false ,
                                     "ShowCaption" : true ,
                                     "Title" : {
                                         "Active" : true ,
@@ -570,9 +571,9 @@
                                         "Active" : true ,
                                         "Enabled" : true ,
                                         "RampKeyword" : "bwr" ,
-                                        "Minimum" : -2.669428755462811e-04 ,
-                                        "Maximum" : 2.669253933774426e-04 ,
-                                        "Interval" : 5.000000000000000e-05 ,
+                                        "Minimum" : -5.228784889341537e+05 ,
+                                        "Maximum" : 4.598723451369667e+05 ,
+                                        "Interval" : 1.000000000000000e+05 ,
                                         "MinAuto" : true ,
                                         "MaxAuto" : true ,
                                         "IntAuto" : true ,
@@ -602,46 +603,46 @@
                                         "Data" : [ 
                                             {
                                                 "Component" : 2 ,
-                                                "Quantity" : 4 ,
+                                                "Quantity" : 2 ,
                                                 "Type" : 0 ,
                                                 "Extra" : 1 ,
                                                 "Stress" : false ,
                                                 "Log" : false ,
                                                 "Active" : true ,
-                                                "Keyword" : "displacement" ,
+                                                "Keyword" : "stress" ,
                                                 "GpData" : {
                                                     "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Quantity" : 2 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
                                                     "Active" : true ,
-                                                    "Keyword" : "displacement" 
+                                                    "Keyword" : "" 
                                                 },
                                                 "ZoneData" : {
                                                     "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Quantity" : 2 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
-                                                    "Stress" : false ,
+                                                    "Stress" : true ,
                                                     "Log" : false ,
                                                     "Active" : true ,
-                                                    "Keyword" : "" ,
+                                                    "Keyword" : "stress" ,
                                                     "Property" : "" 
                                                 },
                                                 "ZoneInterp" : {
-                                                    "Active" : false ,
+                                                    "Active" : true ,
                                                     "Method" : 0 ,
                                                     "RadRatio" : 7.500000000000000e-01 ,
                                                     "Power" : 3.000000000000000e+00 ,
                                                     "Tolerance" : 1.000000000000000e-07 ,
                                                     "HideNull" : false 
                                                 },
-                                                "Source" : 1 ,
+                                                "Source" : 0 ,
                                                 "FaceData" : {
                                                     "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Quantity" : 2 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
@@ -657,13 +658,13 @@
                                             "Data" : [ 
                                                 {
                                                     "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Quantity" : 2 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
                                                     "Log" : false ,
                                                     "Active" : true ,
-                                                    "Keyword" : "displacement" 
+                                                    "Keyword" : "" 
                                                 }
                                             ]
                                         },
@@ -673,13 +674,13 @@
                                             "Data" : [ 
                                                 {
                                                     "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Quantity" : 2 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
-                                                    "Stress" : false ,
+                                                    "Stress" : true ,
                                                     "Log" : false ,
                                                     "Active" : true ,
-                                                    "Keyword" : "" ,
+                                                    "Keyword" : "stress" ,
                                                     "Property" : "" 
                                                 }
                                             ],
@@ -703,7 +704,7 @@
                                             "Power" : 3.000000000000000e+00 ,
                                             "Tolerance" : 1.000000000000000e-07 
                                         },
-                                        "Source" : 1 ,
+                                        "Source" : 0 ,
                                         "CompressionPositive" : false ,
                                         "Face" : {
                                             "Active" : true ,
@@ -711,7 +712,7 @@
                                             "Data" : [ 
                                                 {
                                                     "Component" : 2 ,
-                                                    "Quantity" : 4 ,
+                                                    "Quantity" : 2 ,
                                                     "Type" : 0 ,
                                                     "Extra" : 1 ,
                                                     "Stress" : false ,
@@ -756,9 +757,9 @@
                             {
                                 "Name" : "Joints" ,
                                 "Item" : {
-                                    "Active" : false ,
+                                    "Active" : true ,
                                     "Type" : 0 ,
-                                    "PIActive" : false ,
+                                    "PIActive" : true ,
                                     "ShowCaption" : true ,
                                     "Title" : {
                                         "Active" : true ,
@@ -1029,9 +1030,9 @@
                                                 "Active" : true ,
                                                 "Enabled" : true ,
                                                 "RampKeyword" : "bwr" ,
-                                                "Minimum" : 1.797693134862316e+308 ,
-                                                "Maximum" : 1.797693134862316e+308 ,
-                                                "Interval" : 0.000000000000000e+00 ,
+                                                "Minimum" : 1.012943295882930e+06 ,
+                                                "Maximum" : 4.071305794368040e+07 ,
+                                                "Interval" : 5.000000000000000e+06 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
                                                 "IntAuto" : true ,
@@ -1453,7 +1454,7 @@
                                         "UsePiece" : false 
                                     },
                                     "ColorBy" : 0 ,
-                                    "ContourBy" : 1 ,
+                                    "ContourBy" : 2 ,
                                     "Property" : "" ,
                                     "Cracked" : false ,
                                     "Scheme" : 1 ,
@@ -1661,9 +1662,9 @@
                                                 "Active" : true ,
                                                 "Enabled" : true ,
                                                 "RampKeyword" : "bwr" ,
-                                                "Minimum" : 1.797693134862316e+308 ,
-                                                "Maximum" : 1.797693134862316e+308 ,
-                                                "Interval" : 0.000000000000000e+00 ,
+                                                "Minimum" : 1.000520745383226e-04 ,
+                                                "Maximum" : 8.133534575213465e-04 ,
+                                                "Interval" : 1.000000000000000e-04 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
                                                 "IntAuto" : true ,
@@ -1688,6 +1689,192 @@
                                                 "Format" : 0 
                                             }
                                         ]
+                                    }
+                                }
+                            }, 
+                            {
+                                "Name" : "history" ,
+                                "Item" : {
+                                    "Active" : false ,
+                                    "Type" : 0 ,
+                                    "PIActive" : false ,
+                                    "ShowCaption" : true ,
+                                    "Title" : {
+                                        "Active" : true ,
+                                        "Enabled" : true ,
+                                        "Size" : 55 ,
+                                        "Family" : "Times New Roman" ,
+                                        "Style" : 1 ,
+                                        "Color" : "#000000FF" ,
+                                        "Bool" : true ,
+                                        "Text" : "" 
+                                    },
+                                    "Transparency" : 70 ,
+                                    "TransActive" : false ,
+                                    "TransLocked" : true ,
+                                    "Range" : [  ],
+                                    "Chart" : {
+                                        "Active" : true ,
+                                        "Chart" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Grid" : {
+                                                "Active" : true ,
+                                                "Enabled" : true ,
+                                                "Width" : 1 ,
+                                                "Style" : 1 ,
+                                                "Color" : "#000000FF" ,
+                                                "Bool" : false 
+                                            },
+                                            "Width" : 2 ,
+                                            "Box" : false ,
+                                            "Color" : "#000000FF" ,
+                                            "Position" : {
+                                                "X" : 1 ,
+                                                "Y" : 1 
+                                            },
+                                            "Size" : {
+                                                "Width" : 96 ,
+                                                "Height" : 96 
+                                            },
+                                            "MGrid1" : {
+                                                "Active" : true ,
+                                                "Enabled" : true ,
+                                                "Width" : 1 ,
+                                                "Style" : 1 ,
+                                                "Color" : "#a0a0a4FF" ,
+                                                "Bool" : false 
+                                            },
+                                            "MGrid2" : {
+                                                "Active" : true ,
+                                                "Enabled" : true ,
+                                                "Width" : 1 ,
+                                                "Style" : 1 ,
+                                                "Color" : "#a0a0a4FF" ,
+                                                "Bool" : false 
+                                            }
+                                        },
+                                        "XAxis" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Log" : false ,
+                                            "Minimum" : 1.000000000000000e+01 ,
+                                            "Maximum" : 1.000000000000000e+04 ,
+                                            "MinAuto" : true ,
+                                            "MaxAuto" : true ,
+                                            "Alias" : "Step" ,
+                                            "Inside" : true ,
+                                            "Exponent" : {
+                                                "Active" : true ,
+                                                "Enabled" : true ,
+                                                "Show" : true ,
+                                                "Value" : 4 ,
+                                                "Auto" : true 
+                                            }
+                                        },
+                                        "YAxis" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Log" : false ,
+                                            "Minimum" : 1.916403499543186e+00 ,
+                                            "Maximum" : 4.858121387334616e+07 ,
+                                            "MinAuto" : true ,
+                                            "MaxAuto" : true ,
+                                            "Alias" : "Axis-2" ,
+                                            "Inside" : true ,
+                                            "Exponent" : {
+                                                "Active" : true ,
+                                                "Enabled" : true ,
+                                                "Show" : true ,
+                                                "Value" : 7 ,
+                                                "Auto" : true 
+                                            }
+                                        },
+                                        "Swap" : false ,
+                                        "Title" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Size" : 25 ,
+                                            "Family" : "Arial" ,
+                                            "Style" : 1 ,
+                                            "Color" : "#000000FF" ,
+                                            "Bool" : true ,
+                                            "Text" : "" 
+                                        },
+                                        "Labels" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Size" : 20 ,
+                                            "Family" : "Times New Roman" ,
+                                            "Style" : 1 ,
+                                            "Color" : "#000000FF" ,
+                                            "Bool" : true ,
+                                            "Text" : "" 
+                                        },
+                                        "Marks" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Size" : 18 ,
+                                            "Family" : "Times New Roman" ,
+                                            "Style" : 0 ,
+                                            "Color" : "#000000FF" ,
+                                            "Bool" : true ,
+                                            "Text" : "" 
+                                        },
+                                        "SeriesCaption" : {
+                                            "Active" : true ,
+                                            "Enabled" : true ,
+                                            "Size" : 44 ,
+                                            "Family" : "Arial" ,
+                                            "Style" : 0 ,
+                                            "Color" : "#000000FF" ,
+                                            "Bool" : true ,
+                                            "Text" : "" 
+                                        },
+                                        "RangeCaption" : false ,
+                                        "Series" : [ 
+                                            {
+                                                "Active" : true ,
+                                                "Enabled" : true ,
+                                                "Style" : 0 ,
+                                                "Name" : "1" ,
+                                                "Alias" : "" ,
+                                                "XReversed" : false ,
+                                                "YReversed" : false ,
+                                                "Line" : {
+                                                    "Active" : true ,
+                                                    "Enabled" : true ,
+                                                    "Width" : 2 ,
+                                                    "Style" : 1 ,
+                                                    "Color" : "#00ffffFF" ,
+                                                    "Bool" : true 
+                                                },
+                                                "Mark" : {
+                                                    "Active" : true ,
+                                                    "Enabled" : true ,
+                                                    "Color" : "#00ffffFF" ,
+                                                    "Size" : 2 ,
+                                                    "Type" : 0 
+                                                },
+                                                "ID" : "1" 
+                                            }
+                                        ]
+                                    },
+                                    "Begin" : 0 ,
+                                    "End" : 0 ,
+                                    "Skip" : 0 ,
+                                    "Vs" : "" ,
+                                    "VsReversed" : false ,
+                                    "VsCaption" : false ,
+                                    "VsText" : {
+                                        "Active" : true ,
+                                        "Enabled" : true ,
+                                        "Size" : 44 ,
+                                        "Family" : "Arial" ,
+                                        "Style" : 0 ,
+                                        "Color" : "#000000FF" ,
+                                        "Bool" : true ,
+                                        "Text" : "" 
                                     }
                                 }
                             }
@@ -1727,7 +1914,7 @@
     ],
     "Terminal" : {
         "MoveLists" : true ,
-        "LineLimit" : 9 
+        "LineLimit" : 5 
     },
     "ColorMap" : {
         "EMaps" : [ 
@@ -1755,7 +1942,7 @@
     },
     "Layout3" : {
         "PaneAction" : [  ],
-        "State" : "AAAA/wAAAAD9AAAAAQAAAAAAAAoAAAAFIPwCAAAAAfsAAAAaAFcAbwByAGsAcwBwAGEAYwBlAEQAbwBjAGsBAAAAKAAABSAAAAFUAP///gAAAAAAAAUgAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAwAE0AYQBpAG4AVwBpAG4AZABvAHcAQwBhAHAAdABpAG8AbgBXAHIAYQBwAHAAZQByAQAAAAD/////AAAAAAAAAAA=" ,
+        "State" : "AAAA/wAAAAD9AAAAAQAAAAAAAAeAAAAEQvwCAAAAAfsAAAAaAFcAbwByAGsAcwBwAGEAYwBlAEQAbwBjAGsBAAAAKAAABEIAAAFFAP///gAAAAAAAARCAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAwAE0AYQBpAG4AVwBpAG4AZABvAHcAQwBhAHAAdABpAG8AbgBXAHIAYQBwAHAAZQByAQAAAAD/////AAAAAAAAAAA=" ,
         "Splitter1" : "AAAA/wAAAAEAAAACAAABDwAACOwA/////wEAAAABAA==" ,
         "Splitter2" : "AAAA/wAAAAEAAAACAAADkwAAAYUA/////wEAAAACAA==" ,
         "Splitter3" : "AAAA/wAAAAEAAAADAAAGfgAAAmkAAAAYAP////8BAAAAAQA=" ,
@@ -1764,7 +1951,7 @@
                 
                 {
                     "Name" : "Viewer-ROOT #2" ,
-                    "Geom" : [ 1662  ],
+                    "Geom" : [ 1245  ],
                     "Child1" : "Plot_Plot01" ,
                     "Child2" : "" ,
                     "Hor" : true ,
@@ -1777,13 +1964,15 @@
         },
         "Recent" : {
             "MRUMagic" : [ 
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/initial.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/inject.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_coordinates.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_results.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/fish-support.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/boundary_conditions.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_results.py" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_coordinates.py" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/tmp.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/initial.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" ,
                 "Edit /home/kahmadov/phd/migration/3dec/tmp.dat" 
             ]
         },
@@ -1794,7 +1983,7 @@
         "ViewerVis" : true ,
         "RightTabs" : [  ],
         "RightCI" : -1 ,
-        "LeftCI" : 1 
+        "LeftCI" : 2 
     },
     "PaneContents" : { }
 }

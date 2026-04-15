@@ -1,0 +1,39 @@
+fish define store_results
+    ; a callback to store the results in a file at a certain timestep
+    global t = fluid.time.total
+    command
+        program call 'scripts/store_results.py'
+    endcommand
+end
+
+fish define halt_on_pressure_at_pos
+    ; this function is used as a callback for the solver
+    ; every timestep solver will call this function
+    ; and if this function returns false the model will halt
+    ; the purpose is to stop the model when a significant
+    ; pressure disturbance reaches the end of the joint
+    pos = (100,0,0)
+    sc = block.subcontact.near(pos)
+    x_pos = block.subcontact.pos.x(sc)
+    pressure = block.subcontact.pp(sc)
+    threshold_pressure = 1e6
+    if pressure < threshold_pressure
+        return false
+    else
+        io.out(pressure)
+        return true
+    endif
+end
+
+; linearly increasing injection rate
+; to be added as a callback in inject.dat
+fish define linearly_increasing_discharge
+    global dt = fluid.timestep
+    command
+        flowplane edge apply discharge [q*dt] range pos-x 0
+    endcommand
+end
+
+; determine interval of time for callback function that stores results (old 3DEC version - 3DEC7)
+; model cycle 100
+; [global interval = math.floor(0.1/fluid.timestep)]

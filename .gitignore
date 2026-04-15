@@ -7,3 +7,4 @@ figure*/**
 .DS_Store
 *.temp
 3dec/saves/*
+indent.log
