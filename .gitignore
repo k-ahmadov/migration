@@ -6,3 +6,6 @@ figure*/**
 *.temp
 3dec/saves/*
 overleaf/
+.*
+!.gitignore
+*.log

@@ -5,7 +5,7 @@
         "Version" : 9.0000000e+00 ,
         "Update" : 176 ,
         "Binary" : false ,
-        "DateTime" : "2026-04-16T09:40:24" ,
+        "DateTime" : "2026-04-16T09:46:13" ,
         "Format" : 0 ,
         "Dimension" : 3 
     },
@@ -285,9 +285,9 @@
                         "View" : {
                             "Locked" : false ,
                             "Perspective" : true ,
-                            "EyePosition" : { "x" : 4.763426661874428e+01  , "y" : -1.178042852263864e+02  , "z" : 5.940574766781218e+01 } ,
+                            "EyePosition" : { "x" : -1.365728900056995e+01  , "y" : -9.931715474500831e+01  , "z" : 5.912986976610636e+01 } ,
                             "ViewCenter" : { "x" : 5.000000000000000e+01  , "y" : -2.842161961405379e-14  , "z" : 7.105428592738637e-14 } ,
-                            "Up" : { "x" : 1.236060077281124e-02  , "y" : 4.500323316132022e-01  , "z" : 8.929267137068529e-01 } ,
+                            "Up" : { "x" : 5.654103656451709e-02  , "y" : 4.837409281556702e-01  , "z" : 8.733829776285433e-01 } ,
                             "Magnification" : 1.000000000000000e+00 ,
                             "FirstViewAuto" : false ,
                             "MinClipPlaneDist" : -1.000000000000000e+10 ,
@@ -571,9 +571,9 @@
                                         "Active" : true ,
                                         "Enabled" : true ,
                                         "RampKeyword" : "bwr" ,
-                                        "Minimum" : -5.228784889341537e+05 ,
-                                        "Maximum" : 4.598723451369667e+05 ,
-                                        "Interval" : 1.000000000000000e+05 ,
+                                        "Minimum" : -1.920260402503073e+05 ,
+                                        "Maximum" : 3.502126268704596e+04 ,
+                                        "Interval" : 2.500000000000000e+04 ,
                                         "MinAuto" : true ,
                                         "MaxAuto" : true ,
                                         "IntAuto" : true ,
@@ -757,9 +757,9 @@
                             {
                                 "Name" : "Joints" ,
                                 "Item" : {
-                                    "Active" : true ,
+                                    "Active" : false ,
                                     "Type" : 0 ,
-                                    "PIActive" : true ,
+                                    "PIActive" : false ,
                                     "ShowCaption" : true ,
                                     "Title" : {
                                         "Active" : true ,
@@ -1030,9 +1030,9 @@
                                                 "Active" : true ,
                                                 "Enabled" : true ,
                                                 "RampKeyword" : "bwr" ,
-                                                "Minimum" : 1.012943295882930e+06 ,
-                                                "Maximum" : 4.071305794368040e+07 ,
-                                                "Interval" : 5.000000000000000e+06 ,
+                                                "Minimum" : 8.795398855057015e+05 ,
+                                                "Maximum" : 2.717744041694514e+07 ,
+                                                "Interval" : 2.500000000000000e+06 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
                                                 "IntAuto" : true ,
@@ -1371,9 +1371,9 @@
                             {
                                 "Name" : "Flow-Planes" ,
                                 "Item" : {
-                                    "Active" : false ,
+                                    "Active" : true ,
                                     "Type" : 0 ,
-                                    "PIActive" : false ,
+                                    "PIActive" : true ,
                                     "ShowCaption" : true ,
                                     "Title" : {
                                         "Active" : true ,
@@ -1627,7 +1627,7 @@
                                                     "Width" : 1 ,
                                                     "Style" : 1 ,
                                                     "Color" : "#000000FF" ,
-                                                    "Bool" : true 
+                                                    "Bool" : false 
                                                 },
                                                 "Lighting" : false ,
                                                 "Count" : {
@@ -1662,9 +1662,9 @@
                                                 "Active" : true ,
                                                 "Enabled" : true ,
                                                 "RampKeyword" : "bwr" ,
-                                                "Minimum" : 1.000520745383226e-04 ,
-                                                "Maximum" : 8.133534575213465e-04 ,
-                                                "Interval" : 1.000000000000000e-04 ,
+                                                "Minimum" : 1.188731157099277e-04 ,
+                                                "Maximum" : 6.360537456603444e-04 ,
+                                                "Interval" : 5.000000000000000e-05 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
                                                 "IntAuto" : true ,
@@ -1914,7 +1914,7 @@
     ],
     "Terminal" : {
         "MoveLists" : true ,
-        "LineLimit" : 5 
+        "LineLimit" : 9 
     },
     "ColorMap" : {
         "EMaps" : [ 
@@ -1942,16 +1942,16 @@
     },
     "Layout3" : {
         "PaneAction" : [  ],
-        "State" : "AAAA/wAAAAD9AAAAAQAAAAAAAAeAAAAEQvwCAAAAAfsAAAAaAFcAbwByAGsAcwBwAGEAYwBlAEQAbwBjAGsBAAAAKAAABEIAAAFFAP///gAAAAAAAARCAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAwAE0AYQBpAG4AVwBpAG4AZABvAHcAQwBhAHAAdABpAG8AbgBXAHIAYQBwAHAAZQByAQAAAAD/////AAAAAAAAAAA=" ,
+        "State" : "AAAA/wAAAAD9AAAAAQAAAAAAAAoAAAAFIPwCAAAAAfsAAAAaAFcAbwByAGsAcwBwAGEAYwBlAEQAbwBjAGsBAAAAKAAABSAAAAFUAP///gAAAAAAAAUgAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAwAE0AYQBpAG4AVwBpAG4AZABvAHcAQwBhAHAAdABpAG8AbgBXAHIAYQBwAHAAZQByAQAAAAD/////AAAAAAAAAAA=" ,
         "Splitter1" : "AAAA/wAAAAEAAAACAAABDwAACOwA/////wEAAAABAA==" ,
-        "Splitter2" : "AAAA/wAAAAEAAAACAAADkwAAAYUA/////wEAAAACAA==" ,
+        "Splitter2" : "AAAA/wAAAAEAAAACAAADlQAAAYYA/////wEAAAACAA==" ,
         "Splitter3" : "AAAA/wAAAAEAAAADAAAGfgAAAmkAAAAYAP////8BAAAAAQA=" ,
         "Viewer" : {
             "Info" : [ 
                 
                 {
                     "Name" : "Viewer-ROOT #2" ,
-                    "Geom" : [ 1245  ],
+                    "Geom" : [ 1662  ],
                     "Child1" : "Plot_Plot01" ,
                     "Child2" : "" ,
                     "Hor" : true ,
@@ -1965,15 +1965,14 @@
         "Recent" : {
             "MRUMagic" : [ 
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/inject.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/fish-support.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/boundary_conditions.dat" ,
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/store_results.py" ,
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/store_coordinates.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/tmp.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/initial.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/fish-support.dat" ,
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/tmp.dat" 
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/boundary_conditions.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/initial.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/tmp.dat" 
             ]
         },
         "ProjVis" : true ,
