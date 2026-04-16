@@ -27,6 +27,7 @@ with h5py.File(fp, "r") as f:
 # %%
 
 M = params["k_n"] / (12 * params["mu"])
+D = M * params["w_i"] ** 3
 zeta_ana = np.linspace(0, 10, 100)
 theta_ana = solve_linear_diffusion_const_flux(zeta_ana)
 idx = 800
@@ -49,10 +50,10 @@ for i in [50, 200, 500, 1000, -1]:
     # ax.plot(x_vert, w_x, '.')
     t_i = t[i]
 
-    theta = (w_x - params["w_i"]) / np.sqrt(params["q_0"] ** 2 * t_i / M)
-    zeta = x_vert / np.sqrt(M * params["w_i"] ** 3 * t_i)
+    theta = (w_x - params["w_i"]) / np.sqrt(params["q_0"] ** 2 * t_i / D)
+    zeta = x_vert / np.sqrt(D * t_i)
 
-    ax.plot(zeta, theta / 1e6, ".")
+    ax.plot(zeta, theta, ".")
 
 ax.plot(zeta_ana, theta_ana)
 plt.show()

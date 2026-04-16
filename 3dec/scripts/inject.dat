@@ -23,7 +23,7 @@ model mechanical slave on
 ; flowplane edge apply discharge [q] range pos-x 0
 
 ; slope of the linearly increasing injection rate
-[global q = 1e-5]
+[global q = 1e-4]
 ; callback to cumulatively add discharge rate at each fluid time step
 ; callback added at the step in cycle sequence after timestep determination (a value between 1 and 10)
 ; callback function is in fish-support.dat
@@ -35,7 +35,7 @@ fish callback add linearly_increasing_discharge 1 process fluid
 program call 'scripts/store_coordinates.py'
 ; callback to store results every given fluid time interval
 ; step is at cycle sequence is after fluid calculations (value higher than 80)
-fish callback add store_results 81 interval-time 0.5 process fluid
+fish callback add store_results 81 interval-time 0.2 process fluid
 
 ; simulation stops when significant disturbance reaches the end of the fracture
 model solve fish-halt [halt_on_pressure_at_pos]

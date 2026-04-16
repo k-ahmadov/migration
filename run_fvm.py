@@ -1,13 +1,17 @@
+from pathlib import Path
+
 import h5py
 import numpy as np
-from pathlib import Path
+
 from run_simulation import run_fvm_code
+
 
 class Param:
     def __init__(self, value: float, unit: str, description: str) -> None:
         self.value = value
         self.unit = unit
         self.description = description
+
 
 def save_results_hdf5(
     filepath: Path,
@@ -84,5 +88,6 @@ def main():
         parameters=parameters,
     )
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()
