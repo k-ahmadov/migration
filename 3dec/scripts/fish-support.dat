@@ -16,7 +16,7 @@ fish define halt_on_pressure_at_pos
     sc = block.subcontact.near(pos)
     x_pos = block.subcontact.pos.x(sc)
     pressure = block.subcontact.pp(sc)
-    threshold_pressure = 1e6
+    threshold_pressure = 1e5
     if pressure < threshold_pressure
         return false
     else

@@ -1,45 +1,62 @@
-; geometry, properties, boundary and initial conditions
+; ============================================================
+; Geometry, properties, boundary and initial conditions
+; ============================================================
 program call "scripts/initial.dat"
 
-; import the halt function, callback functions for storing results and linear injection rate
+; Fish utility functions: halt condition, result-storage callbacks,
+; and the linearly increasing injection rate
 program call 'scripts/fish-support.dat'
 
-; parallel computing
-program threads 24
+; ============================================================
+; Solver configuration
+; ============================================================
 
-; fully coupled solution
-model fluid active on
+program threads 24          ; parallel computing
+
+model fluid      active on  ; fully coupled hydro-mechanical solution
 model mechanical active on
-; number of mechanical steps at each fluid step 
+
+; mechanical sub-steps per fluid step (controls coupling accuracy)
 model mechanical substep 200
 model mechanical slave on
 
-; injection condition - constant pressure
+; ============================================================
+; Injection boundary condition (x = 0)
+; ============================================================
+
+; --- Option 1: constant pressure ---
 ; [global P_0 = 9e6]
-; flowknot apply p-p [P0] range pos-x 0
+; flowknot apply p-p [P_0] range pos-x 0
 
-; inject fluid at x=0 with constant discharge rate (unit m^2/s)
-; [global q = 1e-2]
-; flowplane edge apply discharge [q] range pos-x 0
+; --- Option 2: constant discharge rate (m²/s) ---
+[global q = 1e-8]
+flowplane edge apply discharge [q] range pos-x 0
 
-; slope of the linearly increasing injection rate
-[global q = 1e-4]
-; callback to cumulatively add discharge rate at each fluid time step
-; callback added at the step in cycle sequence after timestep determination (a value between 1 and 10)
-; callback function is in fish-support.dat
-fish callback add linearly_increasing_discharge 1 process fluid
+; --- Option 3: linearly increasing discharge rate ---
+; [global q = 1e-4]   ; initial slope of the ramp
+; Fish callback runs after timestep determination (sequence position 1–10)
+; callback defined in fish-support.dat
+; fish callback add linearly_increasing_discharge 1 process fluid
 
-; file to save results
-[global filepath = "/home/kahmadov/phd/migration/results/3dec/runs-linear/run-q-1e-05.hdf5"]
-; initiate the file for storing the results and store the coordinates
+; ============================================================
+; Output
+; ============================================================
+
+[global filepath = "/home/kahmadov/phd/migration/results/3dec/runs-wi-1e-05/run-q-1e-08.hdf5"]
+
+; Initialise the HDF5 file and write coordinate arrays
 program call 'scripts/store_coordinates.py'
-; callback to store results every given fluid time interval
-; step is at cycle sequence is after fluid calculations (value higher than 80)
-fish callback add store_results 81 interval-time 0.2 process fluid
 
-; simulation stops when significant disturbance reaches the end of the fracture
+; Store field profiles every 0.2 s of fluid time
+; callback runs after fluid calculations (sequence position > 80)
+fish callback add store_results 81 interval 100 process fluid
+
+; ============================================================
+; Termination criteria (uncomment one)
+; ============================================================
+
+; Stop when the pressure front reaches the far end of the fracture
 model solve fish-halt [halt_on_pressure_at_pos]
 
-; simulation stops based on the duration given by the user
+; Stop after a fixed fluid-time duration with a mechanical convergence ratio
 ; model solve fluid time-total [T] mechanical ratio 1e-5
-; [store_results]

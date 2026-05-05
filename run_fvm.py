@@ -78,7 +78,7 @@ def main():
 
     out_dir = Path.cwd() / "results" / "fvm" / "runs"
     out_file = out_dir / f"run-L-{L:.0f}.hdf5"
-    # TODO: store stress results
+    # store stress results
     save_results_hdf5(
         filepath=out_file,
         x_fvm=FVM_result.x,

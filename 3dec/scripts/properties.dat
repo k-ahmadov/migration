@@ -20,7 +20,7 @@ block zone prop density [rho] bulk [K] shear [G]
 ; choose smaller bulk modulus value 
 ; but keep it large enough so that K_w/w_i >> k_n
 [global mu = 1e-3]
-[global K_w = 2e8]
+[global K_w = 2e7]
 block fluid property bulk [K_w] density 1000 viscosity [mu]
 
 ; fracture properties
@@ -29,11 +29,11 @@ block fluid property bulk [K_w] density 1000 viscosity [mu]
 ; shear stiffness
 [global k_s = 50e9]
 ; initial aperture
-[global w_i = 1e-4]
+[global w_i = 1e-5]
 ; maximum aperture
-[global w_max = 1e-3]
+[global w_max = 1e-4]
 ; minimum aperture
-[global w_min = 1e-5]
+[global w_min = 1e-6]
 ; constant stiffness (elastic) constituve model for fracture
 block contact jmodel assign elastic
 block contact property stiffness-normal [k_n] &

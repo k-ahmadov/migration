@@ -12,7 +12,7 @@ block cut joint-set dip 0 dip-direction 90 origin 0, 0, 0
 
 block densify segments 5 1 5 join
 
-block zone size edgelength 5 range pos-x 0 [L] pos-z [-L//10] [L//10] 
-block zone generate-new min-edge 5 max-edge 10 grad-surface 0.05
+block zone size edgelength 2 range pos-x 0 [L] pos-z [-L//10] [L//10] 
+block zone generate-new min-edge 2 max-edge 8 grad-surface 0.05
 
 model save "../saves/geometry"

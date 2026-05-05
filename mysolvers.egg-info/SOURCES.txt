@@ -1,0 +1,9 @@
+pyproject.toml
+mysolvers/__init__.py
+mysolvers/aperture_solver.py
+mysolvers/elastic_solution.py
+mysolvers/exact_solutions.py
+mysolvers.egg-info/PKG-INFO
+mysolvers.egg-info/SOURCES.txt
+mysolvers.egg-info/dependency_links.txt
+mysolvers.egg-info/top_level.txt

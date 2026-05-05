@@ -1,0 +1,352 @@
+# %%
+from pathlib import Path
+
+import h5py
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import curve_fit
+
+from mysolvers.exact_solutions import solve_linear_diffusion_const_flux
+
+# %%
+
+
+def _sort_by(arr, keys):
+    idx = np.argsort(keys)
+    return keys[idx], arr[:, idx]
+
+
+class RunData:
+    def __init__(self, x_vert, t, w, x_sc, sn, p, params):
+        self.t = t
+        self.params = params
+        self.x_vert, self.w = _sort_by(w, x_vert)
+        self.x_sc, self.sn = _sort_by(sn, x_sc)
+        _, self.p = _sort_by(p, x_sc)
+
+
+FIELD_PATHS = {
+    "x_vert": "coordinates/x_vertices",
+    "t": "coordinates/t",
+    "w": "fields/aperture",
+    "x_sc": "coordinates/x_subcontacts",
+    "sn": "fields/stress_normal",
+    "p": "fields/fluid_pressure",
+}
+
+
+def read_run(filepath: Path) -> RunData:
+    with h5py.File(str(filepath), "r") as f:
+        arrays = {k: f[path][()] for k, path in FIELD_PATHS.items()}  # type: ignore[index]
+        params = {k: f[f"parameters/{k}"][()] for k in f["parameters"].keys()}  # type: ignore[index]
+    return RunData(**arrays, params=params)
+
+
+def find_aperture_front(run, w_front):
+    """Find the front position by interpolating where w crosses w_front."""
+    x = run.x_vert
+    w = run.w
+
+    if not np.all(np.diff(x) >= 0):
+        raise ValueError("x must be sorted")
+
+    # find timesteps that have both below and above the front
+    below = w < w_front[:, None]
+    has_crossing = np.any(below, axis=1) & np.any(~below, axis=1)
+
+    if not np.any(has_crossing):
+        raise ValueError("No crossings found")
+
+    # find the first crossing index (where values go from above to below w_front)
+    crossing = (~below[:, :-1]) & (below[:, 1:])
+    cross_idx = np.argmax(crossing[has_crossing], axis=1) + 1
+
+    # linear interpolation between the two bracketing points
+    w_sub = w[has_crossing]
+    w_front_sub = w_front[has_crossing]
+
+    i_left = cross_idx - 1
+    i_right = cross_idx
+    x_left = x[i_left]
+    x_right = x[i_right]
+    w_left = w_sub[np.arange(len(w_sub)), i_left]
+    w_right = w_sub[np.arange(len(w_sub)), i_right]
+
+    denom = w_right - w_left
+    x_front = np.full(len(w_sub), np.nan)
+    valid = denom != 0
+    x_front[valid] = (
+        x_left[valid]
+        + (w_front_sub[valid] - w_left[valid])
+        * (x_right[valid] - x_left[valid])
+        / denom[valid]
+    )
+
+    return x_front, has_crossing
+
+
+def find_pressure_front(run, pc_front):
+    """Find the front position by interpolating where w crosses w_front."""
+    x = run.x_sc
+    p = run.p
+
+    if not np.all(np.diff(x) >= 0):
+        raise ValueError("x must be sorted")
+
+    # find timesteps that have both below and above the front
+    below = p < pc_front[:, None]
+    has_crossing = np.any(below, axis=1) & np.any(~below, axis=1)
+
+    if not np.any(has_crossing):
+        raise ValueError("No crossings found")
+
+    # find the first crossing index (where values go from above to below w_front)
+    crossing = (~below[:, :-1]) & (below[:, 1:])
+    cross_idx = np.argmax(crossing[has_crossing], axis=1) + 1
+
+    # linear interpolation between the two bracketing points
+    w_sub = p[has_crossing]
+    w_front_sub = pc_front[has_crossing]
+
+    i_left = cross_idx - 1
+    i_right = cross_idx
+    x_left = x[i_left]
+    x_right = x[i_right]
+    w_left = w_sub[np.arange(len(w_sub)), i_left]
+    w_right = w_sub[np.arange(len(w_sub)), i_right]
+
+    denom = w_right - w_left
+    x_front = np.full(len(w_sub), np.nan)
+    valid = denom != 0
+    x_front[valid] = (
+        x_left[valid]
+        + (w_front_sub[valid] - w_left[valid])
+        * (x_right[valid] - x_left[valid])
+        / denom[valid]
+    )
+
+    return x_front, has_crossing
+
+
+def find_stress_front(run, mesh_size=4.0):
+    positions = run.x_sc[np.argmin(run.sn, axis=1)]
+    boundary = positions.max() - mesh_size
+    idx = np.argmax(positions >= boundary)
+    return positions[:idx], idx
+
+
+# applies only for rigid case
+def _diffusivity(params):
+    """Shared helper to compute D from params."""
+    M = params["k_n"] / (12 * params["mu"])
+    return M * params["w_i"] ** 3
+
+
+# applies only for rigid case
+def nondimensionalize(run, t_idx):
+    params = run.params
+    D = _diffusivity(params)
+    t = run.t[t_idx]
+    if t == 0:
+        return None, None
+    scale = np.sqrt(params["q_0"] ** 2 * t / D)
+    theta = (run.w[t_idx] - params["w_i"]) / scale  # 1D: (nx,)
+    zeta = run.x / np.sqrt(D * t)  # 1D: (nx,)
+    return zeta, theta
+
+
+# applies only for rigid case
+def self_similar_w_front(run, theta_front):
+    D = _diffusivity(run.params)
+    scale = np.sqrt(run.params["q_0"] ** 2 * run.t / D)
+    return scale * theta_front + run.params["w_i"]
+
+
+def constant_w_front(run, percentage_of_increase):
+    w_front = run.params["w_i"] * (1 + percentage_of_increase)
+    return np.full_like(run.t, w_front)
+
+
+def constant_pc_front(run, pc):
+    return np.full_like(run.t, pc)
+
+
+# applies only for rigid case
+def self_similar_pc_front(run, theta_front):
+    D = _diffusivity(run.params)
+    scale = np.sqrt(run.params["q_0"] ** 2 * run.t / D)
+    return scale * theta_front * run.params["k_n"]
+
+
+def power_law(t, A, alpha):
+    return A * t**alpha
+
+
+def fit_front_power_law(t, front):
+    (A, alpha), _ = curve_fit(power_law, t, front, p0=(front.max(), 0.8), maxfev=20_000)
+    return A, alpha
+
+
+# %%
+
+result_dir = Path.cwd() / "results" / "3dec" / "runs"
+fp = result_dir / "run-q-1e-06.hdf5"
+run = read_run(fp)
+
+
+class RigidCase:
+    def __init__(
+        self,
+        run,
+        theta_front=0.1,
+        percentage_of_increase=0.0,
+        stress_peak_as_front=False,
+    ):
+        if theta_front > 0:
+            w_front = self_similar_w_front(run, theta_front)
+            x_front, has_front = find_aperture_front(run, w_front)
+        elif percentage_of_increase > 0:
+            w_front = constant_w_front(run, percentage_of_increase)
+            x_front, has_front = find_aperture_front(run, w_front)
+        elif stress_peak_as_front:
+            x_front, idx = find_stress_front(run)
+            has_front = slice(0, idx)
+        else:
+            print("You must choose one of the front definitions")
+            return None
+
+        self.t_front = run.t[has_front]
+        self.x_front = x_front
+
+    def analytical_solution_for_front(self):
+        zeta_front = np.mean(
+            self.x_front / np.sqrt(_diffusivity(run.params) * self.t_front)
+        )
+        x_front_analytical = zeta_front * np.sqrt(
+            _diffusivity(run.params) * self.t_front
+        )
+        self.zeta_front = zeta_front
+        self.x_front_analytical = x_front_analytical
+
+    def empirical(self):
+        prefactor, time_exponent = fit_front_power_law(self.t_front, self.x_front)
+        self.prefactor = prefactor
+        self.time_exponent = time_exponent
+
+    def analytical_solution(self):
+        zeta = np.linspace(0, 10, 100)
+        theta = solve_linear_diffusion_const_flux(zeta)
+        return zeta, theta
+
+
+theta_front = 0.1
+rigid = RigidCase(run=run, theta_front=theta_front)
+rigid.analytical_solution_for_front()
+rigid.empirical()
+zeta_ana, theta_ana = rigid.analytical_solution()
+
+# TODO:
+# [x] add soft case
+# [] add intermediate case
+
+# %%
+
+# case plot
+fig, ax = plt.subplots()
+ax.plot(rigid.t_front, rigid.x_front)
+ax.plot(rigid.t_front, rigid.x_front_analytical)
+ax.set_xlabel("Time, [s]")
+ax.set_ylabel("Front distance, [m]")
+ax.set_title(rf"$q_0={run.params['q_0']}~\mathrm{{m^2/s}}$")
+ax.legend()
+fig.tight_layout()
+plt.show()
+
+# %%
+
+
+class SoftCase:
+    def __init__(self, run, stress_peak=True, percentage_of_increase=0.0):
+        if stress_peak:
+            x_front, idx = find_stress_front(run)
+            has_front = slice(0, idx)
+        elif percentage_of_increase > 0:
+            w_front = constant_w_front(run, percentage_of_increase)
+            x_front, has_front = find_aperture_front(run, w_front)
+        else:
+            print("You must choose one of the front definitions")
+            return None
+
+        self.t_front = run.t[has_front]
+        self.x_front = x_front
+
+    def analytical_solution_for_front(self):
+
+        time_exponent_analytical = 4 / 5
+        M = run.params["k_n"] / (12.0 * run.params["mu"])
+        prefactor_analytical = (M * run.params["q_0"] ** 3) ** (1 / 5)
+
+        # empirically (visually) found
+        # FIXME: find truely analytical solution
+
+        zeta_front = 1.4
+        print(
+            np.mean(
+                self.x_front[-100:]
+                / prefactor_analytical
+                * self.t_front[-100:] ** time_exponent_analytical
+            )
+        )
+        x_front_analytical = (
+            zeta_front * prefactor_analytical * self.t_front**time_exponent_analytical
+        )
+
+        self.zeta_front = zeta_front
+        self.x_front_analytical = x_front_analytical
+
+    def empirical(self):
+        prefactor, time_exponent = fit_front_power_law(self.t_front, self.x_front)
+        self.prefactor = prefactor
+        self.time_exponent = time_exponent
+
+
+# %%
+fp = result_dir / "run-q-1e-03.hdf5"
+run = read_run(fp)
+
+soft = SoftCase(run)
+soft.analytical_solution_for_front()
+soft.empirical()
+
+
+# %%
+
+fig, ax = plt.subplots()
+ax.plot(soft.t_front, soft.x_front, ".")
+ax.plot(soft.t_front, soft.x_front_analytical)
+ax.set_xlabel("Time [s]")
+ax.set_ylabel("Front distance [m]")
+ax.set_title(f"$q_0=${run.params['q_0']}")
+fig.tight_layout()
+plt.show()
+
+
+# %%
+time_exponent_analytical = 4 / 5
+M = run.params["k_n"] / (12.0 * run.params["mu"])
+prefactor_analytical = (M * run.params["q_0"] ** 3) ** (1 / 5)
+zeta_front = np.mean(
+    soft.x_front / prefactor_analytical * soft.t_front**time_exponent_analytical
+)
+zeta_front_arr = (
+    soft.x_front / prefactor_analytical * soft.t_front**time_exponent_analytical
+)
+
+plt.figure()
+plt.plot(soft.t_front, zeta_front_arr)
+plt.xlabel("x label")
+plt.ylabel("y label")
+plt.title("title")
+plt.tight_layout()
+plt.show()
+print(zeta_front)

@@ -1,83 +1,145 @@
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Callable, Iterable
 
 import h5py
-import itasca as it
-from scripts.helpers import apply_function_to_iterable
+import itasca as it  # pyright: ignore[reportMissingImports]
+import numpy as np
+from numpy.typing import NDArray
+
+FloatArray = NDArray[np.float64]
+IntArray = NDArray[np.int32]
 
 
-class XCoordinates:
-    def __init__(self):
-        self.vertices = apply_function_to_iterable(
-            func=it.flowplane.vertex.Vertex.pos_x,
-            iterable=it.flowplane.vertex.list(),
-            count=it.flowplane.vertex.count(),
-        )
-
-        self.subcontacts = apply_function_to_iterable(
-            func=it.block.subcontact.Subcontact.pos_x,
-            iterable=it.block.subcontact.list(),
-            count=it.block.subcontact.count(),
-        )
-
-        self.flowzones = apply_function_to_iterable(
-            func=it.flowplane.zone.Zone.pos_x,
-            iterable=it.flowplane.zone.list(),
-            count=it.flowplane.zone.count(),
-        )
+# --- Filtering ---
 
 
+def _filter_elements(
+    iterable: Iterable[Any],
+    pos_x: Callable[[Any], float],
+    pos_y: Callable[[Any], float],
+    get_id: Callable[[Any], int],
+    y_threshold: float = 5.0,
+) -> tuple[FloatArray, IntArray]:
+    x_vals: list[float] = []
+    id_vals: list[int] = []
+    for elem in iterable:
+        if pos_y(elem) >= y_threshold:
+            x_vals.append(pos_x(elem))
+            id_vals.append(get_id(elem))
+    return (
+        np.asarray(x_vals, dtype=np.float64),
+        np.asarray(id_vals, dtype=np.int32),
+    )
+
+
+# --- Coordinates container ---
+
+
+@dataclass
+class ElementCoords:
+    """X-coordinates and IDs of filtered model elements."""
+
+    x: FloatArray
+    ids: IntArray
+
+
+class Coordinates:
+    """Filtered element coordinates extracted from the current ITASCA model."""
+
+    vertices: ElementCoords
+    subcontacts: ElementCoords
+    flowzones: ElementCoords
+
+    def __init__(self, y_threshold: float = 5.0) -> None:
+        v = it.flowplane.vertex.Vertex
+        sc = it.block.subcontact.Subcontact
+        z = it.flowplane.zone.Zone
+
+        def extract(iterable: Iterable[Any], elem_type: Any) -> ElementCoords:
+            x, ids = _filter_elements(
+                iterable,
+                elem_type.pos_x,
+                elem_type.pos_y,
+                elem_type.id,
+                y_threshold=y_threshold,
+            )
+            return ElementCoords(x=x, ids=ids)
+
+        self.vertices = extract(it.flowplane.vertex.list(), v)
+        self.subcontacts = extract(it.block.subcontact.list(), sc)
+        self.flowzones = extract(it.flowplane.zone.list(), z)
+
+
+# --- Parameters ---
+
+
+@dataclass
 class Param:
-    def __init__(self, value: float, unit: str, description: str) -> None:
-        self.value = value
-        self.unit = unit
-        self.description = description
+    value: float
+    unit: str
+    description: str
 
 
-def save_coordinates_hdf5(filepath, x_coords, parameters):
+# --- HDF5 writing ---
+
+
+def save_coordinates_hdf5(
+    filepath: str | Path,
+    coords: Coordinates,
+    parameters: dict[str, Param],
+) -> None:
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
-    with h5py.File(filepath, "a") as f:  # <-- append mode
-        g_coords = f.require_group("coordinates")
+    coord_datasets: dict[str, FloatArray | IntArray] = {
+        "x_vertices": coords.vertices.x,
+        "id_vertices": coords.vertices.ids,
+        "x_subcontacts": coords.subcontacts.x,
+        "id_subcontacts": coords.subcontacts.ids,
+        "x_flowzones": coords.flowzones.x,
+        "id_flowzones": coords.flowzones.ids,
+    }
 
-        # Replace datasets if they already exist
-        for name, data in {
-            "x_vertices": x_coords.vertices,
-            "x_flowzones": x_coords.flowzones,
-            "x_subcontacts": x_coords.subcontacts,
-        }.items():
-            if name in g_coords:
-                del g_coords[name]
+    with h5py.File(filepath, "w") as f:
+        g_coords = f.create_group("coordinates")
+        for name, data in coord_datasets.items():
             g_coords.create_dataset(
                 name, data=data, compression="gzip", compression_opts=4
             )
 
-        g_params = f.require_group("parameters")
-        for name, P in parameters.items():
-            if name in g_params:
-                del g_params[name]
-            dset = g_params.create_dataset(name, data=P.value)
-            dset.attrs["unit"] = P.unit
-            dset.attrs["description"] = P.description
+        g_params = f.create_group("parameters")
+        for name, p in parameters.items():
+            ds = g_params.create_dataset(name, data=p.value)
+            ds.attrs["unit"] = p.unit
+            ds.attrs["description"] = p.description
 
 
-def main():
-    out_file = it.fish.get("filepath")
-    x_coords = XCoordinates()
+# --- Main ---
+
+
+def main() -> None:
+    out_file = Path(it.fish.get("filepath"))
+
+    coords = Coordinates()
+
+    def fish(key: str) -> float:
+        return float(it.fish.get(key))
+
     parameters: dict[str, Param] = {
-        "k_n": Param(float(it.fish.get("k_n")), "Pa/m", "Normal stiffness"),
-        "k_s": Param(float(it.fish.get("k_s")), "Pa/m", "Shear stiffness"),
-        "L": Param(float(it.fish.get("L")), "m", "Model size (cube)"),
-        "mu": Param(float(it.fish.get("mu")), "Pa.s", "Fluid viscosity"),
-        "w_i": Param(float(it.fish.get("w_i")), "m", "Initial aperture"),
-        "w_min": Param(float(it.fish.get("w_min")), "m", "Minimum aperture"),
-        "w_max": Param(float(it.fish.get("w_max")), "m", "Maximum aperture"),
-        # "T": Param(float(it.fish.get("T")), "s", "Duration"),
-        "q": Param(float(it.fish.get("q")), "m^2/s", "Applied injection rate"),
-        "E": Param(float(it.fish.get("E")), "Pa/m", "Young's modulus"),
-        "nu": Param(float(it.fish.get("nu")), "-", "Poisson's ratio"),
+        "k_n": Param(fish("k_n"), "Pa/m", "Normal stiffness"),
+        "k_s": Param(fish("k_s"), "Pa/m", "Shear stiffness"),
+        "L": Param(fish("L"), "m", "Model size (cube)"),
+        "mu": Param(fish("mu"), "Pa.s", "Fluid viscosity"),
+        "w_i": Param(fish("w_i"), "m", "Initial aperture"),
+        "w_min": Param(fish("w_min"), "m", "Minimum aperture"),
+        "w_max": Param(fish("w_max"), "m", "Maximum aperture"),
+        "q": Param(fish("q"), "m^2/s", "Applied injection rate"),
+        "E": Param(fish("E"), "Pa/m", "Young's modulus"),
+        "nu": Param(fish("nu"), "-", "Poisson's ratio"),
     }
-    save_coordinates_hdf5(out_file, x_coords, parameters)
+
+    save_coordinates_hdf5(out_file, coords, parameters)
 
 
 if __name__ == "__main__":

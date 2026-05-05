@@ -1,0 +1,137 @@
+# %%
+from pathlib import Path
+from typing import cast
+
+import h5py
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import curve_fit
+
+# %%
+# -------------------------------------------------------------------
+# Utilities (front + fitting + file IO)
+# -------------------------------------------------------------------
+
+
+def power_law(t, A, alpha):
+    return A * t**alpha
+
+
+def find_front(x, sn_tx):
+    # front = location of minimum normal stress per time step
+    return x[np.argmin(sn_tx, axis=1)]
+
+
+def cut_before_boundary(front, t, mesh_size):
+    t_sorted = np.sort(t)
+    front_argsorted = front[np.argsort(t)]
+    boundary = front_argsorted.max() - mesh_size
+    idx_cut = np.argmax(front_argsorted >= boundary)
+    front_cut = front_argsorted[:idx_cut]
+    t_cut = t_sorted[:idx_cut]
+    return front_cut, t_cut
+
+
+def fit_front_power_law(t, front):
+    t = np.asarray(t)
+    front = np.asarray(front)
+    m = t > 0
+    t, front = t[m], front[m]
+    (A, alpha), _ = curve_fit(power_law, t, front, p0=(front.max(), 0.8), maxfev=20_000)
+    return A, alpha
+
+
+def read_run(fp: Path):
+    with h5py.File(fp, "r") as f:
+        x = cast(h5py.Dataset, f["coordinates/x_subcontacts"])[:]
+        t = cast(h5py.Dataset, f["coordinates/t"])[:]
+        sn_tx = cast(h5py.Dataset, f["fields/stress_normal"])[:]
+        params = {
+            k: cast(h5py.Dataset, f[f"parameters/{k}"])[()]
+            for k in cast(h5py.Group, f["parameters"]).keys()
+        }
+    return x, t, sn_tx, params
+
+
+def analyze_run(fp: Path, mesh_size: float, t_slice=None):
+    x, t, sn_tx, params = read_run(fp)
+    front = find_front(x, sn_tx)
+    front, t = cut_before_boundary(front, t, mesh_size)
+
+    if t_slice is not None:
+        front = front[t_slice]
+        t = t[t_slice]
+
+    A, alpha = fit_front_power_law(t, front)
+    return {"file": fp.name, "A": A, "alpha": alpha, "front": front, "t": t, **params}
+
+
+# %%
+result_dir = Path.cwd() / "results" / "3dec" / "runs"
+filepath = result_dir / "run-q-1e-03.hdf5"
+
+x, t, sn_tx, params = read_run(filepath)
+# x_front_uncut = find_front(x, sn_tx)
+# t_front, x_front = cut_before_boundary(x_front_uncut, t, mesh_size=4)
+
+# %%
+plt.figure()
+plt.plot(t, np.max(-sn_tx, axis=1) / 1e5, ".")
+plt.show()
+
+# %%
+plt.figure()
+plt.plot(x, -sn_tx[100] / 1e5, ".")
+plt.xlabel("x")
+plt.ylabel("-sn")
+plt.title("tensile stress profile")
+plt.tight_layout()
+plt.show()
+
+
+# %%
+# -------------------------------------------------------------------
+# Importing results of alpha for injection rate effect analysis
+# -------------------------------------------------------------------
+
+result_dir = Path.cwd() / "results" / "3dec" / "runs"
+files_q0 = [
+    result_dir / "run-q-1e-07.hdf5",
+    result_dir / "run-q-1e-06.hdf5",
+    result_dir / "run-q-1e-05.hdf5",
+    result_dir / "run-q-1e-04.hdf5",
+    result_dir / "run-q-1e-03.hdf5",
+    result_dir / "run-q-1e-02.hdf5",
+]
+
+results = []
+for fp in files_q0:
+    if not fp.exists():
+        print(f"Missing: {fp.name}")
+        continue
+    results.append(analyze_run(fp, mesh_size=4.0))
+
+results = sorted(results, key=lambda d: d["q_0"])
+for r in results:
+    print(f"{r['file']}: q0={r['q_0']:.1e}  A={r['A']:.4g}  alpha={r['alpha']:.4g}")
+
+# %%
+
+fp = result_dir / "run-q-1e-06.hdf5"
+
+with h5py.File(fp, "r") as f:
+    x = cast(h5py.Dataset, f["coordinates/x_subcontacts"])[:]
+    t = cast(h5py.Dataset, f["coordinates/t"])[:]
+    sn_tx = cast(h5py.Dataset, f["fields/stress_normal"])[:]
+    params = {
+        k: cast(h5py.Dataset, f[f"parameters/{k}"])[()]
+        for k in cast(h5py.Group, f["parameters"]).keys()
+    }
+
+# %%
+idx = -3000
+sn_x = sn_tx[idx]
+
+plt.figure()
+plt.plot(x, -sn_x, ".")
+plt.show()
