@@ -19,18 +19,19 @@ def _filter_elements(
     pos_x: Callable[[Any], float],
     pos_y: Callable[[Any], float],
     get_id: Callable[[Any], int],
-    y_threshold: float = 5.0,
+    y_threshold: float = 2e-1,
 ) -> tuple[FloatArray, IntArray]:
     x_vals: list[float] = []
     id_vals: list[int] = []
     for elem in iterable:
-        if pos_y(elem) >= y_threshold:
+        if -y_threshold <= pos_y(elem) <= y_threshold:
             x_vals.append(pos_x(elem))
             id_vals.append(get_id(elem))
-    return (
-        np.asarray(x_vals, dtype=np.float64),
-        np.asarray(id_vals, dtype=np.int32),
-    )
+    x_arr = np.asarray(x_vals, dtype=np.float64)
+    id_arr = np.asarray(id_vals, dtype=np.int32)
+    x_uniq, ind = np.unique(x_arr, return_index=True)
+    ids_uniq = id_arr[ind]
+    return (x_uniq, ids_uniq)
 
 
 # --- Coordinates container ---
@@ -51,7 +52,7 @@ class Coordinates:
     subcontacts: ElementCoords
     flowzones: ElementCoords
 
-    def __init__(self, y_threshold: float = 5.0) -> None:
+    def __init__(self, y_threshold: float = float(it.fish.get('mesh_size_min'))) -> None:
         v = it.flowplane.vertex.Vertex
         sc = it.block.subcontact.Subcontact
         z = it.flowplane.zone.Zone

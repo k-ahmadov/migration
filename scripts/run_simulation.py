@@ -1,10 +1,12 @@
-import numpy as np
-import h5py
-
 from pathlib import Path
+from typing import Any, Collection, cast
+
+import h5py
+import numpy as np
 
 import mysolvers.aperture_solver as aperture_solver
 import mysolvers.elastic_solution as elastic_solution
+from mypackages import physics, types
 
 
 class Param:
@@ -19,23 +21,23 @@ class FVMResults:
         self,
         x: np.ndarray,
         t: np.ndarray,
-        p_tx: np.ndarray,
-        w_tx: np.ndarray,
+        p: np.ndarray,
+        w: np.ndarray,
     ) -> None:
         if x.ndim != 1 or t.ndim != 1:
             raise ValueError("x and t must be 1D arrays")
-        if p_tx.ndim != 2 or w_tx.ndim != 2:
+        if p.ndim != 2 or w.ndim != 2:
             raise ValueError("p_tx and w_tx must be 2D arrays")
         Nx = x.size
         Nt = t.size
-        if p_tx.shape != (Nt, Nx):
+        if p.shape != (Nt, Nx):
             raise ValueError(f"p_tx must have shape ({Nt}, {Nx})")
-        if w_tx.shape != (Nt, Nx):
+        if w.shape != (Nt, Nx):
             raise ValueError(f"w_tx must have shape ({Nt}, {Nx})")
         self.x = x
         self.t = t
-        self.p_tx = p_tx
-        self.w_tx = w_tx
+        self.p = p
+        self.w = w
 
 
 class ElasticResults:
@@ -43,31 +45,19 @@ class ElasticResults:
         self,
         x: np.ndarray,
         t: np.ndarray,
-        sn_tx: np.ndarray,
+        sn: np.ndarray,
     ) -> None:
         if x.ndim != 1 or t.ndim != 1:
             raise ValueError("x and t must be 1D arrays")
-        if sn_tx.ndim != 2:
+        if sn.ndim != 2:
             raise ValueError("sn_tx must be a 2D array")
         Nx = x.size
         Nt = t.size
-        if sn_tx.shape != (Nt, Nx):
+        if sn.shape != (Nt, Nx):
             raise ValueError(f"sn_tx must have shape ({Nt}, {Nx})")
         self.x = x
         self.t = t
-        self.sn_tx = sn_tx
-
-
-def _dimensionalize(
-    *, L: float, k_n: float, mu: float, q_0: float
-) -> tuple[float, float]:
-    """Return characteristic aperture (w_char) and time (t_char)."""
-    if L <= 0 or mu <= 0:
-        raise ValueError("L and mu must be positive.")
-    coefficient_a = k_n / (12.0 * mu)
-    w_char = (L * q_0 / coefficient_a) ** 0.25
-    t_char = (L * L) / (coefficient_a * (w_char**3))
-    return w_char, t_char
+        self.sn = sn
 
 
 def run_fvm_code(
@@ -86,7 +76,9 @@ def run_fvm_code(
     if T < 0:
         raise ValueError("T must be non-negative.")
 
-    w_char, t_char = _dimensionalize(L=L, k_n=k_n, mu=mu, q_0=q_0)
+    w_char, t_char = physics.dimensionalize(
+        types.Parameters(L=L, mu=mu, k_n=k_n, q_0=q_0)
+    )
 
     w_hat_tx = aperture_solver.solve_dimless_nonlinear_diffusion_n3_constant_flux(
         Nx=Nx,
@@ -102,10 +94,11 @@ def run_fvm_code(
     # grids (cell centers in x, uniform time steps)
     dx = L / Nx
     x = (np.arange(Nx, dtype=np.float64) + 0.5) * dx
-    dt = T / Nt
-    t = np.arange(Nt, dtype=np.float64) * dt
+    # dt = T / Nt
+    # t = np.arange(Nt, dtype=np.float64) * dt
+    t = np.linspace(0, T, Nt, dtype=np.float64)
 
-    return FVMResults(x=x, t=t, p_tx=p_tx, w_tx=w_tx)
+    return FVMResults(x=x, t=t, p=p_tx, w=w_tx)
 
 
 class InterpRHS:
@@ -176,7 +169,58 @@ def run_elastic_solution(
 
     # keep x >= 0 half
     mask = x_out >= 0
-    return ElasticResults(x=x_out[mask], t=t, sn_tx=sn_tx[:, mask])
+    return ElasticResults(x=x_out[mask], t=t, sn=sn_tx[:, mask])
+
+
+def run_simulation(parameters: dict, out_filepath: Path):
+    # find characteristic duration for the simulation
+    T = physics.dimensionalize(
+        types.Parameters(
+            k_n=parameters["k_n"].value,
+            mu=parameters["mu"].value,
+            q_0=parameters["q_0"].value,
+            L=parameters["L"].value,
+        )
+    )[1]
+    parameters["T"] = Param(T, "s", "Duration")
+    print(f"Simulation duration: {T}")
+
+    FVM_result = run_fvm_code(
+        L=parameters["L"].value,
+        k_n=parameters["k_n"].value,
+        mu=parameters["mu"].value,
+        w_i=parameters["w_i"].value,
+        T=parameters["T"].value,
+        q_0=parameters["q_0"].value,
+        Nx=int(parameters["Nx_p"].value),
+        Nt=int(parameters["Nt"].value),
+    )
+    print("FVM simulation finished")
+
+    Elastic_result = run_elastic_solution(
+        E=parameters["E"].value,
+        nu=parameters["nu"].value,
+        k_n=parameters["k_n"].value,
+        L=parameters["L"].value,
+        sn_char=parameters["sn_char"].value,
+        Nx_sn=int(parameters["Nx_sn"].value),
+        T=int(parameters["T"].value),
+        x_fvm=FVM_result.x,
+        p_tx=FVM_result.p,
+    )
+    print("Elastic half-space solution finished")
+
+    save_results_hdf5(
+        filepath=out_filepath,
+        x_fvm=FVM_result.x,
+        t=FVM_result.t,
+        p_tx=FVM_result.p,
+        w_tx=FVM_result.w,
+        x_elastic=Elastic_result.x,
+        sn_tx=Elastic_result.sn,
+        parameters=parameters,
+    )
+    print(f"Results stored in {out_filepath}")
 
 
 def save_results_hdf5(
@@ -192,7 +236,7 @@ def save_results_hdf5(
     # ensure directory exists
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
-    with h5py.File(filepath, "w") as f:
+    with h5py.File(str(filepath), "w") as f:
         # Coordinates
         g_coords = f.create_group("coordinates")
         ds_xp = g_coords.create_dataset("x_fvm", data=x_fvm)
@@ -205,7 +249,7 @@ def save_results_hdf5(
         # Fields
         g_fields = f.create_group("fields")
         ds_p = g_fields.create_dataset(
-            "pressure", data=p_tx, compression="gzip", compression_opts=4
+            "fluid_pressure", data=p_tx, compression="gzip", compression_opts=4
         )
         ds_w = g_fields.create_dataset(
             "aperture", data=w_tx, compression="gzip", compression_opts=4
@@ -220,71 +264,43 @@ def save_results_hdf5(
         # Parameters
         g_params = f.create_group("parameters")
         for name, p in parameters.items():
-            dset = g_params.create_dataset(name, data=p.value)
+            dset = g_params.create_dataset(name, data=cast(Collection[Any], p.value))
             dset.attrs["unit"] = p.unit
             dset.attrs["description"] = p.description
 
 
+def run_multiple_simuls(parameters: dict, out_dirpath: Path):
+    k_n_min = 10e9
+    k_n_max = 10000e9
+    k_n_values = np.linspace(k_n_min, k_n_max, 10)
+    for k_n in k_n_values:
+        parameters["k_n"] = Param(k_n, "GPa/m", "Normal Stiffness")
+        out_file = out_dirpath / f"run-kn-{parameters['k_n'].value:.1e}.hdf5"
+        run_simulation(parameters, out_file)
+
+
 def main() -> None:
     parameters: dict[str, Param] = {
-        "k_n": Param(50e9, "Pa/m", "Normal stiffness"),
+        "k_n": Param(200e9, "Pa/m", "Normal stiffness"),
         "L": Param(100.0, "m", "Fracture length"),
         "mu": Param(1e-3, "Pa.s", "Fluid viscosity"),
-        "w_i": Param(1e-4, "m", "Initial aperture"),
-        "T": Param(50.0, "s", "Duration"),
-        "q_0": Param(1e-3, "m^2/s", "Applied injection rate"),
-        "E": Param(60e9, "Pa/m", "Young's modulus"),
+        "w_i": Param(5e-5, "m", "Initial aperture"),
+        "q_0": Param(1e-4, "m^2/s", "Applied injection rate"),
+        "E": Param(60e9, "Pa", "Young's modulus"),
         "nu": Param(0.25, "-", "Poisson's ratio"),
         "sn_char": Param(1e6, "Pa", "Characteristic stress"),
-        "Nx_p": Param(1000, "-", "Number of spatial cells for fvm code"),
+        "Nx_p": Param(256, "-", "Number of spatial cells for fvm code"),
         "Nx_sn": Param(512, "-", "Number of spatial cells for elastic solution"),
-        "Nt": Param(400, "-", "Number of time steps"),
+        "Nt": Param(500, "-", "Number of time steps"),
     }
 
-    L = float(parameters["L"].value)
-    k_n = float(parameters["k_n"].value)
-    mu = float(parameters["mu"].value)
-    w_i = float(parameters["w_i"].value)
-    E = float(parameters["E"].value)
-    nu = float(parameters["nu"].value)
-    sn_char = float(parameters["sn_char"].value)
-    T = float(parameters["T"].value)
-    Nx_p = int(parameters["Nx_p"].value)
-    Nx_sn = int(parameters["Nx_sn"].value)
-    Nt = int(parameters["Nt"].value)
-    q_0 = float(parameters["q_0"].value)
+    # out_dir = Path.cwd() / "results" / "fvm-elastic" / "wi-1e-05"
+    # out_file = out_dir / f"run-q-{parameters['q_0'].value:.0e}.hdf5"
+    # run_simulation(parameters, out_file)
 
-    FVM_result = run_fvm_code(
-        L=L, k_n=k_n, mu=mu, w_i=w_i, T=T, q_0=q_0, Nx=Nx_p, Nt=Nt
-    )
-    print("FVM simulation finished")
+    out_dir = Path.cwd() / "results" / "fvm-elastic" / "for-V-T" / "mixed"
+    run_multiple_simuls(parameters, out_dir)
 
-    Elastic_result = run_elastic_solution(
-        E=E,
-        nu=nu,
-        k_n=k_n,
-        L=L,
-        sn_char=sn_char,
-        Nx_sn=Nx_sn,
-        T=T,
-        x_fvm=FVM_result.x,
-        p_tx=FVM_result.p_tx,
-    )
-    print("Elastic half-space solution finished")
-
-    out_dir = Path.cwd() / "results" / "fvm-elastic" / "runs"
-    out_file = out_dir / f"run-L-{q_0:.0e}.hdf5"
-    save_results_hdf5(
-        filepath=out_file,
-        x_fvm=FVM_result.x,
-        t=FVM_result.t,
-        p_tx=FVM_result.p_tx,
-        w_tx=FVM_result.w_tx,
-        x_elastic=Elastic_result.x,
-        sn_tx=Elastic_result.sn_tx,
-        parameters=parameters,
-    )
-    print(f"Results stored in {out_file}")
 
 if __name__ == "__main__":
     main()

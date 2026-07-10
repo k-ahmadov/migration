@@ -60,8 +60,8 @@ class Fields:
     """Physical field profiles extracted from the current ITASCA model state."""
 
     sn_eff: np.ndarray  # effective normal stress
-    fluid_pressure: np.ndarray
-    sn: np.ndarray  # total normal stress  (sn_eff + fluid_pressure)
+    p: np.ndarray
+    sn: np.ndarray  # total normal stress  (sn_eff + p)
     tau: np.ndarray  # shear stress
     w: np.ndarray  # hydraulic aperture
     q: np.ndarray  # discharge (x-component)
@@ -84,8 +84,8 @@ class Fields:
             )
 
         self.sn_eff = restore("subcontacts", sc.find, sc.Subcontact.stress_norm)
-        self.fluid_pressure = restore("subcontacts", sc.find, sc.Subcontact.pp)
-        self.sn = self.sn_eff + self.fluid_pressure
+        self.p = restore("subcontacts", sc.find, sc.Subcontact.pp)
+        self.sn = self.sn_eff + self.p
         self.tau = restore("subcontacts", sc.find, sc.Subcontact.stress_shear)
         self.w = restore(
             "vertices", fp.vertex.find, fp.vertex.Vertex.aperture_hydraulic
@@ -142,7 +142,7 @@ def _require_scalar_series(
 
 #: Maps HDF5 dataset names to the corresponding Fields attributes.
 _FIELD_MAP: dict[str, str] = {
-    "fluid_pressure": "fluid_pressure",
+    "fluid_pressure": "p",
     "stress_normal": "sn",
     "stress_shear": "tau",
     "aperture": "w",

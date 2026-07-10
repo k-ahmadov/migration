@@ -1,33 +1,25 @@
-from pathlib import Path
-
-import h5py
-import itasca as it
+import itasca as it  # pyright: ignore[reportMissingImports]
 import numpy as np
+from scripts.store_coordinates import _filter_elements
 
+v = it.flowplane.vertex.Vertex
+sc = it.block.subcontact.Subcontact
+z = it.flowplane.zone.Zone
 
-class MeshIDs:
-    def __init__(self, filepath):
-        with h5py.File(filepath, "r") as f:
-            self.vertices = f["coordinates/id_vertices"][()]
-            self.subcontacts = f["coordinates/id_subcontacts"][()]
-            self.flowzones = f["coordinates/id_flowzones"][()]
+elem_type = sc
+iterable = it.block.subcontact.list()
+#iterable = it.flowplane.vertex.list()
+# iterable = it.flowplane.zone.list()
 
-
-def _restore_variables(mesh_ids, element_type, find_func, field_variable):
-    ids = getattr(mesh_ids, element_type)
-    values = [field_variable(find_func(elem_id)) for elem_id in ids]
-    return np.asarray(values, dtype=np.float64)
-
-
-fp = Path.cwd() / "tmp.hdf5"
-mesh_ids = MeshIDs(fp)
-
-vals = _restore_variables(
-    mesh_ids,
-    'vertices',
-    it.flowplane.vertex.find,
-    it.flowplane.vertex.Vertex.aperture_hydraulic,
+x, ids = _filter_elements(
+    iterable,
+    elem_type.pos_x,
+    elem_type.pos_y,
+    elem_type.id,
+    y_threshold=float(it.fish.get("mesh_size_min")),
 )
-print(vals)
 
+print(x, "\n")
+print(x.shape, "\n")
+print(ids.shape, "\n")
 print("finished, \n")

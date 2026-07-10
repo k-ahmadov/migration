@@ -5,8 +5,8 @@ block gridpoint apply velocity-z 0    range position-z [-L//2]
 block gridpoint apply velocity-x 0    range position-x 0
 
 ; roller boundary at the face looking towards us and the one opposite to it
-;block gridpoint apply velocity-y 0    range position-y 5
-;block gridpoint apply velocity-y 0    range position-y -5
+block gridpoint apply velocity-y 0    range position-y [W]
+block gridpoint apply velocity-y 0    range position-y [-W]
 
 ; zero displacement roller boundary conditions on top
 block gridpoint apply velocity-z 0    range position-z [L//2]

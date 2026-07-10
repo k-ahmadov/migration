@@ -2,7 +2,6 @@ from pathlib import Path
 
 import h5py
 import numpy as np
-
 from run_simulation import run_fvm_code
 
 
@@ -24,7 +23,7 @@ def save_results_hdf5(
     # ensure directory exists
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
-    with h5py.File(filepath, "w") as f:
+    with h5py.File(str(filepath), "w") as f:
         # Coordinates
         g_coords = f.create_group("coordinates")
         ds_xp = g_coords.create_dataset("x_fvm", data=x_fvm)

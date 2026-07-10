@@ -11,13 +11,13 @@ program call 'scripts/fish-support.dat'
 ; Solver configuration
 ; ============================================================
 
-program threads 24          ; parallel computing
+program threads 12          ; parallel computing
 
 model fluid      active on  ; fully coupled hydro-mechanical solution
 model mechanical active on
 
 ; mechanical sub-steps per fluid step (controls coupling accuracy)
-model mechanical substep 200
+model mechanical substep 50
 model mechanical slave on
 
 ; ============================================================
@@ -29,8 +29,9 @@ model mechanical slave on
 ; flowknot apply p-p [P_0] range pos-x 0
 
 ; --- Option 2: constant discharge rate (m²/s) ---
-[global q = 1e-8]
+[global q = 5e-5]
 flowplane edge apply discharge [q] range pos-x 0
+;flowknot apply discharge [q] range pos-x 0
 
 ; --- Option 3: linearly increasing discharge rate ---
 ; [global q = 1e-4]   ; initial slope of the ramp
@@ -42,21 +43,25 @@ flowplane edge apply discharge [q] range pos-x 0
 ; Output
 ; ============================================================
 
-[global filepath = "/home/kahmadov/phd/migration/results/3dec/runs-wi-1e-05/run-q-1e-08.hdf5"]
+[global result_dir = "/home/kahmadov/phd/migration/results/3dec/runs-wi-1e-05/"]
+[global filepath = result_dir+"run-q-"+string(q)+"-Kw-2e8.hdf5"]
 
 ; Initialise the HDF5 file and write coordinate arrays
 program call 'scripts/store_coordinates.py'
 
-; Store field profiles every 0.2 s of fluid time
+; Store field profiles every given fluid interval
 ; callback runs after fluid calculations (sequence position > 80)
-fish callback add store_results 81 interval 100 process fluid
+
+fish callback add store_results 81 interval 500 process fluid
 
 ; ============================================================
 ; Termination criteria (uncomment one)
 ; ============================================================
 
-; Stop when the pressure front reaches the far end of the fracture
-model solve fish-halt [halt_on_pressure_at_pos]
+; Stop when pressure threshold_pressure reaches the far end of the fracture
+[global threshold_pressure = 1e5]
+model solve fish-halt [halt_on_pressure_at_pos(threshold_pressure)]
 
-; Stop after a fixed fluid-time duration with a mechanical convergence ratio
-; model solve fluid time-total [T] mechanical ratio 1e-5
+; Stop after a fixed fluid-time duration
+; [global T_fin = ?]
+; model solve fluid time-total [T_fin]

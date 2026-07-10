@@ -1,25 +1,8 @@
-; geometry, properties, boundary and initial conditions
-program call "scripts/initial.dat"
+;[global K_w = 2e6]
+;block fluid property bulk [K_w]
+fish callback remove store_results
 
-; parallel computing
-program threads 24
-
-; inject fluid at x=0 with constant discharge rate (unit m^2/s)
-; [global q_0 = 1e-6]
-; flowplane edge apply discharge [q_0] range pos-x 0
-
-;block face apply stress-zz  -10e6  range pos-z [L//2]
-
-; [global P_0 = 11e6]
-; flowknot apply p-p [P_0] range pos-x 0
-[global q_0 = 1e-6]
-flowplane edge apply discharge [q_0] range pos-x 0
-
-; fully coupled solution
-model fluid active on
-model mech active on
-; number of mechanical steps at each fluid step 
-model mechanical substep 200
-model mechanical slave on
-
-model solve
+fish callback add store_results 81 interval 300 process fluid
+; Stop when pressure threshold_pressure reaches the far end of the fracture
+[global threshold_pressure = 1e6]
+model solve fish-halt [halt_on_pressure_at_pos(threshold_pressure)]

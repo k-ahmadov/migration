@@ -6,13 +6,18 @@ model large-strain off
 program threads 12
 
 [global L=100]
-block create brick 0 [L] -5 5 [-L//2] [L//2]
+[global W=2]
+block create brick 0 [L] [-W] [W] [-L//2] [L//2]
 
 block cut joint-set dip 0 dip-direction 90 origin 0, 0, 0
 
-block densify segments 5 1 5 join
+block densify segments 5 1 10 join
 
-block zone size edgelength 2 range pos-x 0 [L] pos-z [-L//10] [L//10] 
-block zone generate-new min-edge 2 max-edge 8 grad-surface 0.05
+[global mesh_size_min = 1]
+[global mesh_size_int = 2]
+[global mesh_size_max = 10]
+block zone size edgelength [mesh_size_min] range pos-x 0 [L//5] pos-z [-L//20] [L//20]
+block zone size edgelength [mesh_size_int] range pos-x [L//5] [L] pos-z [-L//20] [L//20]
+block zone generate-new min-edge [mesh_size_min] max-edge [mesh_size_max] grad-surface 0.3
 
 model save "../saves/geometry"
