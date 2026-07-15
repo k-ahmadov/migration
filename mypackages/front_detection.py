@@ -80,18 +80,18 @@ def find_stress_front(x, sn, mesh_size: float = 4.0) -> tuple[np.ndarray, int]:
 
 def self_similar_front_threshold(
     run: file_io.RunData,
-    θ_front: DimensionlessApertureAtFront,
+    theta_front: DimensionlessApertureAtFront,
     is_pressure: bool = True,
 ) -> FrontDetectionThreshold:
     """Self-similar threshold:
-    pressure -  θ_front * sqrt(q0^2 * t / D) * k_n.
-    aperture - w_i + θ_front * sqrt(q0^2 * t / D)."""
+    pressure -  theta_front * sqrt(q0^2 * t / D) * k_n.
+    aperture - w_i + theta_front * sqrt(q0^2 * t / D)."""
     D = diffusivity(run.params)
     q = run.params.q_0 or run.params.q
     assert q is not None and q > 0, f"expected correct injection rate, got {q}"
     scale = np.sqrt(q**2 * run.t / D)
-    w_front = run.params.w_i + θ_front * scale
-    p_front = θ_front * scale * run.params.k_n
+    w_front = run.params.w_i + theta_front * scale
+    p_front = theta_front * scale * run.params.k_n
     return p_front if is_pressure else w_front
 
 

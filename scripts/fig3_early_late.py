@@ -12,7 +12,7 @@ from mysolvers.exact_solutions import solve_linear_diffusion_const_flux
 result_dir = Path.cwd() / "results" / "3dec" / "runs-wi-1e-05"
 run = file_io.read_run(result_dir / "run-q-5e-07.hdf5")
 D = physics.diffusivity(run.params)
-t_c = physics.characteristic_time(run.params)
+t_c = physics.critical_time(run.params)
 idx_tc = 30 * (np.searchsorted(run.t, t_c) + 1)
 
 
@@ -22,7 +22,7 @@ result = front_analysis.analyze(run, stress_front=True)
 result_early = front_analysis.analyze_early_time(
     run, stress_front=True, slc=slice(None, idx_tc)
 )
-A_late, α_late = physics.fit_front_power_law(
+A_late, alpha_late = physics.fit_front_power_law(
     result.t_front[idx_tc:], result.x_front[idx_tc:]
 )
 result_late = front_analysis.analyze_late_time(
@@ -32,9 +32,9 @@ result_late = front_analysis.analyze_late_time(
 # %% pressure at injection point
 x_sc, p = file_io.sort_fields(run.x_sc, run.p)
 p_inj = p[:, 0]
-ζ_ana = solve_linear_diffusion_const_flux(np.linspace(0, 10, 200))[0]
-p_inj_ana = ζ_ana * run.params.flux * np.sqrt(run.t / D) * run.params.k_n
-A_p_late, α_p_late = physics.fit_front_power_law(run.t[idx_tc:], p_inj[idx_tc:] / 1e6)
+zeta_ana = solve_linear_diffusion_const_flux(np.linspace(0, 10, 200))[0]
+p_inj_ana = zeta_ana * run.params.flux * np.sqrt(run.t / D) * run.params.k_n
+A_p_late, alpha_p_late = physics.fit_front_power_law(run.t[idx_tc:], p_inj[idx_tc:] / 1e6)
 result_p_inj_rigid = p_inj_analysis.analyze_rigid(run)
 result_p_inj_soft = p_inj_analysis.analyze_soft(run)
 
@@ -57,7 +57,7 @@ ax2.cla()
 ax1.plot(result.t_front, result.x_front, ".", color="tab:gray", label="Numerical")
 ax1.plot(
     result.t_front,
-    result_early.A_ana * result.t_front**result_early.α_ana,
+    result_early.A_ana * result.t_front**result_early.alpha_ana,
     "k-",
     label="Analytical",
 )
@@ -69,7 +69,7 @@ ax1.annotate(
     ha="left",
     arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
 )
-ax1.plot(result.t_front, result_late.A_ana * result.t_front**result_late.α_ana, "k-")
+ax1.plot(result.t_front, result_late.A_ana * result.t_front**result_late.alpha_ana, "k-")
 ax1.annotate(
     r"$x_f=\zeta_f \ ( M q^3 t^4)^{1/5}$" "\n(late-time)",
     xy=(result_late.t_front[250], result_late.x_analytical()[250]),
@@ -80,10 +80,10 @@ ax1.annotate(
 )
 
 plotting.slope_triangle(
-    ax1, result_early.t_front[1], prefactor=result_early.A_ana, slope=result_early.α_ana
+    ax1, result_early.t_front[1], prefactor=result_early.A_ana, slope=result_early.alpha_ana
 )
 plotting.slope_triangle(
-    ax1, result_late.t_front[2], prefactor=result_late.A_ana, slope=result_late.α_ana
+    ax1, result_late.t_front[2], prefactor=result_late.A_ana, slope=result_late.alpha_ana
 )
 
 ax1.set(
@@ -136,10 +136,10 @@ ax1.set_title(rf"Applied injection rate $q={run.params.flux:.0e}~\mathsf{{m^2/s}
 plt.pause(0.01)
 
 # %%
-# ax2.plot(run.t, A_p_late * 1e6 * run.t**α_p_late, "k--", label="Fit")
+# ax2.plot(run.t, A_p_late * 1e6 * run.t**alpha_p_late, "k--", label="Fit")
 # ax2.annotate(
-#     rf"$p_0=A t^{{{α_p_late:.2f}}}$",
-#     xy=(run.t[200], (A_p_late * 1e6 * run.t**α_p_late)[200]),
+#     rf"$p_0=A t^{{{alpha_p_late:.2f}}}$",
+#     xy=(run.t[200], (A_p_late * 1e6 * run.t**alpha_p_late)[200]),
 #     xytext=(10, -40),
 #     textcoords="offset points",
 #     ha="left",

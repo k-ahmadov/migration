@@ -228,25 +228,25 @@ def nondim_powerlaw(
     t,
     w,
     params,
-    α_x: float,
-    α_w: float,
+    alpha_x: float,
+    alpha_w: float,
     wi: float = 0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Power-law nondimensionalization with custom exponents:
 
-        ζ = x / t^α_x
-        θ = w / t^α_w
+        zeta = x / t^alpha_x
+        theta = w / t^alpha_w
 
     Used to empirically find the best-fit scaling exponents.
-    For the rigid case the theoretical values are α_x=0.5, α_w=0.5;
-    for the soft case α_x=0.8, α_w=0.2.
+    For the rigid case the theoretical values are alpha_x=0.5, alpha_w=0.5;
+    for the soft case alpha_x=0.8, alpha_w=0.2.
     """
     w_ = np.asarray(w)
     if w_.ndim == 1:
-        return x / t**α_x, (w - wi) / t**α_w
+        return x / t**alpha_x, (w - wi) / t**alpha_w
     elif w_.ndim == 2:
-        return x / t[:, None] ** α_x, (w - wi) / t[:, None] ** α_w
+        return x / t[:, None] ** alpha_x, (w - wi) / t[:, None] ** alpha_w
     else:
         raise ValueError("w should either be 1 or 2 dimensional")
 
@@ -260,7 +260,7 @@ class NondimFrontResults:
     theta: np.ndarray
 
 
-def analyze_nondim(run, α_x, α_w, pct_increase, wi=0.0):
+def analyze_nondim(run, alpha_x, alpha_w, pct_increase, wi=0.0):
     w_front = front_detection.constant_aperture_threshold(run, pct_increase)
     x_front, has_crossing = front_detection.find_field_front(run.x_vert, run.w, w_front)
     t_front = run.t[has_crossing]
@@ -269,8 +269,8 @@ def analyze_nondim(run, α_x, α_w, pct_increase, wi=0.0):
         t=t_front,
         w=w_front[has_crossing],
         params=None,
-        α_x=α_x,
-        α_w=α_w,
+        alpha_x=alpha_x,
+        alpha_w=alpha_w,
         wi=wi,
     )
     return NondimFrontResults(
@@ -282,11 +282,11 @@ def analyze_nondim(run, α_x, α_w, pct_increase, wi=0.0):
     )
 
 
-α_x = 0.67
-α_w = 0.0
+alpha_x = 0.67
+alpha_w = 0.0
 pct_increase = 0.1
 nondim_front_res = analyze_nondim(
-    run=run_1, α_x=α_x, α_w=α_w, pct_increase=pct_increase
+    run=run_1, alpha_x=alpha_x, alpha_w=alpha_w, pct_increase=pct_increase
 )
 
 # %% ---------------------------------------------------------------------------
@@ -298,7 +298,7 @@ fig2, (ax1, ax2) = plt.subplots(
 )
 sm2 = plot_run(
     run_1,
-    partial(nondim_powerlaw, α_x=α_x, α_w=α_w),
+    partial(nondim_powerlaw, alpha_x=alpha_x, alpha_w=alpha_w),
     ax1,
     ax2,
     step=5,
@@ -306,9 +306,9 @@ sm2 = plot_run(
 )
 ax2.set(
     xlim=(-0.5, 15),
-    title=rf"$x \propto t^{{{α_x}}}$, $w \propto t^{{{α_w}}}$",
-    xlabel=rf"$\zeta=\dfrac{{x}}{{t^{{{α_x}}}}}$",
-    ylabel=rf"$\theta=\dfrac{{w}}{{t^{{{α_w}}}}}$",
+    title=rf"$x \propto t^{{{alpha_x}}}$, $w \propto t^{{{alpha_w}}}$",
+    xlabel=rf"$\zeta=\dfrac{{x}}{{t^{{{alpha_x}}}}}$",
+    ylabel=rf"$\theta=\dfrac{{w}}{{t^{{{alpha_w}}}}}$",
 )
 ax1.plot(nondim_front_res.x, nondim_front_res.w * 1e3, "k-")
 ax2.plot(nondim_front_res.zeta, nondim_front_res.theta, "k.")
@@ -319,11 +319,11 @@ plt.show()
 
 
 # %%
-α_x = 0.66
-α_w = 0.33
+alpha_x = 0.66
+alpha_w = 0.33
 pct_increase = 0.1
 nondim_front_res = analyze_nondim(
-    run=run_2, α_x=α_x, α_w=α_w, pct_increase=pct_increase
+    run=run_2, alpha_x=alpha_x, alpha_w=alpha_w, pct_increase=pct_increase
 )
 
 # %% ---------------------------------------------------------------------------
@@ -335,7 +335,7 @@ fig2, (ax1, ax2) = plt.subplots(
 )
 sm2 = plot_run(
     run_2,
-    partial(nondim_powerlaw, α_x=α_x, α_w=α_w),
+    partial(nondim_powerlaw, alpha_x=alpha_x, alpha_w=alpha_w),
     ax1,
     ax2,
     step=5,
@@ -343,9 +343,9 @@ sm2 = plot_run(
 )
 ax2.set(
     xlim=(-0.5, 15),
-    title=rf"$x \propto t^{{{α_x}}}$, $w \propto t^{{{α_w}}}$",
-    xlabel=rf"$\zeta=\dfrac{{x}}{{t^{{{α_x}}}}}$",
-    ylabel=rf"$\theta=\dfrac{{w}}{{t^{{{α_w}}}}}$",
+    title=rf"$x \propto t^{{{alpha_x}}}$, $w \propto t^{{{alpha_w}}}$",
+    xlabel=rf"$\zeta=\dfrac{{x}}{{t^{{{alpha_x}}}}}$",
+    ylabel=rf"$\theta=\dfrac{{w}}{{t^{{{alpha_w}}}}}$",
 )
 ax1.plot(nondim_front_res.x, nondim_front_res.w * 1e3, "k-")
 ax2.plot(nondim_front_res.zeta, nondim_front_res.theta, "k.")
@@ -355,11 +355,11 @@ figpath = Path.cwd() / "figures" / "similarity" / f"q-{run_2.params['q_0']:.0e}-
 plt.show()
 
 # %%
-α_x = 0.5
-α_w = 0.5
+alpha_x = 0.5
+alpha_w = 0.5
 pct_increase = 0.01
 nondim_front_res = analyze_nondim(
-    run=run_0, α_x=α_x, α_w=α_w, pct_increase=pct_increase, wi=run_0.params["w_i"]
+    run=run_0, alpha_x=alpha_x, alpha_w=alpha_w, pct_increase=pct_increase, wi=run_0.params["w_i"]
 )
 
 
@@ -372,7 +372,7 @@ fig2, (ax1, ax2) = plt.subplots(
 )
 sm2 = plot_run(
     run_0,
-    partial(nondim_powerlaw, α_x=α_x, α_w=α_w),
+    partial(nondim_powerlaw, alpha_x=alpha_x, alpha_w=alpha_w),
     ax1,
     ax2,
     step=5,
@@ -380,9 +380,9 @@ sm2 = plot_run(
 )
 ax2.set(
     xlim=(-0.5, 5),
-    title=rf"$x \propto t^{{{α_x}}}$, $w \propto t^{{{α_w}}}$",
-    xlabel=rf"$\zeta=\dfrac{{x}}{{t^{{{α_x}}}}}$",
-    ylabel=rf"$\theta=\dfrac{{w}}{{t^{{{α_w}}}}}$",
+    title=rf"$x \propto t^{{{alpha_x}}}$, $w \propto t^{{{alpha_w}}}$",
+    xlabel=rf"$\zeta=\dfrac{{x}}{{t^{{{alpha_x}}}}}$",
+    ylabel=rf"$\theta=\dfrac{{w}}{{t^{{{alpha_w}}}}}$",
 )
 ax1.plot(nondim_front_res.x, nondim_front_res.w * 1e3, "k-")
 ax2.plot(nondim_front_res.zeta, nondim_front_res.theta, "k.")

@@ -1,11 +1,8 @@
-import importlib
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
 from mypackages import file_io, p_inj_analysis, plotting
-
-importlib.reload(p_inj_analysis)
 
 # %%
 
@@ -19,13 +16,13 @@ fig, ax = plt.subplots()
 ax.plot(run.t, result_soft.p_inj_num, ".", color="tab:gray", label="3DEC")
 ax.plot(
     run.t,
-    result_soft.p_inj_analytical(run.t) / 1.06,
+    result_soft.p_inj_fit_ana(run.t) / 1.06,
     "-",
     color="k",
     label="Soft ana.",
 )
 plotting.slope_triangle(
-    ax, x0=run.t[100], prefactor=result_soft.A_ana / 1.06, slope=result_soft.α_ana
+    ax, x0=run.t[100], prefactor=result_soft.A_ana / 1.06, slope=result_soft.alpha_ana
 )
 ax.set(
     xlabel="Time [s]",

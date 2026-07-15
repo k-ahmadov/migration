@@ -31,7 +31,7 @@ plotting.slope_triangle(
     ax=plt.gca(),
     x0=result_short.t_front[25],
     prefactor=result_short.A_emp,
-    slope=round(result_short.α_emp, 2),
+    slope=round(result_short.alpha_emp, 2),
 )
 plt.plot(
     result_long.t_front,
@@ -45,7 +45,7 @@ plotting.slope_triangle(
     ax=plt.gca(),
     x0=result_long.t_front[25],
     prefactor=result_long.A_emp,
-    slope=round(result_long.α_emp, 2),
+    slope=round(result_long.alpha_emp, 2),
 )
 plt.xscale("log")
 plt.yscale("log")

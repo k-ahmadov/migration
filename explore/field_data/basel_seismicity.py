@@ -78,11 +78,11 @@ t_early, d_early = t_pct[:idx_start], d_pct[:idx_start]
 t_late, d_late = t_pct[idx_start:], d_pct[idx_start:]
 
 # Fits
-A_early, α_early = physics.fit_front_power_law(t_early, d_early)
-A_late, α_late = physics.fit_front_power_law(t_late, d_late)
+A_early, alpha_early = physics.fit_front_power_law(t_early, d_early)
+A_late, alpha_late = physics.fit_front_power_law(t_late, d_late)
 
-d_fit_early = A_early * t_early**α_early
-d_fit_late = A_late * t_late**α_late
+d_fit_early = A_early * t_early**alpha_early
+d_fit_late = A_late * t_late**alpha_late
 
 # %%
 
@@ -98,7 +98,7 @@ ax.plot(
     label="Early-time fit",
 )
 ax.annotate(
-    "Early-time" "\n" rf"$x_f \propto t^{{{α_early:.2f}}}$",
+    "Early-time" "\n" rf"$x_f \propto t^{{{alpha_early:.2f}}}$",
     xy=(t_early[3], d_fit_early[3]),
     xytext=(-20, 30),
     textcoords="offset points",
@@ -108,7 +108,7 @@ ax.annotate(
 )
 ax.plot(t_late, d_fit_late, "--", color="tab:orange", label="Late-time fit", lw=3)
 ax.annotate(
-    "Late-time" "\n" rf"$x_f \propto t^{{{α_late:.2f}}}$",
+    "Late-time" "\n" rf"$x_f \propto t^{{{alpha_late:.2f}}}$",
     xy=(t_late[10], d_fit_late[10]),
     xytext=(-20, 30),
     backgroundcolor="1",

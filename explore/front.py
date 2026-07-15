@@ -14,22 +14,22 @@ def plot_front_rigid(ax, result: front_analysis.FrontResultsWithAnalytical, titl
     t = result.t_front
     x = result.x_front
     ax.plot(t, x, ".", color="tab:gray", label="Numerical (3DEC)")
-    D = (result.A_ana / result.ζ_front) ** (1 / result.α_ana)
+    D = (result.A_ana / result.zeta_front) ** (1 / result.alpha_ana)
     ax.plot(
         t,
         result.x_analytical(),
         color="k",
         label=r"Analytical - $x_f = \zeta_f \, D^{0.5} t^{0.5}$"
         "\n"
-        rf"$\zeta_f={result.ζ_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$",
+        rf"$\zeta_f={result.zeta_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$",
     )
     slope_triangle(
-        ax, x0=t[len(t) // 10], prefactor=result.A_ana, slope=result.α_ana, dx_log=0.5
+        ax, x0=t[len(t) // 10], prefactor=result.A_ana, slope=result.alpha_ana, dx_log=0.5
     )
     # ax.text(
     #     t[int(0.01 * len(t))],  # pyright: ignore[reportIndexIssue]
     #     x[int(0.6 * len(x))],  # pyright: ignore[reportIndexIssue]
-    #     rf"$\zeta_f={result.ζ_front:.2f}$, $D={D:.2f}~\mathsf{{m^2/s}}$",
+    #     rf"$\zeta_f={result.zeta_front:.2f}$, $D={D:.2f}~\mathsf{{m^2/s}}$",
     # )
     ax.set(
         xlabel=r"Time $t$, [s]",
@@ -56,16 +56,16 @@ def plot_front_soft(ax, result: front_analysis.FrontResultsWithAnalytical, title
         result.x_empirical(),
         linestyle="--",
         color="k",
-        label=f"Fit - $x_f = {result.A_emp:.1f} \\, t^{{{result.α_emp:.1f}}}$",
+        label=f"Fit - $x_f = {result.A_emp:.1f} \\, t^{{{result.alpha_emp:.1f}}}$",
     )
     slope_triangle(
-        ax, x0=t[len(t) // 100], prefactor=result.A_ana, slope=result.α_ana, dx_log=0.3
+        ax, x0=t[len(t) // 100], prefactor=result.A_ana, slope=result.alpha_ana, dx_log=0.3
     )
     slope_triangle(
         ax,
         x0=t[len(t) // 3],
         prefactor=result.A_emp,
-        slope=round(result.α_emp, 1),
+        slope=round(result.alpha_emp, 1),
         dx_log=0.3,
     )
     # ax.text(
@@ -76,7 +76,7 @@ def plot_front_soft(ax, result: front_analysis.FrontResultsWithAnalytical, title
     # ax.text(
     #     t[int(0.01 * len(t))],
     #     x[int(0.45 * len(x))],
-    #     rf"$\zeta_f={result.ζ_front:.2f}$",
+    #     rf"$\zeta_f={result.zeta_front:.2f}$",
     # )
     ax.set(
         xlabel=r"Time $t$, [s]",
@@ -139,7 +139,7 @@ def slope_triangle(ax, x0, prefactor, slope, dx_log=0.3, label_slope=True):
 
 
 def plot_early_late(ax, general, early, late, run, pc):
-    t_c = physics.characteristic_time(run.params)
+    t_c = physics.critical_time(run.params)
 
     ax.plot(
         general.t_front,
@@ -195,7 +195,7 @@ def main_rigid_soft():
     rigid = front_analysis.analyze_rigid(
         run_rigid,
         front_detection.self_similar_front_threshold(
-            run_rigid, θ_front=0.1, is_pressure=True
+            run_rigid, theta_front=0.1, is_pressure=True
         ),
     )
 
@@ -257,18 +257,18 @@ run_2 = file_io.read_run(result_dir / "run-q-1e-04.hdf5")
 run_3 = file_io.read_run(result_dir / "run-q-1e-03.hdf5")
 
 results_0 = front_analysis.analyze_rigid(
-    run_0, threshold=front_detection.self_similar_front_threshold(run_0, θ_front=0.1)
+    run_0, threshold=front_detection.self_similar_front_threshold(run_0, theta_front=0.1)
 )
 results_1 = front_analysis.analyze(
-    run_1, threshold=front_detection.self_similar_front_threshold(run_1, θ_front=0.1)
+    run_1, threshold=front_detection.self_similar_front_threshold(run_1, theta_front=0.1)
 )
 results_2 = front_analysis.analyze(
-    # run_2, threshold=front_detection.self_similar_front_threshold(run_2, θ_front=0.1)
+    # run_2, threshold=front_detection.self_similar_front_threshold(run_2, theta_front=0.1)
     run_2,
     threshold=front_detection.constant_pressure_threshold(run_2.t, pc=5e5),
 )
 results_3 = front_analysis.analyze(
-    # run_3, threshold=front_detection.self_similar_front_threshold(run_3, θ_front=0.1)
+    # run_3, threshold=front_detection.self_similar_front_threshold(run_3, theta_front=0.1)
     run_3,
     threshold=front_detection.constant_pressure_threshold(run_3.t, pc=5e5),
 )
@@ -290,7 +290,7 @@ slope_triangle(
     ax,
     results_0.t_front[len(results_0.t_front) // 5],
     prefactor=results_0.A_ana,
-    slope=results_0.α_ana,
+    slope=results_0.alpha_ana,
 )
 ax.annotate(
     text=f"$q_0={run_0.params['q_0']:.0e}~\\mathsf{{m^2/s}}$",
@@ -310,7 +310,7 @@ slope_triangle(
     ax,
     results_2.t_front[len(results_2.t_front) // 5],
     prefactor=results_2.A_emp,
-    slope=round(results_2.α_emp, 1),
+    slope=round(results_2.alpha_emp, 1),
 )
 ax.annotate(
     text=f"$q_0={run_2.params['q_0']:.0e}~\\mathsf{{m^2/s}}$",
@@ -330,7 +330,7 @@ slope_triangle(
     ax,
     results_3.t_front[len(results_3.t_front) // 5],
     prefactor=results_3.A_emp,
-    slope=round(results_3.α_emp, 1),
+    slope=round(results_3.alpha_emp, 1),
 )
 ax.annotate(
     text=f"$q_0={run_3.params['q_0']:.0e}~\\mathsf{{m^2/s}}$",
@@ -356,7 +356,7 @@ plt.show()
 result_dir = Path.cwd() / "results" / "3dec" / "runs"
 run = file_io.read_run(result_dir / "run-q-1e-03.hdf5")
 threshold_ss = front_detection.self_similar_front_threshold(
-    run, θ_front=0.1, is_pressure=True
+    run, theta_front=0.1, is_pressure=True
 )
 threshold_cp = front_detection.constant_pressure_threshold(run.t[slice(None)], pc=1e5)
 results = front_analysis.analyze(run, threshold_cp)
@@ -416,7 +416,7 @@ for results, run, idx_frac, xytext in [
     (rigid, run_rigid, 12, (-15, 0)),
     (soft, run_soft, 100, (85, 20)),
 ]:
-    D = (results.A_ana / results.ζ_front) ** (1 / results.α_ana)
+    D = (results.A_ana / results.zeta_front) ** (1 / results.alpha_ana)
     idx = len(results.t_front) // idx_frac
 
     ax.loglog(results.t_front, results.x_front, ".", color="tab:gray")
@@ -425,13 +425,13 @@ for results, run, idx_frac, xytext in [
         ax,
         x0=results.t_front[idx],
         prefactor=results.A_ana,
-        slope=results.α_ana,
+        slope=results.alpha_ana,
         dx_log=0.3,
     )
     ax.annotate(
         text=rf"$x_f = \zeta_f \, \sqrt{{D t}}$"
         "\n"
-        rf"$\zeta_f={results.ζ_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$"
+        rf"$\zeta_f={results.zeta_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$"
         "\n"
         rf"$k_n={run.params['k_n'] / 1e9}~\mathsf{{GPa/m}}$",
         xy=(results.t_front[idx], results.x_front[idx]),
@@ -458,14 +458,14 @@ run = file_io.read_run(result_dir / "run-q-1e-09.hdf5")
 
 x_front, idx_cut = front_detection.find_stress_front(run.x_sc, run.sn, mesh_size=2)
 t_front = run.t[:idx_cut]
-A_emp, α_emp = physics.fit_front_power_law(
+A_emp, alpha_emp = physics.fit_front_power_law(
     t_front[: len(t_front) // 4], x_front[: len(t_front) // 4]
 )
 # front_analysis.analyze_rigid()
 # %%
 plt.figure()
 plt.loglog(t_front, x_front, ".")
-plt.loglog(t_front, A_emp * t_front**α_emp, ".")
+plt.loglog(t_front, A_emp * t_front**alpha_emp, ".")
 plt.ylabel("Front position [m]")
 plt.xlabel("Time [s]")
 plt.title("title")
@@ -486,15 +486,15 @@ run = file_io.read_pickle(result_dir / "soft.pkl")
 x_front, idx_cut = front_detection.find_stress_front(run.x_sc, run.sn, mesh_size=1)
 t_front = run.t[:idx_cut]
 idx = len(t_front)
-A_emp, α_emp = physics.fit_front_power_law(
+A_emp, alpha_emp = physics.fit_front_power_law(
     t_front[:idx],
     x_front[:idx],
 )
 # %%
 plt.figure()
 plt.loglog(t_front, x_front, ".")
-# plt.loglog(t_front, A_ana * t_front**α_ana, "-")
-plt.loglog(t_front, A_emp * t_front**α_emp, "--")
+# plt.loglog(t_front, A_ana * t_front**alpha_ana, "-")
+plt.loglog(t_front, A_emp * t_front**alpha_emp, "--")
 plt.ylabel("Front position [m]")
 plt.xlabel("Time [s]")
 plt.title("title")

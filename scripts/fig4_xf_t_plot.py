@@ -18,7 +18,7 @@ def plot_constant_pressure(
     marker_styles: list[str],
 ):
     for result, run, xytext, marker_style in zip(results, runs, xytexts, marker_styles):
-        D = (result.A_ana / result.ζ_front) ** (1 / result.α_ana)
+        D = (result.A_ana / result.zeta_front) ** (1 / result.alpha_ana)
         idx = len(result.t_front) // 8
 
         ax.plot(
@@ -35,14 +35,14 @@ def plot_constant_pressure(
             ax,
             x0=result.t_front[idx],
             prefactor=result.A_ana,
-            slope=result.α_ana,
+            slope=result.alpha_ana,
             dx_log=0.3,
         )
         ax.annotate(
             text=(
                 rf"$x_f = \zeta_f \, \sqrt{{D t}}$"
                 "\n"
-                rf"$\zeta_f={result.ζ_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$"
+                rf"$\zeta_f={result.zeta_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$"
                 "\n"
                 rf"$k_n={run.params.k_n / 1e9}~\mathsf{{GPa/m}}$"
             ),
@@ -75,10 +75,10 @@ def plot_constant_pressure(
 def recalibrate_zeta(
     D: HydraulicDiffusivity, result: front_analysis.FrontResultsWithAnalytical
 ):
-    # recalibrate ζ_front for rigid case to only use the first half of data
+    # recalibrate zeta_front for rigid case to only use the first half of data
     idx = len(result.t_front) // 2
     zeta = float(
-        np.mean(result.x_front[:idx] / (D * result.t_front[:idx]) ** result.α_ana)
+        np.mean(result.x_front[:idx] / (D * result.t_front[:idx]) ** result.alpha_ana)
     )
     return zeta
 
@@ -91,10 +91,10 @@ def plot_constant_rate(
     xytexts: list[tuple[int, int]],
     fit_types: list[str],
 ):
-    # recalibrate ζ for rigid case to only use the first half of data
+    # recalibrate zeta for rigid case to only use the first half of data
     D = physics.diffusivity(runs[0].params)
-    ζ = recalibrate_zeta(D, results[0])
-    results[0].A_ana = ζ * D ** results[0].α_ana
+    zeta = recalibrate_zeta(D, results[0])
+    results[0].A_ana = zeta * D ** results[0].alpha_ana
 
     for result, run, marker_style, xytext, fit_type in zip(
         results, runs, marker_styles, xytexts, fit_types
@@ -118,7 +118,7 @@ def plot_constant_rate(
             ax,
             result.t_front[idx],
             prefactor=result.A_ana if fit_type == "Analytical" else result.A_emp,
-            slope=result.α_ana if fit_type == "Analytical" else round(result.α_emp, 1),
+            slope=result.alpha_ana if fit_type == "Analytical" else round(result.alpha_emp, 1),
             dx_log=0.5,
         )
         ax.annotate(

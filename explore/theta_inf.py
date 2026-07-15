@@ -7,14 +7,11 @@ from mypackages import file_io, front_analysis, physics
 
 # %%
 result_dir = Path.cwd() / "results" / "3dec" / "runs"
-run = file_io.read_run(result_dir / "run-q-1e-03.hdf5")
+run = file_io.read_run(result_dir / "run-q-1e-04.hdf5")
 result = front_analysis.analyze(run, stress_front=True, slc=slice(None, None))
 
-# %%
-
-denominator = (run.params.flux**2 * run.t / physics.parameter_M(run.params)) ** (1 / 5)
+denominator = (run.params.flux**2 * run.t / physics.parameter_a(run.params)) ** (1 / 5)
 theta_inf = run.params.w_i / denominator
-
 
 # %%
 
@@ -27,7 +24,7 @@ ax.set(
     xlabel="$t$ [s]",
     ylabel=r"$\theta_{\infty}$",
     title=rf"$q={run.params.flux:.0e}~\mathsf{{m^2/s}}$",
-    xscale="log",
-    yscale="log",
+    # xscale="log",
+    # yscale="log",
 )
 plt.show()

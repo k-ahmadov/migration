@@ -127,7 +127,7 @@ def product_trapz_weights(x):
     psi0_vals = psi0(k)
     psi1_vals = psi1(k)
 
-    # --- Compute the α (alpha) and β (beta) coefficients ---
+    # --- Compute the alpha (alpha) and β (beta) coefficients ---
     #     These modify the basic trapezoidal weights near the singularity.
     #     See Atkinson (1967) for full derivation.
     alpha = h * np.log(h) / 2 + h * (psi0_vals - psi1_vals)

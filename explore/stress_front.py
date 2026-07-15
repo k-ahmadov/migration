@@ -58,11 +58,11 @@ plt.show()
 
 
 # %%
-print(f"Scaling exponent: α = {result.α_emp:.2f}")
+print(f"Scaling exponent: alpha = {result.alpha_emp:.2f}")
 
 print("w_0/w_i =", run.w[len(result_soft.t_front)][run.x_vert == 0][0] / run.params.w_i)
 
 print(
-    "θ_∞ = (t_c/t)^(1/5) =",
-    (physics.characteristic_time(run.params) / result.t_front[-1]) ** (1 / 5),
+    "theta_∞ = (t_c/t)^(1/5) =",
+    (physics.critical_time(run.params) / result.t_front[-1]) ** (1 / 5),
 )

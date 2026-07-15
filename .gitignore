@@ -13,3 +13,6 @@ results/
 figures/
 3dec/saves/
 overleaf/
+documents/
+.overleaf-key.md
+*.sav
