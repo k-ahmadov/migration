@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 from scipy.optimize import curve_fit
 
@@ -34,13 +36,32 @@ def power_law(t, A, alpha):
 
 
 def fit_front_power_law(
-    t: Time, x_front: XPositions, alpha: ScalingExponent = 0.0
+    t: Time,
+    x_front: XPositions,
 ) -> tuple[Prefactor, ScalingExponent]:
-    if alpha != 0.0:
-        (A,), _ = curve_fit(lambda t, A: A * t**alpha, t, x_front, p0=(x_front.max(),))
-        return A
-    (A, alpha), _ = curve_fit(power_law, t, x_front, p0=(x_front.max(), 0.8), maxfev=20_000)
+    (A, alpha), _ = curve_fit(
+        power_law,
+        t,
+        x_front,
+        p0=(x_front.max(), 0.8),
+        maxfev=20_000,
+    )
     return A, alpha
+
+
+def fit_front_power_law_fixed_alpha(
+    t: Time,
+    x_front: XPositions,
+    alpha: ScalingExponent,
+) -> Prefactor:
+    power_law_fixed_exponent = partial(power_law, alpha=alpha)
+    (A,), _ = curve_fit(
+        power_law_fixed_exponent,
+        t,
+        x_front,
+        p0=(x_front.max(),),
+    )
+    return A
 
 
 def critical_time(params: Parameters) -> CharacteristicTime:
