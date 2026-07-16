@@ -51,7 +51,7 @@ class FrontResults:
 
 
 @dataclass
-class FrontResultsWithAnalytical(FrontResults):
+class AnalyticalFrontResults(FrontResults):
     A_ana: Prefactor
     alpha_ana: ScalingExponent
     zeta_front: float
@@ -101,12 +101,12 @@ def analyze_rigid(
     threshold: FrontDetectionThreshold | None = None,
     slc: slice = slice(None),
     stress_front: bool = False,
-) -> FrontResultsWithAnalytical:
+) -> AnalyticalFrontResults:
     result = analyze(run, threshold, slc, stress_front)
     D = physics.diffusivity(run.params)
     alpha_ana = RIGID_DIFFUSION_EXPONENT
     zeta = _compute_zeta_front_rigid(result.x_front, result.t_front, D, alpha_ana)
-    return FrontResultsWithAnalytical(
+    return AnalyticalFrontResults(
         **vars(result), A_ana=zeta * D**alpha_ana, alpha_ana=alpha_ana, zeta_front=zeta
     )
 
@@ -131,7 +131,7 @@ def analyze_soft(
     threshold: FrontDetectionThreshold | None = None,
     slc: slice = slice(None),
     stress_front: bool = False,
-) -> FrontResultsWithAnalytical:
+) -> AnalyticalFrontResults:
     result = analyze(run, threshold, slc, stress_front)
     q = run.params.q_0 or run.params.q
     assert q is not None and q > 0, f"expected correct injection rate, got {q}"
@@ -139,7 +139,7 @@ def analyze_soft(
     alpha_ana = SOFT_DIFFUSION_EXPONENT
     zeta = _compute_zeta_front_soft(result.x_front, result.t_front, M, q, alpha_ana)
     A_ana = zeta * (M * q**3) ** (1 / 5)
-    return FrontResultsWithAnalytical(
+    return AnalyticalFrontResults(
         **vars(result), A_ana=A_ana, alpha_ana=alpha_ana, zeta_front=zeta
     )
 
@@ -156,7 +156,7 @@ def analyze_early_time(
     pc: CriticalPressure | None = None,
     stress_front: bool = False,
     slc: slice = slice(None),
-) -> FrontResultsWithAnalytical:
+) -> AnalyticalFrontResults:
     if slc == slice(None):
         slc = time_slice(run, early=True)
     if not stress_front:
@@ -173,7 +173,7 @@ def analyze_late_time(
     pc: CriticalPressure | None = None,
     stress_front: bool = False,
     slc: slice = slice(None),
-) -> FrontResultsWithAnalytical:
+) -> AnalyticalFrontResults:
     if slc == slice(None):
         slc = time_slice(run, early=True)
     if not stress_front:

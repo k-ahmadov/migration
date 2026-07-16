@@ -10,7 +10,7 @@ from mypackages import file_io, front_analysis, front_detection, physics
 # %% --- Plotting ---------------------------------------------------------------
 
 
-def plot_front_rigid(ax, result: front_analysis.FrontResultsWithAnalytical, title: str):
+def plot_front_rigid(ax, result: front_analysis.AnalyticalFrontResults, title: str):
     t = result.t_front
     x = result.x_front
     ax.plot(t, x, ".", color="tab:gray", label="Numerical (3DEC)")
@@ -41,7 +41,7 @@ def plot_front_rigid(ax, result: front_analysis.FrontResultsWithAnalytical, titl
     ax.legend(loc="upper left")
 
 
-def plot_front_soft(ax, result: front_analysis.FrontResultsWithAnalytical, title: str):
+def plot_front_soft(ax, result: front_analysis.AnalyticalFrontResults, title: str):
     t = result.t_front
     x = result.x_front
     ax.plot(t, x, ".", color="tab:gray", label="Numerical (3DEC)")
