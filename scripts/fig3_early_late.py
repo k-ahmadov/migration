@@ -10,7 +10,7 @@ from mysolvers.exact_solutions import solve_linear_diffusion_const_flux
 # %% --- Data ---
 
 result_dir = Path.cwd() / "results" / "3dec" / "runs-wi-1e-05"
-run = file_io.read_run(result_dir / "run-q-5e-07.hdf5")
+run = file_io.read_run(result_dir / "run-q-5e-05.hdf5")
 D = physics.diffusivity(run.params)
 t_c = physics.critical_time(run.params)
 idx_tc = 30 * (np.searchsorted(run.t, t_c) + 1)
@@ -29,31 +29,14 @@ result_late = front_analysis.analyze_late_time(
     run, stress_front=True, slc=slice(idx_tc, None)
 )
 
-# %% pressure at injection point
-x_sc, p = file_io.sort_fields(run.x_sc, run.p)
-p_inj = p[:, 0]
-zeta_ana = solve_linear_diffusion_const_flux(np.linspace(0, 10, 200))[0]
-p_inj_ana = zeta_ana * run.params.flux * np.sqrt(run.t / D) * run.params.k_n
-A_p_late, alpha_p_late = physics.fit_front_power_law(run.t[idx_tc:], p_inj[idx_tc:] / 1e6)
-result_p_inj_rigid = p_inj_analysis.analyze_rigid(run)
-result_p_inj_soft = p_inj_analysis.analyze_soft(run)
 
-# %% --- Plot ---
+# %%
 
-# plt.ion()
-fig, (ax1, ax2) = plt.subplots(
-    1,
-    2,
-    figsize=(6.4 / 1.5 * 2, 4.8 / 1.5),
-    dpi=150,
-    layout="constrained",
-    clear=True,
-    num=1,
+fig = plt.figure(
+    figsize=(6.4, 4.8 / 2), dpi=150, layout="constrained", clear=True, num=1
 )
+ax1, ax2 = fig.subplots(1, 2)
 
-# %% --- front position ---
-ax1.cla()
-ax2.cla()
 ax1.plot(result.t_front, result.x_front, ".", color="tab:gray", label="Numerical")
 ax1.plot(
     result.t_front,
@@ -61,87 +44,62 @@ ax1.plot(
     "k-",
     label="Analytical",
 )
-ax1.annotate(
+ax1.plot(
+    result.t_front, result_late.A_ana * result.t_front**result_late.alpha_ana, "k-"
+)
+
+ax2.plot(result.t_front, result.x_front, ".", color="tab:gray", label="Numerical")
+ax2.plot(
+    result.t_front, result_early.A_ana * result.t_front**result_early.alpha_ana, "k-"
+)
+ax2.annotate(
     r"$x_f=\zeta_f \ (D t)^{1/2}$" "\n(early-time)",
-    xy=(result_early.t_front[5], result_early.x_analytical()[5]),
-    xytext=(40, -20),
+    xy=(result_early.t_front[3], result_early.x_analytical()[3]),
+    xytext=(10, -50),
     textcoords="offset points",
     ha="left",
     arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
 )
-ax1.plot(result.t_front, result_late.A_ana * result.t_front**result_late.alpha_ana, "k-")
-ax1.annotate(
+plotting.slope_triangle(
+    ax2,
+    result_early.t_front[0],
+    prefactor=result_early.A_ana,
+    slope=result_early.alpha_ana,
+    dx_log=0.5
+)
+
+ax2.plot(
+    result.t_front, result_late.A_ana * result.t_front**result_late.alpha_ana, "k-"
+)
+ax2.annotate(
     r"$x_f=\zeta_f \ ( M q^3 t^4)^{1/5}$" "\n(late-time)",
-    xy=(result_late.t_front[250], result_late.x_analytical()[250]),
-    xytext=(-30, 0),
+    xy=(result_late.t_front[400], result_late.x_analytical()[400]),
+    xytext=(-60, -10),
     textcoords="offset points",
     ha="right",
     arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
 )
-
 plotting.slope_triangle(
-    ax1, result_early.t_front[1], prefactor=result_early.A_ana, slope=result_early.alpha_ana
-)
-plotting.slope_triangle(
-    ax1, result_late.t_front[2], prefactor=result_late.A_ana, slope=result_late.alpha_ana
+    ax2,
+    result_late.t_front[0],
+    prefactor=result_late.A_ana,
+    slope=result_late.alpha_ana,
 )
 
 ax1.set(
+    xlabel="Time, $t$ [s]",
+    ylabel="Front position $x_f$ [m]",
+)
+ax1.legend()
+ax2.set(
     xscale="log",
     yscale="log",
     xlabel="Time, $t$ [s]",
     ylabel="Front position $x_f$ [m]",
-    ylim=(1, 110),
 )
-ax1.legend()
-
-# --- pressure at injection point ---
-ax2.plot(run.t, p[:, 0], ".", color="tab:gray", label="Numerical")
-
-ax2.plot(run.t, result_p_inj_rigid.p_inj_analytical(run.t), "k-")
-ax2.annotate(
-    r"$p_{{\mathrm{{inj}}}} =\theta_{{\mathrm{{inj}}}}\ k_n \, q\, D^{-1/2}\, t^{1/2}$"
-    "\n(early-time)",
-    xy=(run.t[5], p_inj_ana[5]),
-    xytext=(25, 30),
-    textcoords="offset points",
-    ha="right",
-    arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
-)
-
-ax2.plot(run.t, result_p_inj_soft.p_inj_analytical(run.t), "k", label="analytical")
-ax2.annotate(
-    r"$p_{\mathrm{inj}}=\theta_{\mathrm{inj}}\ k_n \, (q^2 t/ M)^{1/5} $"
-    "\n (late-time)",
-    xy=(run.t[100], (result_p_inj_soft.p_inj_analytical(run.t))[100]),
-    xytext=(100, 25),
-    textcoords="offset points",
-    ha="right",
-    arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
-)
-
-ax2.set(
-    xscale="log",
-    yscale="log",
-    xlabel="Time $t$, [s]",
-    ylabel=r"$p_{\mathrm{inj}}$ [Pa]",
-)
-ax2.legend()
-ax1.set_title(rf"Applied injection rate $q={run.params.flux:.0e}~\mathsf{{m^2/s}}$")
-
-# plt.savefig(Path.cwd()/ 'figures'/ 'paper' / 'Fig4.eps')
-# plt.savefig(Path.cwd()/ 'figures'/ 'early-late' / 'q-5e-07.png')
-# plt.savefig(Path.cwd() / "overleaf" / "figures_main" / "Fig4.eps")
-
+fig.canvas.draw_idle()
 plt.pause(0.01)
 
-# %%
-# ax2.plot(run.t, A_p_late * 1e6 * run.t**alpha_p_late, "k--", label="Fit")
-# ax2.annotate(
-#     rf"$p_0=A t^{{{alpha_p_late:.2f}}}$",
-#     xy=(run.t[200], (A_p_late * 1e6 * run.t**alpha_p_late)[200]),
-#     xytext=(10, -40),
-#     textcoords="offset points",
-#     ha="left",
-#     arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
-# )
+# plt.savefig(Path.cwd()/ 'figures'/ 'paper' / 'Fig3.eps')
+# plt.savefig(Path.cwd()/ 'figures'/ 'early-late' / 'q-5e-07-linear-vs-log.png')
+# plt.savefig(Path.cwd() / "overleaf" / "figures_main" / "Fig3.eps")
