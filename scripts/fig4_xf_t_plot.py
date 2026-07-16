@@ -1,235 +1,192 @@
 # %%
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.legend_handler import HandlerTuple
 
-from mypackages import file_io, front_analysis, front_detection, physics, plotting
-from mypackages.types import HydraulicDiffusivity
-
+from mypackages import file_io, front_analysis, plotting
 
 # %%
-def plot_constant_pressure(
-    ax,
-    results: list[front_analysis.FrontResultsWithAnalytical],
-    runs: list[file_io.RunData],
-    xytexts: list[tuple[int, int]],
-    marker_styles: list[str],
-):
-    for result, run, xytext, marker_style in zip(results, runs, xytexts, marker_styles):
-        D = (result.A_ana / result.zeta_front) ** (1 / result.alpha_ana)
-        idx = len(result.t_front) // 8
-
-        ax.plot(
-            result.t_front,
-            result.x_front,
-            marker_style,
-            color="tab:gray",
-            label="Numerical",
-        )
-        ax.plot(
-            result.t_front, result.x_analytical(), "-", color="k", label="Analytical"
-        )
-        plotting.slope_triangle(
-            ax,
-            x0=result.t_front[idx],
-            prefactor=result.A_ana,
-            slope=result.alpha_ana,
-            dx_log=0.3,
-        )
-        ax.annotate(
-            text=(
-                rf"$x_f = \zeta_f \, \sqrt{{D t}}$"
-                "\n"
-                rf"$\zeta_f={result.zeta_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$"
-                "\n"
-                rf"$k_n={run.params.k_n / 1e9}~\mathsf{{GPa/m}}$"
-            ),
-            xy=(result.t_front[idx // 2], result.x_front[idx // 2]),
-            xytext=xytext,
-            textcoords="offset points",
-            ha="right" if xytext[1] > 0 else "left",
-            arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
-        )
-    # Deduplicate legend entries (both loop iterations add Numerical/Analytical)
-    handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))  # remove duplicate labels
-    # ax.legend(handles=by_label.values(), labels=by_label.keys(), loc="lower right")
-    ax.legend(
-        handles=[(handles[0], handles[2]), handles[1]],
-        labels=by_label.keys(),
-        loc="lower right",
-        handler_map={tuple: HandlerTuple(ndivide=None)},
-    )
-    ax.set(
-        xlabel="Time $t$, [s]",
-        ylabel="Front position $x_f$, [m]",
-        xscale="log",
-        yscale="log",
-        title="Constant pressure injection",
-    )
-    return ax
-
-
-def recalibrate_zeta(
-    D: HydraulicDiffusivity, result: front_analysis.FrontResultsWithAnalytical
-):
-    # recalibrate zeta_front for rigid case to only use the first half of data
-    idx = len(result.t_front) // 2
-    zeta = float(
-        np.mean(result.x_front[:idx] / (D * result.t_front[:idx]) ** result.alpha_ana)
-    )
-    return zeta
 
 
 def plot_constant_rate(
     ax,
-    runs: list[file_io.RunData],
-    results: list[front_analysis.FrontResultsWithAnalytical],
-    marker_styles: list[str],
-    xytexts: list[tuple[int, int]],
-    fit_types: list[str],
+    runs: dict[float, file_io.RunData],
+    results: dict[float, front_analysis.AnalyticalFrontResults],
+    configs: dict[float, Any],
+    log_scale: bool,
 ):
-    # recalibrate zeta for rigid case to only use the first half of data
-    D = physics.diffusivity(runs[0].params)
-    zeta = recalibrate_zeta(D, results[0])
-    results[0].A_ana = zeta * D ** results[0].alpha_ana
-
-    for result, run, marker_style, xytext, fit_type in zip(
-        results, runs, marker_styles, xytexts, fit_types
-    ):
-        idx = len(result.t_front) // 10
+    for q in configs.keys():
+        idx = len(results[q].t_front) //  int(configs[q]["ann_pos_frac"])
         ax.plot(
-            result.t_front,
-            result.x_front,
-            marker_style,
+            results[q].t_front,
+            results[q].x_front,
+            configs[q]["marker"],
             color="tab:gray",
-            markevery=2,
+            markevery=1,
             label="Numerical",
         )
-        if fit_type == "Analytical":
-            ax.plot(result.t_front, result.x_analytical(), "k-", label="Analytical")
-        elif fit_type == "Empirical":
-            ax.plot(result.t_front, result.x_empirical(), "k--")
-        else:
-            raise ValueError("incorrect fit type")
-        plotting.slope_triangle(
-            ax,
-            result.t_front[idx],
-            prefactor=result.A_ana if fit_type == "Analytical" else result.A_emp,
-            slope=result.alpha_ana if fit_type == "Analytical" else round(result.alpha_emp, 1),
-            dx_log=0.5,
-        )
-        ax.annotate(
-            rf"$q_0={run.params.flux:.0e}~\mathsf{{m^2/s}}$",
-            xy=(
-                result.t_front[idx],
-                result.x_front[idx],
-            ),
-            xytext=xytext,
-            textcoords="offset points",
-            ha="left" if xytext[1] < 0 else "right",
-            arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
-        )
-
+        if configs[q]["fit_type"] == "Analytical":
+            ax.plot(
+                results[q].t_front, results[q].x_analytical(), "k-", label="Analytical"
+            )
+        elif configs[q]["fit_type"] == "Empirical":
+            ax.plot(results[q].t_front, results[q].x_empirical(), "k--", label="Empirical")
+        if log_scale:
+            plotting.slope_triangle(
+                ax,
+                results[q].t_front[idx],
+                prefactor=results[q].A_ana
+                if configs[q]["fit_type"] == "Analytical"
+                else results[q].A_emp,
+                slope=results[q].alpha_ana
+                if configs[q]["fit_type"] == "Analytical"
+                else round(results[q].alpha_emp, 1),
+                dx_log=0.5,
+            )
+            ax.annotate(
+                rf"$q_0={runs[q].params.flux:.0e}~\mathsf{{m^2/s}}$",
+                xy=(
+                    results[q].t_front[idx],
+                    results[q].x_front[idx],
+                ),
+                xytext=configs[q]["xytext"],
+                textcoords="offset points",
+                ha="left" if configs[q]["xytext"][1] < 0 else "right",
+                arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
+            )
     ax.set(
         xlabel="Time $t$, [s]",
         ylabel="Front position $x_f$, [m]",
-        xscale="log",
-        yscale="log",
-        title="Constant rate injection",
-        # ylim=(2, 110)
-    )
-    # Deduplicate legend entries (both loop iterations add Numerical/Analytical)
-    handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))  # remove duplicate labels
-    ax.legend(
-        handles=[(handles[0], handles[2], handles[4]), handles[1]],
-        labels=by_label.keys(),
-        loc="lower right",
-        handler_map={tuple: HandlerTuple(ndivide=None)},
+        xscale="log" if log_scale else "linear",
+        yscale="log" if log_scale else "linear",
+        title = "Log scale" if log_scale else "Linear scale"
     )
     return ax
 
 
-# --------------------------------------------------------------
-# %% for poster
-# --------------------------------------------------------------
-fig, (ax1, ax2) = plt.subplots(
-    1,
-    2,
-    figsize=(6.4 * 1.25, 4.8 / 1.5),
-    dpi=200,
-    constrained_layout=True,
-    num=1,
-    clear=True,
-)
-
-# TODO: add (a) and (b) annotations to the figure
 # %%
-# ────────────────────────────────────────────────────────────────
-# ── Left panel ──────────────────────────────────────────────────
-# ────────────────────────────────────────────────────────────────
-ax1.cla()
-ax2.cla()
-result_dir_cp = Path.cwd() / "results" / "3dec" / "constant-pressure"
-filenames_cp = ["rigid.pkl", "soft.pkl"]
-runs_cp = [file_io.read_pickle(result_dir_cp / f) for f in filenames_cp]
-results_cp = [
-    front_analysis.analyze_rigid(runs_cp[0], stress_front=True),
-    front_analysis.analyze_rigid(runs_cp[1], stress_front=True),
-]
-xytexts_cp = [(15, 25), (-35, -65)]
-marker_styles = [".", "x"]
 
-plot_constant_pressure(
-    ax=ax1,
-    results=results_cp,
-    runs=runs_cp,
-    xytexts=xytexts_cp,
-    marker_styles=marker_styles,
+result_dir = Path.cwd() / "results" / "3dec" / "runs-wi-1e-05"
+
+run_configs = {
+    5e-5: dict(
+        analysis_fn=front_analysis.analyze_soft,
+        marker="x",
+        xytext=(0, 20),
+        fit_type="Analytical",
+        ann_pos_frac = 20
+    ),
+    5e-7: dict(
+        analysis_fn=front_analysis.analyze,
+        marker="1",
+        xytext=(-25, -80),
+        fit_type="Empirical",
+        ann_pos_frac = 20
+    ),
+    5e-9: dict(
+        analysis_fn=front_analysis.analyze_rigid,
+        marker=".",
+        xytext=(-40, -50),
+        fit_type="Analytical",
+        ann_pos_frac = 150 
+    ),
+}
+
+runs = {q: file_io.read_run(result_dir / f"run-q-{q:.0e}.hdf5") for q in run_configs}
+results = {}
+for q, cfg in run_configs.items():
+    run = runs[q]
+    kwargs: dict[str, Any] = {"stress_front": True}
+    if cfg["analysis_fn"] is front_analysis.analyze_rigid:
+        kwargs["slc"] = slice(None, len(run.t) // 3)
+    results[q] = cfg["analysis_fn"](run, **kwargs)
+
+# %%
+
+fig = plt.figure(
+    figsize=(6.4 * 1.25, 4.8 / 1.5), dpi=150, layout="constrained", clear=True, num=1
 )
-
-
-# ────────────────────────────────────────────────────────────────
-# ── Right panel ─────────────────────────────────────────────────
-# ────────────────────────────────────────────────────────────────
-
-result_dir_runs = Path.cwd() / "results" / "3dec" / "runs-wi-1e-05"
-filenames_runs = [
-    "run-q-5e-09.hdf5",
-    "run-q-5e-05.hdf5",
-    "run-q-5e-07.hdf5",
-]
-runs_q = [file_io.read_run(result_dir_runs / f) for f in filenames_runs]
-results_q = [
-    front_analysis.analyze_rigid(runs_q[0], stress_front=True),
-    front_analysis.analyze_soft(runs_q[1], stress_front=True),
-    front_analysis.analyze(runs_q[2], stress_front=True),
-]
-marker_styles = [".", "x", "1"]
-xytexts_q = [
-    (-45, -50),
-    (0, 20),
-    (-38, -85),
-]
-fit_types = ["Analytical", "Analytical", "Empirical"]
+axes = fig.subplots(1, 2)
+ax1, ax2 = axes[0], axes[1]
 
 plot_constant_rate(
-    ax=ax2,
-    runs=runs_q,
-    results=results_q,
-    marker_styles=marker_styles,
-    xytexts=xytexts_q,
-    fit_types=fit_types,
+    ax=ax1, runs=runs, results=results, configs=run_configs, log_scale=False
+)
+
+plot_constant_rate(
+    ax=ax2, runs=runs, results=results, configs=run_configs, log_scale=True
+)
+
+ax1.annotate(
+    r"$x_f=\zeta_f \ (D t)^{1/2}$" "\n(rigid)",
+    xy=(results[5e-9].t_front[len(results[5e-9].t_front)//2], results[5e-9].x_analytical()[len(results[5e-9].t_front)//2]),
+    xytext=(40, -35),
+    textcoords="offset points",
+    ha="left",
+    arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
+)
+ax1.annotate(
+    r"$x_f=\zeta_f \ ( M q^3 t^4)^{1/5}$" "\n(soft)",
+    xy=(results[5e-5].t_front[len(results[5e-5].t_front)//2], results[5e-5].x_analytical()[len(results[5e-5].t_front)//2]),
+    xytext=(15, 30),
+    textcoords="offset points",
+    ha="left",
+    arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
+)
+ax1.annotate(
+    r"$x_f \sim t^{0.7}$ (intermediate)",
+    xy=(results[5e-7].t_front[len(results[5e-7].t_front)//4], results[5e-7].x_empirical()[len(results[5e-7].t_front)//4]),
+    xytext=(40, 0),
+    textcoords="offset points",
+    ha="left",
+    arrowprops=dict(arrowstyle="<-", shrinkA=4, shrinkB=4),
+)
+
+
+# Deduplicate legend entries (both loop iterations add Numerical/Analytical)
+handles, labels = ax1.get_legend_handles_labels()
+by_label = dict(zip(labels, handles))  # remove duplicate labels
+ax1.legend(
+    handles=[(handles[0], handles[2], handles[4]), handles[1], handles[3]],
+    labels=by_label.keys(),
+    loc="upper right",
+    handler_map={tuple: HandlerTuple(ndivide=None)},
 )
 
 ax1.annotate("(a)", (-0.1, 1.03), xycoords="axes fraction", fontsize="large")
 ax2.annotate("(b)", (-0.1, 1.03), xycoords="axes fraction", fontsize="large")
 
-# fig.savefig(Path.cwd() / "overleaf" / "figures_main" / "Fig3.eps")
-
+fig.canvas.draw_idle()
 plt.pause(0.01)
 
+# plt.savefig(Path.cwd()/ 'figures'/ 'paper' / 'Fig4.eps')
+# plt.savefig(Path.cwd()/ 'figures'/ 'front' / 'linear-vs-log.png')
+# plt.savefig(Path.cwd() / "overleaf" / "figures_main" / "Fig4.eps")
+
+
+
 # %%
+# # arrow base and direction: 45 degrees left of north (i.e. northwest), pointing away from base
+# x0, y0 = 1.5, 0.3
+# length = 1
+# angle_deg = 125  # 90 = straight up (north); +45 rotates left (counter-clockwise) to NW
+# angle_rad = np.deg2rad(angle_deg)
+# dx, dy = length * np.cos(angle_rad), length * np.sin(angle_rad)
+#
+# ax2.annotate(
+#     "",
+#     xy=(x0 + dx, y0 + dy),      # arrow tip
+#     xytext=(x0, y0),            # arrow base
+#     arrowprops=dict(arrowstyle="->", color="k"),
+# )
+#
+# # label near the arrow, offset slightly perpendicular to it so it doesn't overlap
+# ax2.text(
+#     x0 + dx * 0.6 + 0.3, y0 + dy * 0.6 + 0.02,
+#     r"$q_0\uparrow$",
+#     fontsize=14,
+#     ha="left", va="top",
+# )
+

@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 
 from mypackages import physics
+from mypackages.front_analysis import RIGID_DIFFUSION_EXPONENT, SOFT_DIFFUSION_EXPONENT
 
 
-def load_soultz(filepath, bin_size):
+# %%
+def load_soultz(filepath):
     # load data file
     df = pd.read_csv(filepath, sep=";")
     # formatting string for date and time format
@@ -16,15 +18,19 @@ def load_soultz(filepath, bin_size):
     timestamps = pd.to_datetime(
         df["Date (local)"] + " " + df["Time (local)"], format=fmt
     )
-    # convert time to hours
-    t_days = (timestamps - timestamps.iloc[0]).dt.total_seconds() / 86400
+    # cut data to injection period
+    date_mask = timestamps < timestamps.iloc[0] + pd.Timedelta(days=18)
+    df = df.loc[date_mask]
+    timestamps = timestamps[date_mask]
+    # import time in seconds
+    t = (timestamps - timestamps.iloc[0]).dt.total_seconds()
     # import coordinates of events
     x, y, z = df["East (m)"], df["North (m)"], df["Depth (m)"]
     # median of first 10 events
     x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
     # euclidian distance
     distance = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)
-    return t_days.values, distance.values
+    return t.values, distance.values
 
 
 def load_basel(filepath):
@@ -70,15 +76,14 @@ def load_basel(filepath):
     df = df.loc[date_mask].reset_index(drop=True)
     # import time data
     timestamps = df["SourceDateTime"]
-    # convert time from sec to hours
-    t_days = (timestamps - timestamps.iloc[0]).dt.total_seconds() / 86400
+    t = (timestamps - timestamps.iloc[0]).dt.total_seconds()
     # import coordinates of events
     x, y, z = df["X"], df["Y"], df["Z"]
     # median of first 10 events
     x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
     # euclidian distance
     distance = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)
-    return t_days.values, distance.values
+    return t.values, distance.values
 
 
 def percentile_envelope(t_days, distance, bin_size, percentile):
@@ -99,12 +104,8 @@ def percentile_envelope(t_days, distance, bin_size, percentile):
     return t_pct, d_pct
 
 
-def fit_and_split(t_pct, d_pct, split_frac, t_max=None):
+def fit_and_split(t_pct, d_pct, split_frac):
     "Function to extract the early- and late-time series and fit a power law function"
-    # filter data according to the give maximum time value
-    if t_max is not None:
-        keep = t_pct < t_max
-        t_pct, d_pct = t_pct[keep], d_pct[keep]
     # index to separate early and late data
     idx_start = int(len(t_pct) * split_frac)
     # import early and late
@@ -116,9 +117,35 @@ def fit_and_split(t_pct, d_pct, split_frac, t_max=None):
     return (t_early, A_e * t_early**a_e, a_e), (t_late, A_l * t_late**a_l, a_l)
 
 
+# TODO: fit analytical models to early and late time data
+def analytical_fit_and_split(t_pct, d_pct, split_frac):
+    "Function to extract the early- and late-time series and fit a power law function"
+    # index to separate early and late data
+    idx_start = int(len(t_pct) * split_frac)
+    # import early and late
+    t_early, d_early = t_pct[:idx_start], d_pct[:idx_start]
+    t_late, d_late = t_pct[idx_start:], d_pct[idx_start:]
+    A_e = physics.fit_front_power_law_fixed_alpha(
+        t_early, d_early, alpha=RIGID_DIFFUSION_EXPONENT
+    )
+    A_l = physics.fit_front_power_law_fixed_alpha(
+        t_late, d_late, alpha=SOFT_DIFFUSION_EXPONENT
+    )
+    return (
+        t_early,
+        A_e * t_early**RIGID_DIFFUSION_EXPONENT,
+        RIGID_DIFFUSION_EXPONENT,
+        A_e,
+    ), (t_late, A_l * t_late**SOFT_DIFFUSION_EXPONENT, SOFT_DIFFUSION_EXPONENT, A_l)
+
+
+def _to_days(t_sec):
+    return t_sec / 86400
+
+
 def plot_front(
     ax,
-    t_days,
+    t,
     distance,
     t_pct,
     d_pct,
@@ -129,41 +156,38 @@ def plot_front(
     title,
     xlim,
     ylim,
-    mask=None,
     early_ann_idx=10,
     late_ann_idx=40,
 ):
-    if mask is None:
-        mask = np.ones_like(t_days, dtype=bool)
-    t_e, d_fit_e, a_e = early
-    t_l, d_fit_l, a_l = late
+    t_e, d_fit_e, alpha_e, A_e = early
+    t_l, d_fit_l, alpha_l, A_l = late
 
     ax.plot(
-        t_days[mask],
-        distance[mask],
+        _to_days(t),
+        distance,
         ".",
         color="tab:gray",
         ms=3,
         label="Seismic events",
     )
-    ax.plot(t_pct, d_pct, "ko", label=f"P{percentile} per {bin_size} events")
-    ax.plot(t_e, d_fit_e, "--", color="tab:blue", lw=3, label="Power-law fit")
+    ax.plot(_to_days(t_pct), d_pct, "ko", label=f"P{percentile} per {bin_size} events")
+    ax.plot(_to_days(t_e), d_fit_e, "--", color="tab:blue", lw=3, label="Power-law fit")
     ax.annotate(
-        "Early-time\n" + rf"$x_f \propto t^{{{a_e:.2f}}}$",
-        xy=(t_e[early_ann_idx], d_fit_e[early_ann_idx]),
-        xytext=(-20, 30),
+        "Early-time\n" + rf"$x_f = {A_e:.2f} t^{{{alpha_e:.2f}}}$",
+        xy=(_to_days(t_e)[early_ann_idx], d_fit_e[early_ann_idx]),
+        xytext=(-80, 40),
         textcoords="offset points",
-        ha="right",
+        ha="left",
         backgroundcolor="1",
         arrowprops=dict(arrowstyle="<-", shrinkA=2, shrinkB=2),
     )
-    ax.plot(t_l, d_fit_l, "--", color="tab:blue", lw=3)
+    ax.plot(_to_days(t_l), d_fit_l, "--", color="tab:blue", lw=3)
     ax.annotate(
-        "Late-time\n" + rf"$x_f \propto t^{{{a_l:.2f}}}$",
-        xy=(t_l[late_ann_idx], d_fit_l[late_ann_idx]),
-        xytext=(-40, 20),
+        "Late-time\n" + rf"$x_f = {A_l:.2f} t^{{{alpha_l:.2f}}}$",
+        xy=(_to_days(t_l)[late_ann_idx], d_fit_l[late_ann_idx]),
+        xytext=(-80, 20),
         textcoords="offset points",
-        ha="right",
+        ha="left",
         backgroundcolor="1",
         arrowprops=dict(arrowstyle="<-", shrinkA=2, shrinkB=2),
     )
@@ -182,31 +206,25 @@ def plot_front(
 
 # %% ---- Soultz 1993 ----
 t_s, d_s = load_soultz(
-    "/home/kahmadov/phd/migration/data/SSFS1993-Catalogue_Bourouis.csv",
-    bin_size=50,
-    # percentile=90,
+    Path.cwd() / "data" / "SSFS1993-Catalogue_Bourouis.csv",
 )
 t_pct_s, d_pct_s = percentile_envelope(t_s, d_s, bin_size=50, percentile=90)
-early_s, late_s = fit_and_split(t_pct_s, d_pct_s, split_frac=1 / 5, t_max=18)
-mask_s = (t_s <= 18) & (d_s <= 1050)
+early_s, late_s = analytical_fit_and_split(t_pct_s, d_pct_s, split_frac=1 / 4)
 
 # %% ---- Basel 2006 ----
-t_b, d_b = load_basel(
-    "/home/kahmadov/phd/migration/data/supp2_compilation_existing_catalogs.dat"
-)
+t_b, d_b = load_basel(Path.cwd() / "data" / "supp2_compilation_existing_catalogs.dat")
 t_pct_b, d_pct_b = percentile_envelope(t_b, d_b, bin_size=50, percentile=75)
-early_b, late_b = fit_and_split(t_pct_b, d_pct_b, split_frac=1 / 4)
+early_b, late_b = analytical_fit_and_split(t_pct_b, d_pct_b, split_frac=1 / 4)
 
 # %% ---- Combined figure ----
-fig, axes = plt.subplots(
-    1, 2, figsize=(6.4 / 1.5 * 1.8, 4.8 / 1.5), dpi=200, layout="constrained"
+fig = plt.figure(
+    figsize=(6.4 * 1.25, 4.8 / 1.5), dpi=150, layout="constrained", clear=True, num=1
 )
+axes = fig.subplots(1, 2)
+ax1, ax2 = axes[0], axes[1]
 
-# # %%
-# axes[0].cla()
-# axes[1].cla()
 plot_front(
-    axes[0],
+    ax1,
     t_s,
     d_s,
     t_pct_s,
@@ -218,12 +236,11 @@ plot_front(
     title="Soultz 1993",
     xlim=(0.5, 20),
     ylim=(50, 1100),
-    mask=mask_s,
     early_ann_idx=10,
     late_ann_idx=40,
 )
 plot_front(
-    axes[1],
+    ax2,
     t_b,
     d_b,
     t_pct_b,
@@ -239,10 +256,57 @@ plot_front(
     late_ann_idx=10,
 )
 
-axes[0].set_ylabel("Distance [m]")
-axes[0].annotate("(a)", (0, 1.03), xycoords="axes fraction", fontsize="large")
-axes[1].annotate("(b)", (0, 1.03), xycoords="axes fraction", fontsize="large")
+ax1.set_ylabel("Distance [m]")
+ax1.annotate("(a)", (0, 1.03), xycoords="axes fraction", fontsize="large")
+ax2.annotate("(b)", (0, 1.03), xycoords="axes fraction", fontsize="large")
 
-# plt.savefig(Path.cwd() / "figures" / "paper" / "field_migration.png", dpi=200)
-# plt.savefig(Path.cwd() / "overleaf" / "figures_main" / "Fig5.eps")
+# fig.savefig(Path.cwd() / "figures" / "paper" / "field_migration.png", dpi=200)
+# fig.savefig(Path.cwd() / "overleaf" / "figures_main" / "Fig5.eps")
+
+fig.canvas.draw_idle()
 plt.pause(0.01)
+
+# %%
+
+
+# TODO: fit analytical models to early and late time data
+def explore_analytical_fit_and_split(t_pct, d_pct, split_frac):
+    "Function to extract the early- and late-time series and fit a power law function"
+    # index to separate early and late data
+    idx_start = int(len(t_pct) * split_frac)
+    # import early and late
+    t_early, d_early = t_pct[:idx_start], d_pct[:idx_start]
+    t_late, d_late = t_pct[idx_start:], d_pct[idx_start:]
+    A_e = physics.fit_front_power_law_fixed_alpha(
+        t_early, d_early, alpha=RIGID_DIFFUSION_EXPONENT
+    )
+    A_l = physics.fit_front_power_law_fixed_alpha(
+        t_late, d_late, alpha=SOFT_DIFFUSION_EXPONENT
+    )
+    return A_e, A_l
+
+
+# %%
+
+prefactor_early, prefactor_late = explore_analytical_fit_and_split(
+    t_pct_s, d_pct_s, split_frac=1 / 4
+)
+
+# %%
+D = prefactor_early**2 / 4
+mu = 1e-3
+w_i = 1e-5
+k_n = 12 * D * mu / w_i**3
+
+print(f"k_n = {k_n / 1e9:.1f} GPa/m")
+
+a = k_n / 12 / mu
+q_0 = (prefactor_late**5 / a) ** (1 / 3)
+print(f"q_0 = {q_0:.1e} m^2/s")
+
+L = 1e3
+# dimensionless deformation parameter
+epsilon = w_i / (L * q_0 / a)**(1/4)
+print(f"epsilon = {epsilon}")
+
+
