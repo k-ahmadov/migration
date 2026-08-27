@@ -6,7 +6,7 @@ mypackages/front_detection.py
 mypackages/p_inj_analysis.py
 mypackages/physics.py
 mypackages/plotting.py
-mypackages/types.py
+mypackages/typesdefs.py
 mypackages.egg-info/PKG-INFO
 mypackages.egg-info/SOURCES.txt
 mypackages.egg-info/dependency_links.txt
