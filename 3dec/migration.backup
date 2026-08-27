@@ -5,7 +5,7 @@
         "Version" : 9.0000000e+00 ,
         "Update" : 176 ,
         "Binary" : false ,
-        "DateTime" : "2026-05-28T07:03:46" ,
+        "DateTime" : "2026-06-02T16:27:06" ,
         "Format" : 0 ,
         "Dimension" : 3 
     },
@@ -21,7 +21,7 @@
                     },
                     "Settings" : {
                         "UpdateInterval" : 100 ,
-                        "Academic" : true ,
+                        "Academic" : false ,
                         "Demonstration" : false ,
                         "Unrepeatable" : false ,
                         "ReadOnly" : false ,
@@ -572,9 +572,9 @@
                                         "Active" : true ,
                                         "Enabled" : true ,
                                         "RampKeyword" : "bwr" ,
-                                        "Minimum" : -6.039923575860445e+05 ,
-                                        "Maximum" : 3.545202816589942e+05 ,
-                                        "Interval" : 1.000000000000000e+05 ,
+                                        "Minimum" : 0.000000000000000e+00 ,
+                                        "Maximum" : 0.000000000000000e+00 ,
+                                        "Interval" : 1.000000000000000e+00 ,
                                         "MinAuto" : true ,
                                         "MaxAuto" : true ,
                                         "IntAuto" : true ,
@@ -1031,9 +1031,9 @@
                                                 "Active" : true ,
                                                 "Enabled" : true ,
                                                 "RampKeyword" : "bwr" ,
-                                                "Minimum" : 0.000000000000000e+00 ,
-                                                "Maximum" : 0.000000000000000e+00 ,
-                                                "Interval" : 1.000000000000000e+00 ,
+                                                "Minimum" : 1.797693134862316e+308 ,
+                                                "Maximum" : 1.797693134862316e+308 ,
+                                                "Interval" : 0.000000000000000e+00 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
                                                 "IntAuto" : true ,
@@ -1663,9 +1663,9 @@
                                                 "Active" : true ,
                                                 "Enabled" : true ,
                                                 "RampKeyword" : "bwr" ,
-                                                "Minimum" : 9.884576925052857e-05 ,
-                                                "Maximum" : 8.480328159835023e-04 ,
-                                                "Interval" : 1.000000000000000e-04 ,
+                                                "Minimum" : 0.000000000000000e+00 ,
+                                                "Maximum" : 0.000000000000000e+00 ,
+                                                "Interval" : 1.000000000000000e+00 ,
                                                 "MinAuto" : true ,
                                                 "MaxAuto" : true ,
                                                 "IntAuto" : true ,
@@ -1915,7 +1915,7 @@
     ],
     "Terminal" : {
         "MoveLists" : true ,
-        "LineLimit" : 10 
+        "LineLimit" : 15 
     },
     "ColorMap" : {
         "EMaps" : [ 
@@ -1965,16 +1965,16 @@
         },
         "Recent" : {
             "MRUMagic" : [ 
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/inject.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/tmp.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/test.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_results.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_coordinates.py" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/boundary_conditions.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/fish-support.dat" ,
                 "Edit /home/kahmadov/phd/migration/3dec/scripts/initial.dat" ,
-                "Edit /home/kahmadov/phd/migration/3dec/scripts/fish-support.dat" 
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/boundary_conditions.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_coordinates.py" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/store_results.py" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/test.py" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/geometry.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/properties.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/tmp.dat" ,
+                "Edit /home/kahmadov/phd/migration/3dec/scripts/inject.dat" 
             ]
         },
         "ProjVis" : true ,
