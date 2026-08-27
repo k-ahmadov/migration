@@ -16,3 +16,6 @@ overleaf/
 documents/
 .overleaf-key.md
 *.sav
+backup/**
+*.backup
+*.temp
