@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from mypackages import file_io, front_analysis, plotting
 
 # %%
-run_long = file_io.read_fvm(
+run_long = file_io.read_halfspace(
     Path.cwd() / "results" / "fvm-elastic" / "runs" / "run-L-500.hdf5"
 )
-run_short = file_io.read_fvm(
+run_short = file_io.read_halfspace(
     Path.cwd() / "results" / "fvm-elastic" / "runs" / "run-q-1e-04.hdf5"
 )
 

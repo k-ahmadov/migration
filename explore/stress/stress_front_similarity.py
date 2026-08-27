@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from mypackages import front_detection, physics
-from mypackages.file_io import RunData, read_fvm, read_run, sort_fields
+from mypackages.file_io import RunData, read_halfspace, read_run, sort_fields
 
 importlib.reload(physics)
 # %%
@@ -21,7 +21,7 @@ run_1 = read_run(filepath=result_dir / "run-q-1e-03.hdf5")
 run_2 = read_run(filepath=result_dir / "run-q-1e-04.hdf5")
 run_3 = read_run(filepath=result_dir / "run-q-1e-05.hdf5")
 
-run_0_fvm = read_fvm(
+run_0_fvm = read_halfspace(
     filepath=Path.cwd() / "results" / "fvm-elastic" / "runs" / "run-q-1e-06.hdf5"
 )
 # %%
