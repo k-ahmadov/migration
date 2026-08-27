@@ -29,12 +29,12 @@ model mechanical slave on
 ; flowknot apply p-p [P_0] range pos-x 0
 
 ; --- Option 2: constant discharge rate (m²/s) ---
-[global q = 5e-5]
-flowplane edge apply discharge [q] range pos-x 0
-;flowknot apply discharge [q] range pos-x 0
+[global q_0 = 5e-7]
+flowplane edge apply discharge [q_0] range pos-x 0
+;flowknot apply discharge [q_0] range pos-x 0
 
 ; --- Option 3: linearly increasing discharge rate ---
-; [global q = 1e-4]   ; initial slope of the ramp
+; [global q_0 = 1e-4]   ; initial slope of the ramp
 ; Fish callback runs after timestep determination (sequence position 1–10)
 ; callback defined in fish-support.dat
 ; fish callback add linearly_increasing_discharge 1 process fluid
@@ -43,16 +43,30 @@ flowplane edge apply discharge [q] range pos-x 0
 ; Output
 ; ============================================================
 
-[global result_dir = "/home/kahmadov/phd/migration/results/3dec/runs-wi-1e-05/"]
-[global filepath = result_dir+"run-q-"+string(q)+"-Kw-2e8.hdf5"]
+[global result_dir = "/home/kahmadov/phd/migration/results/3dec/stress-bc/"]
+[global filepath = result_dir+"q-"+string(q_0)+"-fine.hdf5"]
 
 ; Initialise the HDF5 file and write coordinate arrays
 program call 'scripts/store_coordinates.py'
 
-; Store field profiles every given fluid interval
-; callback runs after fluid calculations (sequence position > 80)
+; a function to have denser sampling at early stages of injection
+[global next_store_step = 5.0]
+; decrease to get even denser sampling in the beginning
+[global growth_factor = 1.1]
+fish define store_results_adaptive
+    global step = fluid.step - EQUILIBRIUM_CYCLE_NUMBER
+	if step >= next_store_step
+        global t = fluid.time.total
+        command
+            program call 'scripts/store_results.py'
+        endcommand
+        next_store_step = math.max(next_store_step + 1, next_store_step * growth_factor)
+    endif
+end
 
-fish callback add store_results 81 interval 500 process fluid
+; Callback to store field profiles, sample size defined by store_results_adaptive
+; callback runs after fluid calculations (sequence position > 80)
+fish callback add store_results_adaptive 81 interval 1 process fluid
 
 ; ============================================================
 ; Termination criteria (uncomment one)
@@ -60,7 +74,7 @@ fish callback add store_results 81 interval 500 process fluid
 
 ; Stop when pressure threshold_pressure reaches the far end of the fracture
 [global threshold_pressure = 1e5]
-model solve fish-halt [halt_on_pressure_at_pos(threshold_pressure)]
+model solve fish-halt [halt_on_pressure(threshold_pressure)]
 
 ; Stop after a fixed fluid-time duration
 ; [global T_fin = ?]

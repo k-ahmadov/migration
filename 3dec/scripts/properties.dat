@@ -20,7 +20,7 @@ block zone prop density [rho] bulk [K] shear [G]
 ; choose smaller bulk modulus value 
 ; but keep it large enough so that K_w/w_i >> k_n
 [global mu = 1e-3]
-[global K_w = 2e8]
+[global K_w = 2e9]
 block fluid property bulk [K_w] density 1000 viscosity [mu]
 
 ; fracture properties

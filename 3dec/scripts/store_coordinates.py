@@ -135,7 +135,7 @@ def main() -> None:
         "w_i": Param(fish("w_i"), "m", "Initial aperture"),
         "w_min": Param(fish("w_min"), "m", "Minimum aperture"),
         "w_max": Param(fish("w_max"), "m", "Maximum aperture"),
-        "q": Param(fish("q"), "m^2/s", "Applied injection rate"),
+        "q_0": Param(fish("q_0"), "m^2/s", "Applied injection rate"),
         "E": Param(fish("E"), "Pa/m", "Young's modulus"),
         "nu": Param(fish("nu"), "-", "Poisson's ratio"),
     }
