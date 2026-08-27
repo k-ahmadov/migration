@@ -51,7 +51,7 @@ from scipy.special import erf
 
 
 def _integrate(
-    F: Callable, zeta_span: tuple[float, float], y0, n_points: int = 100
+    F: Callable, zeta_span: tuple[float, float], y0: list[float], n_points: int = 100
 ) -> tuple[np.ndarray, np.ndarray]:
     """Integrate the ODE system F over zeta_span and return (zeta, u)."""
     zeta_eval = np.linspace(*zeta_span, n_points)
