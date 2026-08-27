@@ -82,8 +82,8 @@ def main():
         filepath=out_file,
         x_fvm=FVM_result.x,
         t=FVM_result.t,
-        p_tx=FVM_result.p_tx,
-        w_tx=FVM_result.w_tx,
+        p_tx=FVM_result.p,
+        w_tx=FVM_result.w,
         parameters=parameters,
     )
 

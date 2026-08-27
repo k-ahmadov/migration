@@ -6,7 +6,8 @@ import numpy as np
 
 import mysolvers.aperture_solver as aperture_solver
 import mysolvers.elastic_solution as elastic_solution
-from mypackages import physics, types
+from mypackages import physics
+from mypackages.typesdefs import Parameters
 
 
 class Param:
@@ -76,11 +77,9 @@ def run_fvm_code(
     if T < 0:
         raise ValueError("T must be non-negative.")
 
-    w_char, t_char = physics.dimensionalize(
-        types.Parameters(L=L, mu=mu, k_n=k_n, q_0=q_0)
-    )
+    w_char, t_char = physics.dimensionalize(Parameters(L=L, mu=mu, k_n=k_n, q_0=q_0))
 
-    w_hat_tx = aperture_solver.solve_dimless_nonlinear_diffusion_n3_constant_flux(
+    w_hat_tx = aperture_solver.solve_nonlinear_diffusion_n3_constant_flux(
         Nx=Nx,
         Nt=Nt,
         ui_hat=w_i / w_char,
@@ -121,7 +120,8 @@ def run_elastic_solution(
     nu: float,
     k_n: float,
     L: float,
-    sn_char: float,
+    q_0: float,
+    mu: float,
     Nx_sn: int,
     T: float,
     x_fvm: np.ndarray,
@@ -136,6 +136,8 @@ def run_elastic_solution(
     # material + nondimensional parameter
     E_eff = E / (1.0 - nu**2)
     lam = (4.0 / np.pi) * k_n * L / E_eff
+    a = k_n / (12 * mu)
+    sn_char = E_eff * (q_0 / (L**3 * a)) ** (1 / 4)
 
     # mirrored grid (avoid double-counting x=0)
     x_mirror = np.concatenate((-x_fvm[:0:-1], x_fvm))
@@ -175,7 +177,7 @@ def run_elastic_solution(
 def run_simulation(parameters: dict, out_filepath: Path):
     # find characteristic duration for the simulation
     T = physics.dimensionalize(
-        types.Parameters(
+        Parameters(
             k_n=parameters["k_n"].value,
             mu=parameters["mu"].value,
             q_0=parameters["q_0"].value,
@@ -202,7 +204,8 @@ def run_simulation(parameters: dict, out_filepath: Path):
         nu=parameters["nu"].value,
         k_n=parameters["k_n"].value,
         L=parameters["L"].value,
-        sn_char=parameters["sn_char"].value,
+        q_0=parameters["q_0"].value,
+        mu=parameters["mu"].value,
         Nx_sn=int(parameters["Nx_sn"].value),
         T=int(parameters["T"].value),
         x_fvm=FVM_result.x,
@@ -279,27 +282,40 @@ def run_multiple_simuls(parameters: dict, out_dirpath: Path):
         run_simulation(parameters, out_file)
 
 
+def run_multiple_simuls_q0(parameters: dict, out_dirpath: Path):
+    q_0_min = 1e-4
+    q_0_max = 1e-10
+    q_0_values = np.geomspace(q_0_min, q_0_max, 7)
+    for q_0 in q_0_values:
+        print(f"running q_0={q_0:.0e}")
+        parameters["q_0"] = Param(q_0, "m^2/s", "Applied injection rate")
+        out_file = out_dirpath / f"q0-{parameters['q_0'].value:.0e}.hdf5"
+        run_simulation(parameters, out_file)
+
+
 def main() -> None:
     parameters: dict[str, Param] = {
         "k_n": Param(200e9, "Pa/m", "Normal stiffness"),
-        "L": Param(100.0, "m", "Fracture length"),
+        "L": Param(1000.0, "m", "Fracture length"),
         "mu": Param(1e-3, "Pa.s", "Fluid viscosity"),
-        "w_i": Param(5e-5, "m", "Initial aperture"),
-        "q_0": Param(1e-4, "m^2/s", "Applied injection rate"),
+        "w_i": Param(1e-5, "m", "Initial aperture"),
+        "q_0": Param(5e-7, "m^2/s", "Applied injection rate"),
         "E": Param(60e9, "Pa", "Young's modulus"),
         "nu": Param(0.25, "-", "Poisson's ratio"),
-        "sn_char": Param(1e6, "Pa", "Characteristic stress"),
-        "Nx_p": Param(256, "-", "Number of spatial cells for fvm code"),
+        "Nx_p": Param(1024, "-", "Number of spatial cells for fvm code"),
         "Nx_sn": Param(512, "-", "Number of spatial cells for elastic solution"),
         "Nt": Param(500, "-", "Number of time steps"),
     }
 
-    # out_dir = Path.cwd() / "results" / "fvm-elastic" / "wi-1e-05"
-    # out_file = out_dir / f"run-q-{parameters['q_0'].value:.0e}.hdf5"
-    # run_simulation(parameters, out_file)
+    multi_simul = True
 
-    out_dir = Path.cwd() / "results" / "fvm-elastic" / "for-V-T" / "mixed"
-    run_multiple_simuls(parameters, out_dir)
+    if multi_simul:
+        out_dir = Path.cwd() / "results" / "halfspace" / "wi-1e-05"
+        run_multiple_simuls_q0(parameters, out_dir)
+
+    out_dir = Path.cwd() / "results" / "halfspace" / "wi-1e-05"
+    out_file = out_dir / f"q-{parameters['q_0'].value:.0e}.hdf5"
+    run_simulation(parameters, out_file)
 
 
 if __name__ == "__main__":

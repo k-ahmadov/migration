@@ -3,6 +3,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sympy as sp
+from sympy import init_session
 
 from mypackages import physics
 from mypackages.front_analysis import RIGID_DIFFUSION_EXPONENT, SOFT_DIFFUSION_EXPONENT
@@ -295,10 +297,10 @@ prefactor_early, prefactor_late = explore_analytical_fit_and_split(
 # %%
 D = prefactor_early**2 / 4
 mu = 1e-3
-w_i = 1e-5
+w_i = 1e-4
 k_n = 12 * D * mu / w_i**3
 
-print(f"k_n = {k_n / 1e9:.1f} GPa/m")
+print(f"k_n = {k_n / 1e9:.5f} GPa/m")
 
 a = k_n / 12 / mu
 q_0 = (prefactor_late**5 / a) ** (1 / 3)
@@ -306,7 +308,19 @@ print(f"q_0 = {q_0:.1e} m^2/s")
 
 L = 1e3
 # dimensionless deformation parameter
-epsilon = w_i / (L * q_0 / a)**(1/4)
+epsilon = w_i / (L * q_0 / a) ** (1 / 4)
 print(f"epsilon = {epsilon}")
 
+# %%
 
+init_session()
+# mu = 1e-3
+# q_0 = 1e-3  # 20 L/s divided by 10 and 2
+
+A_late, k_n, mu, q_0 = sp.symbols("A_late k_n mu q_0", positive=True)
+
+A_late_eq = sp.Eq(A_late, (k_n / (12 * mu)) ** (1 / 5) * q_0 ** (3 / 5))
+
+k_n_eq = sp.solve(A_late_eq, k_n)[0]
+
+k_n_eq.subs({A_late: prefactor_late, mu: 1e-3, q_0: 1e-4})
