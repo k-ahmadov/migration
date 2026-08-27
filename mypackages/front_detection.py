@@ -1,26 +1,15 @@
 import numpy as np
 
-from mypackages import file_io
-from mypackages.physics import diffusivity
-from mypackages.types import (
-    CriticalPressure,
-    DimensionlessApertureAtFront,
-    Field,
-    FractionalPercentage,
-    FrontDetectionThreshold,
-    FrontPositions,
-    Time,
-    TimestepHasFront,
-    XPositions,
-)
+from mypackages import file_io, physics
+from mypackages.typesdefs import Bool, Field, OneD, Vector
 
 
 def find_field_front(
-    x: XPositions,
+    x: Vector,
     field: Field,
-    threshold: FrontDetectionThreshold,
+    threshold: Vector,
     interpolate: bool = True,
-) -> tuple[FrontPositions, TimestepHasFront]:
+) -> tuple[Vector, np.ndarray[OneD, Bool]]:
     """
     Find front positions where `field` crosses `threshold`. Interpolate if wished.
 
@@ -66,12 +55,29 @@ def find_field_front(
     return x_front, has_crossing
 
 
-def find_stress_front(x, sn, mesh_size: float = 4.0) -> tuple[np.ndarray, int]:
-    # NOTE: [:2] is added to avoid errors, remove later
+def find_stress_front(x: Vector, sn: Field, L: float) -> tuple[Vector, int]:
+    """Track the stress front position over time and find when it reaches
+    within one mesh cell of the domain boundary L.
+
+    The front at each timestep is taken as the x-position of minimum
+    (most tensile) stress in that timestep's profile.
+
+    Returns:
+        positions: front x-position at each timestep, up to (not including)
+            the timestep where the front first reaches `boundary`.
+        idx: index of that first timestep, or len(positions_full) if the
+            front never reaches the boundary within the given data.
+    """
+    if sn.shape[0] == 0:
+        raise ValueError("sn must contain at least one timestep")
+
     positions = x[np.argmin(sn, axis=1)]
-    assert len(positions) > 0, "Positions array should contain elements"
-    boundary = positions.max() - mesh_size
-    idx = int(np.argmax(positions >= boundary))
+    mesh_size = x[-1] - x[-2]
+    boundary = L - mesh_size
+
+    reached = np.flatnonzero(positions >= boundary)  # True values are non-zero
+    idx = int(reached[0]) if reached.size > 0 else len(positions)
+
     return positions[:idx], idx
 
 
@@ -80,28 +86,26 @@ def find_stress_front(x, sn, mesh_size: float = 4.0) -> tuple[np.ndarray, int]:
 
 def self_similar_front_threshold(
     run: file_io.RunData,
-    theta_front: DimensionlessApertureAtFront,
+    theta_front: float,
     is_pressure: bool = True,
-) -> FrontDetectionThreshold:
+) -> Vector:
     """Self-similar threshold:
     pressure -  theta_front * sqrt(q0^2 * t / D) * k_n.
     aperture - w_i + theta_front * sqrt(q0^2 * t / D)."""
-    D = diffusivity(run.params)
-    q = run.params.q_0 or run.params.q
-    assert q is not None and q > 0, f"expected correct injection rate, got {q}"
-    scale = np.sqrt(q**2 * run.t / D)
+    D = physics.diffusivity(run.params)
+    scale = np.sqrt(run.params.q_0**2 * run.t / D)
     w_front = run.params.w_i + theta_front * scale
     p_front = theta_front * scale * run.params.k_n
     return p_front if is_pressure else w_front
 
 
 def constant_aperture_threshold(
-    run: file_io.RunData, pct_increase: FractionalPercentage
-) -> FrontDetectionThreshold:
+    run: file_io.RunData, pct_increase: float
+) -> Vector:
     return np.full_like(run.t, run.params.w_i * (1 + pct_increase))
 
 
 def constant_pressure_threshold(
-    t: Time, pc: CriticalPressure
-) -> FrontDetectionThreshold:
+    t: Vector, pc: float
+) -> Vector:
     return np.full_like(t, pc)

@@ -7,15 +7,15 @@ from typing import cast
 import h5py
 import numpy as np
 
-from mypackages.types import Field, Parameters, Time, XPositions
+from mypackages.typesdefs import Field, Parameters, Vector
 
 
 @dataclass
 class RunData:
-    t: Time  # shape: (n_time, )
-    x_vert: XPositions  # shape: (n_vert, )
+    t: Vector  # shape: (n_time, )
+    x_vert: Vector  # shape: (n_vert, )
     w: Field  # shape: (n_time, n_vert)
-    x_sc: XPositions  # shape: (n_sc, )
+    x_sc: Vector  # shape: (n_sc, )
     sn: Field  # shape: (n_time, n_sc)
     tau: Field | None  # shape: (n_time, n_sc)
     p: Field  # shape: (n_time, n_sc)
@@ -34,9 +34,9 @@ FIELD_PATHS = {
 
 
 def sort_fields(
-    x: XPositions,
+    x: Vector,
     field: Field,
-) -> tuple[XPositions, Field]:
+) -> tuple[Vector, Field]:
     idx = np.argsort(x)
     return x[idx], field[:, idx]
 
@@ -72,7 +72,7 @@ def read_pickle(filepath: Path) -> RunData:
     return RunData(**arrays, tau=None, params=params)
 
 
-def read_fvm(filepath: Path) -> RunData:
+def read_halfspace(filepath: Path) -> RunData:
     with h5py.File(str(filepath), "r") as f:
         x_el = cast(h5py.Dataset, f["coordinates/x_elastic"])[:]
         x_fvm = cast(h5py.Dataset, f["coordinates/x_fvm"])[:]

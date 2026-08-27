@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import cm
+from matplotlib import cm, text
 from matplotlib import colors as mcolors
 from matplotlib.patches import Polygon
 
-from mypackages import file_io, types
+from mypackages import file_io
+from mypackages.typesdefs import Field, Vector
 
 
 def slope_triangle(
@@ -15,6 +16,8 @@ def slope_triangle(
     dx_log: float = 0.3,
     label_slope: bool = True,
     inverse: bool = False,
+    polygon_lw: float = 1.0,
+    **text_kwargs,
 ):
     """Annotate a slope triangle on an existing loglog axis."""
 
@@ -26,6 +29,7 @@ def slope_triangle(
         [[x0, y0], [x1, y0], [x1, y2]],
         fill=False,
         edgecolor="k",
+        linewidth=polygon_lw
     )
     ax.add_patch(tri)
     ax.annotate(
@@ -34,7 +38,7 @@ def slope_triangle(
         xytext=(0, -12) if not inverse else (0, 5),
         textcoords="offset points",
         ha="center",
-        fontsize=10,
+        **text_kwargs,
     )
     if label_slope:
         ax.annotate(
@@ -43,7 +47,7 @@ def slope_triangle(
             xytext=(6, 0),
             textcoords="offset points",
             ha="left",
-            fontsize=10,
+            **text_kwargs,
         )
 
 
@@ -83,9 +87,9 @@ def plot_nondimensionalization(
 
 def plot_profiles(
     ax,
-    x: types.XPositions,
-    field: types.Field,
-    t: types.Time,
+    x: Vector,
+    field: Field,
+    t: Vector,
     *,
     n=10,
     cut=0,
@@ -95,9 +99,14 @@ def plot_profiles(
     if cut == 0:
         cut = field.shape[0]
     for i in range(2, cut, (cut) // n):
-        ax.plot(x, field[i], ".", label=f"t={t[i]} s")
+        ax.plot(x, field[i], ".-", label=f"t={t[i]} s")
     ax.set(
         xlabel="Distance $x$, [m]",
         ylabel=ylabel,
         title=title,
     )
+
+
+def sci_latex(x):
+    mantissa, exponent = f"{x:.0e}".split("e")
+    return rf"{mantissa}\cdot 10^{{{int(exponent)}}}"

@@ -3,30 +3,24 @@ from functools import partial
 import numpy as np
 from scipy.optimize import curve_fit
 
-from mypackages.types import (
-    CharacteristicTime,
+from mypackages import file_io
+from mypackages.typesdefs import (
     Field,
     Float64,
-    HydraulicDiffusivity,
     OneD,
-    ParameterM,
     Parameters,
-    Prefactor,
-    ScalingExponent,
-    Time,
     TwoD,
-    XPositions,
+    Vector,
 )
 
 
-def parameter_a(params: Parameters) -> ParameterM:
+def parameter_a(params: Parameters) -> float:
     return params.k_n / (12 * params.mu)
 
 
-def diffusivity(params: Parameters) -> HydraulicDiffusivity:
-    DP = params.DP
-    if DP is not None:
-        w_0 = params.w_i + DP / params.k_n
+def diffusivity(params: Parameters) -> float:
+    if params.DP != 0.0:
+        w_0 = params.w_i + params.DP / params.k_n
         return parameter_a(params) * w_0**3
     return parameter_a(params) * params.w_i**3
 
@@ -36,9 +30,9 @@ def power_law(t, A, alpha):
 
 
 def fit_front_power_law(
-    t: Time,
-    x_front: XPositions,
-) -> tuple[Prefactor, ScalingExponent]:
+    t: Vector,
+    x_front: Vector,
+) -> tuple[float, float]:
     (A, alpha), _ = curve_fit(
         power_law,
         t,
@@ -50,10 +44,10 @@ def fit_front_power_law(
 
 
 def fit_front_power_law_fixed_alpha(
-    t: Time,
-    x_front: XPositions,
-    alpha: ScalingExponent,
-) -> Prefactor:
+    t: Vector,
+    x_front: Vector,
+    alpha: float,
+) -> float:
     power_law_fixed_exponent = partial(power_law, alpha=alpha)
     (A,), _ = curve_fit(
         power_law_fixed_exponent,
@@ -64,23 +58,27 @@ def fit_front_power_law_fixed_alpha(
     return A
 
 
-def critical_time(params: Parameters) -> CharacteristicTime:
-    q = params.q_0 or params.q
-    assert q is not None
-    t_c = parameter_a(params) * params.w_i**5 / q**2
+def critical_time(params: Parameters) -> float:
+    t_c = parameter_a(params) * params.w_i**5 / params.q_0**2
     return t_c
+
+
+def time_slice(run: file_io.RunData, early: bool) -> slice:
+    t_c = critical_time(run.params)
+    idx = np.searchsorted(run.t, t_c) + 1
+    return slice(idx) if early else slice(idx, None)
 
 
 def nondimensionalize_rigid(
     *,
-    x: XPositions,
-    t: Time,
+    x: Vector,
+    t: Vector,
     w: Field | np.ndarray[OneD, Float64],
     params: Parameters,
 ) -> tuple[np.ndarray[TwoD | OneD, Float64], np.ndarray[TwoD | OneD, Float64]]:
     D = diffusivity(params)
     wi = params.w_i
-    q = params.q_0 or params.q
+    q = params.q_0
     assert q is not None
     t_ = np.asarray(t)
 
@@ -96,13 +94,13 @@ def nondimensionalize_rigid(
 
 def nondimensionalize_soft(
     *,
-    x: XPositions,
-    t: Time | float,
+    x: Vector,
+    t: Vector | float,
     w: Field,
     params: Parameters,
 ) -> tuple[np.ndarray, np.ndarray]:
     M = parameter_a(params)
-    q = params.q_0 or params.q
+    q = params.q_0
     assert q is not None
     t_ = np.asarray(t)
 
@@ -118,9 +116,9 @@ def nondimensionalize_soft(
 
 
 def dimensionalize(params: Parameters) -> tuple[float, float]:
-    """Return characteristic aperture (w_char) and time (t_char)."""
+    """Return characteristic aperture (w_char) and Vector (t_char)."""
     if params.L <= 0 or params.mu <= 0:
         raise ValueError("L and mu must be positive.")
-    w_char = (params.L * params.flux / parameter_a(params)) ** 0.25
+    w_char = (params.L * params.q_0 / parameter_a(params)) ** 0.25
     t_char = (params.L * params.L) / (parameter_a(params) * (w_char**3))
     return w_char, t_char
