@@ -6,11 +6,11 @@ from mypackages import file_io, physics
 
 # %%
 
-result_dir = Path.cwd() / "results" / "3dec" / "runs-wi-1e-05"
+result_dir = Path.cwd() / "results" / "3dec" / "wi-1e-05"
 
 q_values = [5e-5, 5e-7, 5e-9]
 
-runs = {q: file_io.read_run(result_dir / f"run-q-{q:.0e}.hdf5") for q in q_values}
+runs = {q: file_io.read_run(result_dir / f"q-{q:.0e}.hdf5") for q in q_values}
 
 p_inj_dict = {q: run.p[:, 0] for q, run in runs.items()}
 
