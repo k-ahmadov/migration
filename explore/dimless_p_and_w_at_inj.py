@@ -16,7 +16,7 @@ p_inj_dict = {q: run.p[:, 0] for q, run in runs.items()}
 
 w_inj_dict = {q: run.w[:, 0] - run.params.w_i for q, run in runs.items()}
 
-char = {q: physics.dimensionalize(run.params) for q, run in runs.items()}
+char = {q: physics.dimensionalize_constant_rate(run.params) for q, run in runs.items()}
 
 # %%
 

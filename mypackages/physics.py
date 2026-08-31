@@ -115,10 +115,10 @@ def nondimensionalize_soft(
     return zeta, theta
 
 
-def dimensionalize(params: Parameters) -> tuple[float, float]:
-    """Return characteristic aperture (w_char) and Vector (t_char)."""
-    if params.L <= 0 or params.mu <= 0:
-        raise ValueError("L and mu must be positive.")
-    w_char = (params.L * params.q_0 / parameter_a(params)) ** 0.25
-    t_char = (params.L * params.L) / (parameter_a(params) * (w_char**3))
+def dimensionalize(params: Parameters, left_bc_constant_rate: bool = True):
+    if left_bc_constant_rate:
+        w_char = (params.L * params.q_0 / parameter_a(params)) ** 0.25
+    else:
+        w_char = (params.L**3 * params.m_q / parameter_a(params)**2)**(1/7)
+    t_char = (params.L ** 2) / (parameter_a(params) * (w_char**3))
     return w_char, t_char

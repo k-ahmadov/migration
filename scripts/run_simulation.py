@@ -30,9 +30,9 @@ class FVMResults:
         if p.ndim != 2 or w.ndim != 2:
             raise ValueError("p_tx and w_tx must be 2D arrays")
         Nx = x.size
-        Nt = t.size
+        Nt = t.size - 1
         if p.shape != (Nt, Nx):
-            raise ValueError(f"p_tx must have shape ({Nt}, {Nx})")
+            raise ValueError(f"p_tx must have shape ({Nt}, {Nx}), but it is {p.shape}")
         if w.shape != (Nt, Nx):
             raise ValueError(f"w_tx must have shape ({Nt}, {Nx})")
         self.x = x
@@ -61,6 +61,16 @@ class ElasticResults:
         self.sn = sn
 
 
+BC_RATE_PARAM_KEY = {
+    True: "q_0",   # constant rate
+    False: "m_q",  # linearly ramped rate
+}
+
+
+def _rate_param_key(left_bc_constant_rate: bool) -> str:
+    return BC_RATE_PARAM_KEY[left_bc_constant_rate]
+
+
 def run_fvm_code(
     *,
     L: float,
@@ -68,34 +78,37 @@ def run_fvm_code(
     mu: float,
     w_i: float,
     T: float,
-    q_0: float,
+    rate: float,
     Nx: int,
     Nt: int,
+    left_bc_constant_rate: bool = True,
 ) -> FVMResults:
     if Nx <= 0 or Nt <= 0:
         raise ValueError("Nx and Nt must be positive integers.")
     if T < 0:
         raise ValueError("T must be non-negative.")
 
-    w_char, t_char = physics.dimensionalize(Parameters(L=L, mu=mu, k_n=k_n, q_0=q_0))
+    w_char, t_char = physics.dimensionalize(
+        Parameters(L=L, mu=mu, k_n=k_n, _rate_param_key(left_bc_constant_rate)=rate), left_bc_constant_rate=left_bc_constant_rate
+    )
 
-    w_hat_tx = aperture_solver.solve_nonlinear_diffusion_n3_constant_flux(
-        Nx=Nx,
-        Nt=Nt,
-        ui_hat=w_i / w_char,
-        T_hat=T / t_char,
+    # TODO: run a simulation with linearly increasing injection rate
+    w_hat_tx = aperture_solver.solve_diffusion(
+        num_nodes=Nx,
+        num_steps=Nt,
+        w_initial=w_i / w_char,
+        t_final=T / t_char,
+        k_func=lambda w: w**3,
+        left_bc_constant_rate=left_bc_constant_rate,
     )
 
     # dimensionalize + pressure
     w_tx = w_hat_tx * w_char
     p_tx = k_n * (w_tx - w_i)
 
-    # grids (cell centers in x, uniform time steps)
-    dx = L / Nx
-    x = (np.arange(Nx, dtype=np.float64) + 0.5) * dx
-    # dt = T / Nt
-    # t = np.arange(Nt, dtype=np.float64) * dt
-    t = np.linspace(0, T, Nt, dtype=np.float64)
+    # grids (node (vertex)-centered)
+    x = np.linspace(0, L, Nx)
+    t = np.linspace(T / (Nt - 1), T, Nt)
 
     return FVMResults(x=x, t=t, p=p_tx, w=w_tx)
 
@@ -174,16 +187,28 @@ def run_elastic_solution(
     return ElasticResults(x=x_out[mask], t=t, sn=sn_tx[:, mask])
 
 
-def run_simulation(parameters: dict, out_filepath: Path):
-    # find characteristic duration for the simulation
-    T = physics.dimensionalize(
-        Parameters(
-            k_n=parameters["k_n"].value,
-            mu=parameters["mu"].value,
-            q_0=parameters["q_0"].value,
-            L=parameters["L"].value,
+def run_simulation(
+    parameters: dict[str, Param],
+    out_filepath: Path,
+    left_bc_constant_rate: bool = True,
+) -> None:
+    rate_key = _rate_param_key(left_bc_constant_rate)
+    if rate_key not in parameters:
+        raise KeyError(
+            f"parameters must contain '{rate_key}' when "
+            f"left_bc_constant_rate={left_bc_constant_rate}"
         )
-    )[1]
+    rate = parameters[rate_key].value
+
+    # find characteristic duration for the simulation
+    _, T = _dimensionalize(
+        L=parameters["L"].value,
+        mu=parameters["mu"].value,
+        k_n=parameters["k_n"].value,
+        rate=rate,
+        left_bc_constant_rate=left_bc_constant_rate,
+    )
+
     parameters["T"] = Param(T, "s", "Duration")
     print(f"Simulation duration: {T}")
 
@@ -193,21 +218,25 @@ def run_simulation(parameters: dict, out_filepath: Path):
         mu=parameters["mu"].value,
         w_i=parameters["w_i"].value,
         T=parameters["T"].value,
-        q_0=parameters["q_0"].value,
+        rate=rate,
         Nx=int(parameters["Nx_p"].value),
         Nt=int(parameters["Nt"].value),
+        left_bc_constant_rate=left_bc_constant_rate,
     )
     print("FVM simulation finished")
 
+    # NOTE: run_elastic_solution's characteristic stress scale (sn_char) is
+    # currently derived assuming a constant rate q_0. If you run the ramp-rate
+    # mode, double check whether sn_char should instead depend on m_q here.
     Elastic_result = run_elastic_solution(
         E=parameters["E"].value,
         nu=parameters["nu"].value,
         k_n=parameters["k_n"].value,
         L=parameters["L"].value,
-        q_0=parameters["q_0"].value,
+        q_0=rate,
         mu=parameters["mu"].value,
         Nx_sn=int(parameters["Nx_sn"].value),
-        T=int(parameters["T"].value),
+        T=parameters["T"].value,
         x_fvm=FVM_result.x,
         p_tx=FVM_result.p,
     )
@@ -293,13 +322,14 @@ def run_multiple_simuls_q0(parameters: dict, out_dirpath: Path):
         run_simulation(parameters, out_file)
 
 
-def main() -> None:
+def make_default_parameters(left_bc_constant_rate: bool = True) -> dict[str, Param]:
+    """Build the default parameter dict, using q_0 or m_q depending on the
+    chosen left boundary condition."""
     parameters: dict[str, Param] = {
         "k_n": Param(200e9, "Pa/m", "Normal stiffness"),
-        "L": Param(1000.0, "m", "Fracture length"),
+        "L": Param(100.0, "m", "Fracture length"),
         "mu": Param(1e-3, "Pa.s", "Fluid viscosity"),
         "w_i": Param(1e-5, "m", "Initial aperture"),
-        "q_0": Param(5e-7, "m^2/s", "Applied injection rate"),
         "E": Param(60e9, "Pa", "Young's modulus"),
         "nu": Param(0.25, "-", "Poisson's ratio"),
         "Nx_p": Param(1024, "-", "Number of spatial cells for fvm code"),
@@ -307,15 +337,28 @@ def main() -> None:
         "Nt": Param(500, "-", "Number of time steps"),
     }
 
-    multi_simul = True
+    if left_bc_constant_rate:
+        parameters["q_0"] = Param(5e-7, "m^2/s", "Applied injection rate")
+    else:
+        parameters["m_q"] = Param(5e-7, "m^2/s^2", "Injection rate ramp slope")
+
+    return parameters
+
+
+def main() -> None:
+    left_bc_constant_rate = True
+    parameters = make_default_parameters(left_bc_constant_rate)
+
+    multi_simul = False
+    rate_key = _rate_param_key(left_bc_constant_rate)
 
     if multi_simul:
         out_dir = Path.cwd() / "results" / "halfspace" / "wi-1e-05"
         run_multiple_simuls_q0(parameters, out_dir)
 
     out_dir = Path.cwd() / "results" / "halfspace" / "wi-1e-05"
-    out_file = out_dir / f"q-{parameters['q_0'].value:.0e}.hdf5"
-    run_simulation(parameters, out_file)
+    out_file = out_dir / f"{rate_key}-{parameters[rate_key].value:.0e}.hdf5"
+    run_simulation(parameters, out_file, left_bc_constant_rate=left_bc_constant_rate)
 
 
 if __name__ == "__main__":

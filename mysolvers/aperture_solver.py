@@ -1,96 +1,137 @@
+from typing import Callable
+
 import numpy as np
 from scipy.linalg import solve_banded
-from scipy.sparse import csc_array, diags
-from scipy.sparse.linalg import factorized, spsolve
 from scipy.stats import hmean
 
 
-def solve_nonlinear_diffusion_n3_constant_flux(
-    Nx: int, Nt: int, ui_hat: float, T_hat: float
+def _face_conductivity(
+    w: np.ndarray, k_func: Callable[[np.ndarray], np.ndarray]
+) -> np.ndarray:
+    """Harmonic mean of k(w) evaluated at adjacent nodes -> face values."""
+    kw = k_func(w)
+    return hmean(np.array([kw[:-1], kw[1:]]), axis=0)
+
+
+def _assemble(
+    num_nodes: int,
+    w: np.ndarray,
+    k_func: Callable[[np.ndarray], np.ndarray],
+    dt: float,
+    t_new: float,
+    left_bc_constant_rate: bool = True,
+):
+    dx = 1.0 / (num_nodes - 1)
+    gamma = dt / dx**2
+
+    # tridiagonal coefficients
+    a = np.zeros(num_nodes)  # coef. of w_{i-1}
+    b = np.zeros(num_nodes)  # coef. of w_{i}
+    c = np.zeros(num_nodes)  # coef. of w_{i+1}
+
+    k_face = _face_conductivity(w, k_func)
+
+    for i in range(1, num_nodes - 1):
+        km, kp = k_face[i - 1], k_face[i]
+        a[i] = -gamma * km
+        c[i] = -gamma * kp
+        b[i] = 1 - a[i] - c[i]
+
+    # boundary conditions (outer nodes)
+    # injection rate condition
+    a[0] = 0
+    c[0] = -gamma * k_face[0]
+    b[0] = 1 - c[0]
+    # no flux at i=N
+    a[-1] = -gamma * k_face[-1]
+    c[-1] = 0
+    b[-1] = 1 - a[-1]
+
+    d = np.zeros(num_nodes)
+    if left_bc_constant_rate:
+        q = 1.0
+    else:
+        q = t_new
+    # injection rate dependence on time only changes the coefficient d
+    d[0] += dt / dx * q
+
+    return a, b, c, d
+
+
+def _to_banded(a, b, c):
+    num_nodes = len(b)
+    # banded matrix that contains only 3 diagonals
+    # ab[u + i - j, j] == A[i, j], u is number of non-zero upper diags
+    ab = np.zeros((3, num_nodes))
+    # superdiagonal
+    ab[0, 1:] = c[:-1]
+    # main diagonal
+    ab[1, :] = b
+    # subdiagonal
+    ab[2, :-1] = a[1:]
+    return ab
+
+
+def solve_diffusion(
+    num_nodes: int,
+    num_steps: int,
+    w_initial: float,
+    t_final: float,
+    k_func: Callable[[np.ndarray], np.ndarray],
+    left_bc_constant_rate: bool = True,
 ) -> np.ndarray:
     """
     Solve the nonlinear diffusion equation (n = 3)
-    using the Finite Volume Method (FVM) in dimensionless form.
+    using the Control-Volume Method in dimensionless form.
 
     Equation (dimensionless form):
         ∂û/∂t̂ = ∂/∂x̂ (û³ ∂û/∂x̂)
 
     Dimensionless variables:
         x̂ = x / L
-        û = u / U*,     where U* = (L·q₀ / a)^(1/4)
-        t̂ = t / T*,     where T* = L² / (a·U*³)
+        û = u / U*
+        t̂ = t / T*
 
     Parameters
     ----------
-    Nx : int
-        Number of spatial cells.
-    Nt : int
+    num_notes : int
+        Number of spatial nodes.
+    num_steps : int
         Number of time steps.
-    ui_hat : float
+    w_initial : float
         Uniform Initial condition (dimensionless) for û at t̂ = 0.
-    T_hat : float
+    t_final : float
         Final dimensionless simulation time.
+    k_func : callable
+        Nonlinear conductivity k(w), e.g. `lambda w: w**3`. Pass
+        `lambda w: np.ones_like(w)` (or a constant array) to recover a
+        linear diffusion problem.
 
     Returns
     -------
-    u_hat : ndarray of shape (Nt, Nx)
+    w : ndarray of shape (num_steps, num_nodes)
         Dimensionless solution û(x̂, t̂) at each time step and spatial cell.
 
     Notes
     -----
-    - The scheme uses harmonic means for flux interpolation at cell interfaces.
+    - The scheme uses harmonic means for flux interpolation at node intefaces.
     - Fully implicit (backward Euler) in time.
     """
-    dx_hat = 1.0 / Nx
-    dt_hat = T_hat / Nt
-    gamma = dt_hat / dx_hat**2
-
-    u_hat = np.zeros((Nt, Nx))
-    u_hat[0, :] = ui_hat
-
-    for k in range(Nt - 1):
-        u_k = u_hat[k, :]
-
-        # harmonic mean of u³ between adjacent cells -> face diffusivities
-        alpha = hmean(np.array([u_k[:-1] ** 3, u_k[1:] ** 3]), axis=0)
-
-        # tridiagonal system from implicit FVM discretization of ∂/∂x̂(û³ ∂û/∂x̂)
-        # (I - gamma * Laplacian(alpha))
-        off_diag = -gamma * alpha
-        main_diag = np.ones(Nx)
-        main_diag[:-1] += gamma * alpha
-        main_diag[1:] += gamma * alpha
-
-        A = csc_array(diags([off_diag, main_diag, off_diag], offsets=[-1, 0, 1]))  # type: ignore
-
-        # RHS: constant-flux Neumann condition at left boundary
-        b = u_k.copy()
-        b[0] += gamma * dx_hat
-
-        u_hat[k + 1, :] = spsolve(A, b)
-
-    return u_hat
-
-
-def solve_linear_diffusion_BC_constant_flux(Nx, Nt, T_hat, ui_hat=0):
-    x_hat = np.linspace(0, 1, Nx)
-    dx_hat = 1 / Nx
-    dt_hat = T_hat / Nt
-    gamma = dt_hat / dx_hat**2
-    main = (1 + 2 * gamma) * np.ones(Nx)
-    upper = -gamma * np.ones(Nx - 1)
-    upper[0] = -2 * gamma
-    lower = -gamma * np.ones(Nx - 1)
-    lower[-1] = -2 * gamma
-    A = csc_array(diags([lower, main, upper], [-1, 0, 1]))  # type: ignore
-    solve = factorized(csc_array(A))
-    u_hat = np.zeros((Nt, Nx))
-    u_hat[0, :] = ui_hat
-    for k in range(Nt - 1):
-        b = u_hat[k, :].copy()
-        b[0] += 2 * gamma * dx_hat
-        u_hat[k + 1, :] = solve(b)
-    return x_hat, u_hat
+    dt = t_final / (num_steps - 1)
+    # tridiagonal coefficients
+    w = np.zeros((num_steps, num_nodes))
+    # initial condition
+    w[0, :] = w_initial
+    for n in range(num_steps - 1):
+        w_n = w[n, :].copy()
+        t_new = (n + 1) * dt
+        # assemble the triag. cofficients
+        a, b, c, d = _assemble(num_nodes, w_n, k_func, dt, t_new, left_bc_constant_rate)
+        # build banded matrix
+        ab = _to_banded(a, b, c)
+        d += w_n
+        w[n + 1, :] = solve_banded((1, 1), ab, d)
+    return w[1:, :]
 
 
 def solve_linear_radial_diffusion(
@@ -186,8 +227,9 @@ def solve_linear_radial_diffusion(
     return w
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
+
     num_nodes = 100
     num_steps = 100
     # all input parameters are dimensionless

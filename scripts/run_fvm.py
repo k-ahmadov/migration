@@ -72,7 +72,7 @@ def main():
     Nt = int(parameters["Nt"].value)
 
     FVM_result = run_fvm_code(
-        L=L, k_n=k_n, mu=mu, w_i=w_i, T=T, q_0=q_0, Nx=Nx_p, Nt=Nt
+        L=L, k_n=k_n, mu=mu, w_i=w_i, T=T, q=q_0, Nx=Nx_p, Nt=Nt
     )
 
     out_dir = Path.cwd() / "results" / "fvm" / "runs"

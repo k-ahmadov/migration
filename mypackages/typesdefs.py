@@ -18,6 +18,7 @@ class Parameters:
     nu: float = 0.0  # Poisson's ratio
     w_i: float = 0.0  # initial aperture
     q_0: float = 0.0 # injection rate
+    m_q: float = 0.0 # slope of linearly increasing injection rate
     DP: float  = 0.0  # constant overpressure
     w_max: float = 0.0  # max aperture
     w_min: float = 0.0  # min aperture
