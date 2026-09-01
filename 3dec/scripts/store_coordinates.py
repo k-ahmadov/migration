@@ -127,6 +127,12 @@ def main() -> None:
     def fish(key: str) -> float:
         return float(it.fish.get(key))
 
+    def fish_or(key: str, default: float) -> float:
+        try:
+            return float(it.fish.get(key))
+        except Exception:
+            return default
+
     parameters: dict[str, Param] = {
         "k_n": Param(fish("k_n"), "Pa/m", "Normal stiffness"),
         "k_s": Param(fish("k_s"), "Pa/m", "Shear stiffness"),
@@ -135,10 +141,19 @@ def main() -> None:
         "w_i": Param(fish("w_i"), "m", "Initial aperture"),
         "w_min": Param(fish("w_min"), "m", "Minimum aperture"),
         "w_max": Param(fish("w_max"), "m", "Maximum aperture"),
-        "q_0": Param(fish("q_0"), "m^2/s", "Applied injection rate"),
-        "E": Param(fish("E"), "Pa/m", "Young's modulus"),
+        "E": Param(fish("E"), "Pa", "Young's modulus"),
         "nu": Param(fish("nu"), "-", "Poisson's ratio"),
     }
+
+    # The `q_0` global holds a constant injection rate, or -- when
+    # `ramp_injection` is set (see inject.dat, Option 3) -- the slope of a
+    # linearly increasing rate. Store it under the matching key/unit.
+    if fish_or("ramp_injection", 0.0) != 0.0:
+        parameters["m_q"] = Param(
+            fish("q_0"), "m^2/s^2", "Injection-rate ramp slope"
+        )
+    else:
+        parameters["q_0"] = Param(fish("q_0"), "m^2/s", "Applied injection rate")
 
     save_coordinates_hdf5(out_file, coords, parameters)
 

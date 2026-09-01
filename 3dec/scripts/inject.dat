@@ -29,11 +29,13 @@ model mechanical slave on
 ; flowknot apply p-p [P_0] range pos-x 0
 
 ; --- Option 2: constant discharge rate (m²/s) ---
+[global ramp_injection = 0]   ; q_0 is a constant rate (stored as parameters/q_0)
 [global q_0 = 5e-7]
 flowplane edge apply discharge [q_0] range pos-x 0
 ;flowknot apply discharge [q_0] range pos-x 0
 
 ; --- Option 3: linearly increasing discharge rate ---
+; [global ramp_injection = 1]   ; q_0 is the ramp slope (stored as parameters/m_q)
 ; [global q_0 = 1e-4]   ; initial slope of the ramp
 ; Fish callback runs after timestep determination (sequence position 1–10)
 ; callback defined in fish-support.dat
