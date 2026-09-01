@@ -1,13 +1,23 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mypackages"
+name = "fracinj"
 version = "0.1.0"
+description = "Fluid injection into a pre-existing fracture: solvers, analysis, figures"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.26",
+    "scipy>=1.11",
+    "h5py>=3.10",
+    "matplotlib>=3.8",
+    "pandas>=2.1",
+    "sympy>=1.12",
+]
 
 [tool.setuptools.packages.find]
-include = ["mysolvers*", "mypackages*"]
+include = ["fracinj*"]
 
 [tool.ruff.lint]
 ignore = ["F401"]
