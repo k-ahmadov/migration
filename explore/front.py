@@ -5,7 +5,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
-from mypackages import file_io, front_analysis, front_detection, physics
+from fracinj import io, analysis, detection, physics
 
 # %% --- Plotting ---------------------------------------------------------------
 
