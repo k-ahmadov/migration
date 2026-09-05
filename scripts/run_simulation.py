@@ -58,7 +58,7 @@ def run_fvm(params: Parameters, *, bc: RateBC = RateBC.CONST) -> FVMResult:
     w = w_hat * scales.w
     return FVMResult(
         x=np.linspace(0, params.L, nx),
-        t=np.linspace(params.T / (nt - 1), params.T, nt),
+        t=np.linspace(params.T / (nt - 1), params.T, nt - 1),
         p=params.k_n * (w - params.w_i),
         w=w,
     )
@@ -146,7 +146,12 @@ def sweep(
     *,
     bc: RateBC = RateBC.CONST,
 ) -> None:
-    """Run one simulation per value of ``params.<field>``."""
+    """Run one simulation per value of ``params.<field>``.
+
+    ``run_simulation`` recomputes ``params.T`` unconditionally on every call:
+    since `params` is shared across iterations, a "only set T if unset" guard
+    would freeze T at the first value's duration for the rest of the sweep.
+    """
     for value in values:
         setattr(params, field, float(value))
         print(f"running {field}={value:.1e}")
@@ -155,17 +160,17 @@ def sweep(
 
 def default_parameters(bc: RateBC = RateBC.CONST) -> Parameters:
     params = Parameters(
-        k_n=50e9,
+        k_n=200e9,
         L=100.0,
         mu=1e-3,
-        w_i=1e-4,
+        w_i=1e-5,
         E=60e9,
         nu=0.25,
-        Nx_p=1024,
-        Nx_sn=512,
+        Nx_p=512,
+        Nx_sn=256,
         Nt=500,
     )
-    setattr(params, bc.value, 1e-6)
+    setattr(params, bc.value, 1e-8)
     return params
 
 
@@ -173,9 +178,12 @@ def main() -> None:
     bc = RateBC.RAMP
     params = default_parameters(bc)
     out_dir = paths.results_dir("halfspace", "linear")
+    m_q_values = np.geomspace(1e-14, 1e-7, 8)
 
-    out_file = out_dir / f"{bc.value}-{getattr(params, bc.value):.0e}.hdf5"
-    run_simulation(params, out_file, bc=bc)
+    sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
+
+    # out_file = out_dir / f"{bc.value}-{getattr(params, bc.value):.0e}.hdf5"
+    # run_simulation(params, out_file, bc=bc)
 
 
 if __name__ == "__main__":
