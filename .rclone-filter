@@ -33,5 +33,12 @@
 - *.swp
 - Session.vim
 
+# --- secrets: never push these to the cloud -------------------------
+- .overleaf-key.md
+- overleaf-key.md
+- .env
+- *.key
+- *.pem
+
 # --- backup script's own local log (the git bundle IS kept) ----------
 - /backup/rclone-backup.log

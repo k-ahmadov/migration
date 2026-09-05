@@ -17,18 +17,22 @@
 #   scripts/backup.sh --run      # perform the sync
 #
 # Configuration (environment variables):
-#   BACKUP_REMOTE   rclone destination   (default: seafile:migration)
+#   BACKUP_REMOTE   rclone destination   (default: seafile:mylib/phd/backups/migration)
 #   BACKUP_TRASH    where replaced/deleted remote files are moved
-#                                        (default: seafile:migration-trash)
+#                                        (default: seafile:mylib/phd/backups/migration-trash)
 #
-# BACKUP_TRASH must not sit inside BACKUP_REMOTE or rclone will refuse to run.
+# The destination is a subfolder dedicated to this repo: `rclone sync` mirrors
+# it exactly, so anything else living directly under it would be deleted. Keep
+# BACKUP_REMOTE pointed at a path that holds only this backup.
+#
+# BACKUP_TRASH must not sit inside BACKUP_REMOTE or rclone will refuse to run
+# (hence the sibling `migration-trash`, not a folder nested in `migration`).
 # For a Seafile remote the top-level library must already exist (rclone will
-# not create it): point BACKUP_REMOTE at an existing library, optionally with
-# a sub-path, e.g.  export BACKUP_REMOTE=seafile:Backups/migration
+# not create it).
 
 set -euo pipefail
 
-usage() { sed -n '3,24p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,31p' "$0" | sed 's/^# \{0,1\}//'; }
 
 # --- resolve paths -----------------------------------------------------------
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -39,8 +43,8 @@ LOG_DIR="$REPO_DIR/backup"
 LOG_FILE="$LOG_DIR/rclone-backup.log"
 BUNDLE_FILE="$LOG_DIR/history.bundle"
 
-BACKUP_REMOTE="${BACKUP_REMOTE:-seafile:migration}"
-BACKUP_TRASH="${BACKUP_TRASH:-seafile:migration-trash}"
+BACKUP_REMOTE="${BACKUP_REMOTE:-seafile:mylib/phd/backups/migration}"
+BACKUP_TRASH="${BACKUP_TRASH:-seafile:mylib/phd/backups/migration-trash}"
 STAMP=$(date +%Y%m%d-%H%M%S)
 
 # --- parse arguments -------------------------------------------------------
