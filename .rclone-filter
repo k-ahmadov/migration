@@ -1,0 +1,37 @@
+# rclone filter rules for backing up this repository to cloud storage.
+#
+# Consumed by scripts/backup.sh via --filter-from. Rules are evaluated top to
+# bottom, first match wins; anything not matched here is INCLUDED in the sync.
+# The point of the backup is the large, gitignored inputs/outputs (data/,
+# results/, figures/, overleaf/) that GitHub does not hold -- those are left
+# to sync. Only throwaway/derived files are excluded below.
+
+# --- caches, build products, virtualenvs --------------------------------
+- .git/**
+- .venv/**
+- venv/**
+- __pycache__/**
+- *.py[cod]
+- *.egg-info/**
+- .mypy_cache/**
+- .pytest_cache/**
+- .ruff_cache/**
+- .ipynb_checkpoints/**
+- .virtual_documents/**
+
+# --- Quarto build artifacts -------------------------------------------
+- .quarto/**
+- *.quarto_ipynb
+- *.quarto_ipynb_*
+- *_files/**
+
+# --- editor / OS cruft ----------------------------------------------
+- .idea/**
+- .vscode/**
+- .DS_Store
+- Thumbs.db
+- *.swp
+- Session.vim
+
+# --- backup script's own local log (the git bundle IS kept) ----------
+- /backup/rclone-backup.log

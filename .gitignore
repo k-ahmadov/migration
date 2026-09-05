@@ -2,6 +2,7 @@
 *.temp
 .*
 !.gitignore
+!.rclone-filter
 *.log
 Session.vim
 *.pyc
