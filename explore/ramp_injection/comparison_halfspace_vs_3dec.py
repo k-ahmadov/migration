@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from fracinj import analysis, io, paths, physics, plotting
+from fracinj import analysis, io, paths, plotting
 
 # %%
 run_3dec = io.read_hdf5(paths.results_dir("3dec", "linear") / "run-q-1e-06.hdf5")
@@ -26,6 +26,7 @@ ax.set(
     yscale="log",
 )
 ax.legend(frameon=False)
+fig.savefig(paths.figure_path('comparison-halfspace-3dec', subdir="ramp-injection", ext='png'))
 fig.canvas.draw_idle()
 plt.pause(0.01)
 
