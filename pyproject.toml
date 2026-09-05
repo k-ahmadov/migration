@@ -19,5 +19,6 @@ dependencies = [
 [tool.setuptools.packages.find]
 include = ["fracinj*"]
 
-[tool.ruff.lint]
-ignore = ["F401"]
+[tool.pyright]
+exclude = ["**/__pycache__", "**/.ipynb_checkpoints", "**/.virtual_documents",
+           "results", "figures", "data", "overleaf", "documents", "3dec/saves", ".archive", "backup"]
