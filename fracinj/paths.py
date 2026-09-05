@@ -19,8 +19,8 @@ def results_dir(*parts: str) -> Path:
     return RESULTS.joinpath(*parts)
 
 
-def figure_path(name: str, *, ext: str = "eps", overleaf: bool = False) -> Path:
+def figure_path(name: str, *, subdir: str = "", ext: str = "eps", overleaf: bool = False) -> Path:
     """Location for a figure file, creating the parent directory."""
-    base = OVERLEAF / "figures_main" if overleaf else FIGURES / "paper"
+    base = OVERLEAF / "figures_main" if overleaf else FIGURES / subdir
     base.mkdir(parents=True, exist_ok=True)
     return base / f"{name}.{ext}"

@@ -1,5 +1,6 @@
 """Matplotlib helpers shared across the figure scripts."""
 
+from collections.abc import Callable
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -9,7 +10,7 @@ from matplotlib import colors as mcolors
 from matplotlib.patches import Polygon
 
 from fracinj import io, paths
-from fracinj.types import Field, Vector
+from fracinj.types import Field, RateBC, Vector
 
 
 def save_figure(fig, name: str, *, ext: str = "eps", overleaf: bool = False) -> Path:
@@ -66,7 +67,8 @@ def plot_nondimensionalization(
     ax1,
     ax2,
     run: io.RunData,
-    nondim_fn,
+    nondim_fn: Callable,
+    bc: RateBC = "const_rate",
     *,
     step: int,
     stop: int | None = None,
@@ -80,7 +82,7 @@ def plot_nondimensionalization(
     cmap = plt.get_cmap(cmap) if isinstance(cmap, str) else cmap
 
     x_vert, w = io.sort_fields(run.x_vert, run.w)
-    zeta, theta = nondim_fn(x=x_vert, t=run.t, w=w, params=run.params)
+    zeta, theta = nondim_fn(x=x_vert, t=run.t, w=w, params=run.params, bc=bc)
     norm = mcolors.Normalize(vmin=run.t[step], vmax=run.t[stop - 1])
 
     for i in range(step, stop, step):

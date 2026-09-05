@@ -1,6 +1,7 @@
 """Shared array-type aliases and the parameter container."""
 
 from dataclasses import dataclass, field, fields
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -10,6 +11,7 @@ from numpy.typing import NDArray
 Vector = NDArray[np.float64]
 Field = NDArray[np.float64]
 BoolVector = NDArray[np.bool_]
+RateBC = Literal["const_rate", "ramp_rate"]
 
 
 def _p(unit: str, description: str, default: float = 0.0):
