@@ -20,3 +20,12 @@ documents/
 backup/**
 *.backup
 tmp.py
+overleaf-key.md
+
+# Quarto
+/.quarto/
+*.quarto_ipynb
+*.quarto_ipynb_*
+*_files/
+notebooks/*.html
+notebooks/*.pdf
