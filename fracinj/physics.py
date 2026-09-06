@@ -54,7 +54,7 @@ def characteristic_distance(params: Parameters, bc: RateBC = "const_rate"):
 # TODO: maybe add nondimensionazation type aware characteristic time
 def characteristic_time(params: Parameters, bc: RateBC = "const_rate"):
     a = mobility(params)
-    t_char = characteristic_distance(params, bc=bc) ** 2 / a * params.w_i**3
+    t_char = characteristic_distance(params, bc=bc) ** 2 / (a * params.w_i**3)
     return t_char
 
 
