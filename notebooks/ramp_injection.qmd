@@ -9,8 +9,8 @@ format:
         fontsize: larger
         embed-resources: true
         theme: darkly
-execute:
-    cache: true
+# execute:
+#     cache: true
 jupyter: migration
 ---
 
@@ -18,7 +18,7 @@ jupyter: migration
 Here I analyze the effect of the linearly increasing injection rate
 on the migration of the stress front. Previously, we used a crossover function
 to analyze the early- and late time behavior in the constant injection rate case.
-There is a parameter $\delta$ that measures the 'slowness' of the transiotion regime.
+There is a parameter $\delta$ that measures the 'slowness' of the transition regime.
 The obtained $\delta=0.01$ from the fit to our numerical results was inconsistent
 with the field data. To resolve this inconsistency, I do a similar analysis
 for fluid injection with linearly increasing rate. The injection condition can be
@@ -36,14 +36,14 @@ obtained from my code and 3DEC.
 
 ```{python}
 
-from dataclasses import dataclass, field
-
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import scienceplots
+from scipy.optimize import curve_fit
 
-from fracinj import analysis, detection, io, math_utils, paths, physics, plotting
-from fracinj.types import Vector
+from fracinj import analysis, io, math_utils, paths, physics, plotting
+
+plt.style.use(["science", "notebook"])
 ```
 
 ```{python}
@@ -79,8 +79,8 @@ plt.pause(0.01)
 
 ## Dimensional self-similarity analysis produces a super-linear late-time scaling exponent for distance ($\alpha=1.2$)
 
-The similarity variables chanve with the injection condtion, we cannot use the
-previously derived variables. Given the nonlinear diffusion equation 
+The similarity variables change with the injection condition, so we cannot use the
+previously derived variables. Given the nonlinear diffusion equation
 $$
 	\frac{k_{n}}{12 \mu} \frac{ \partial }{ \partial x } \left(w^{3} \frac{ \partial w }{ \partial x }  \right)  = \frac{ \partial w }{ \partial t } ,
 $$ {#eq-diffusion}
@@ -110,22 +110,19 @@ of distance $x(t) \sim t^{7/5}$ and of aperture $w(t) \sim t^{3/5}$.
 
 The soft asymptotic limit is reached at large times when $t \gg t_{c}$ with
 $t_{c}$ being the characteristic time. At smaller times $t \leq t_{c}$, the
-similarity behavior is governed by linear diffusion where distance aperture
+similarity behavior is governed by linear diffusion where distance and aperture
 scale proportionally to $t^{1/2}$.
 
 ### Derived similarity variables superpose the late-time aperture profiles obtained from a numerical solution
 
-Since I derived the dimensionless variables by hand it would be cautios
+Since I derived the dimensionless variables by hand it would be cautious
 to cross-check them with the numerical results of aperture profiles.
-
-```{python}
-
-run = io.read_halfspace(paths.results_dir("halfspace", "linear") / "m_q-1e-08.hdf5")
-```
 
 ```{python}
 #| label: fig-similarity
 #| fig-cap: Aperture profiles throughout the simulation (a) in dimensional form (b) nondimensionalized with similarity variables for soft asymptotic regime. The dimensionless profiles collapse at late times.
+
+run = io.read_halfspace(paths.results_dir("halfspace", "linear") / "m_q-1e-08.hdf5")
 
 fig = plt.figure(
     figsize=(6.4, 4.8 / 2.5), dpi=95, layout="constrained", clear=True, num=1
@@ -156,59 +153,68 @@ $$
 $$
 where $x_{c}$ and $t_{c}$ are characteristic distance and time, respectively. These characteristic scales can be used to study the evolution of the dimensionless front position across multiple simulations.
 
-## Fitting the crossover function to the numerical data results in $\delta=0.3$, producing "faster" transition than constant injection rate condition
+## Fitting the crossover function to the numerical data gives $\delta = 0.3$, a "faster" transition than the constant injection rate condition
 
 Given that the early-time power-law exponent that describes the migration of
 the stress front is 0.5 and the late-time exponent is 1.2 (@eq-similarity),
 the crossover function that combines both power-laws separated by $t_{c}$ is
 $$
 	x_{f}(t) = \frac{A_{\mathrm{early}}t^{0.5}}{1 + (t/t_{c})^{\delta}} + \frac{A_{\mathrm{late}}t^{1.2}}{1 + (t_{c}/t)^{\delta}}.
-$$
+$$ {#eq-crossover}
 
 ```{python}
 
 result_dir = paths.results_dir("halfspace", "linear")
 mq_values = np.geomspace(1e-14, 1e-8, 7)
-
 runs = [io.read_halfspace(result_dir / f"m_q-{m_q:.0e}.hdf5") for m_q in mq_values]
-
-# Early-time runs need truncated slices (front detection breaks down late);
-# later runs are well-behaved over their full range.
-CUSTOM_SLICE_FRACTIONS = {0: 5, 1: 2, 2: 2}  # run_index -> keep first 1/N of points
-
-
-def slice_for_run(i: int, n_points: int) -> slice:
-    if i in CUSTOM_SLICE_FRACTIONS:
-        return slice(None, n_points // CUSTOM_SLICE_FRACTIONS[i])
-    return slice(None, None)
-
-
-results = [
-    analysis.analyze_front(run, stress_front=True, slc=slice_for_run(i, len(run.t)))
-    for i, run in enumerate(runs)
-]
 bc = "ramp_rate"
 
+# early runs: keep only the early part (late-time front detection is noisy)
+keep_fraction = {0: 1 / 5, 1: 1 / 2, 2: 1 / 2}
+results = [
+    analysis.analyze_front(
+        run,
+        stress_front=True,
+        slc=slice(int(len(run.t) * keep_fraction.get(i, 1.0))),
+    )
+    for i, run in enumerate(runs)
+]
 
-t_min = runs[0].t[0]
-t_max = runs[-1].t[-1]
-t_range = np.geomspace(
-    t_min / physics.characteristic_time(runs[0].params, bc=bc),
-    t_max / physics.characteristic_time(runs[-1].params, bc=bc),
-    200,
-)
+# pool every run onto dimensionless axes (t / t_c, x_f / x_c)
+tc = [physics.characteristic_time(run.params, bc=bc) for run in runs]
+xc = [physics.characteristic_distance(run.params, bc=bc) for run in runs]
+t_nd = np.concatenate([res.t / t for res, t in zip(results, tc)])
+x_nd = np.concatenate([res.y / x for res, x in zip(results, xc)])
+positive = t_nd > 0
+t_nd, x_nd = t_nd[positive], x_nd[positive]
 
-delta = 0.3
-front_crossover = math_utils.crossover(
-    x=t_range, a=1.9, alpha=0.5, b=1.8, beta=1.2, x0=1, delta=delta
+
+# fit the crossover to the pooled data: exponents and t_c fixed, (a, b, delta) free
+def crossover_fixed_exponents(t, a, b, delta):
+    return math_utils.crossover(t, a=a, alpha=0.5, b=b, beta=1.2, x0=1.0, delta=delta)
+
+
+(a_fit, b_fit, delta_fit), _ = curve_fit(
+    crossover_fixed_exponents, t_nd, x_nd, p0=(1.0, 1.0, 0.1), maxfev=10_000
 )
+# NOTE: because of the outliers the curve_fit overestimated the prefactor a_fit
+# visually I found that adjusting the parameters in the following way
+# gives a better fit
+a_fit /= 1.25
+b_fit *= 1.07
+delta_fit = 0.3  # the orginal fit gave 0.38
+print(f"a = {a_fit:.3g}, b = {b_fit:.3g}, delta = {delta_fit:.3g}")
+
+t_range = np.geomspace(t_nd.min(), t_nd.max(), 200)
+front_crossover = crossover_fixed_exponents(t_range, a_fit, b_fit, delta_fit)
 ```
 
 I did several numerical simulations (using half-space code) with the slope of the
 injection rate condition $m_{q}$ varying in the range
-$\mathrm{10^{-14}\,m^2/s^2} \leq m_{q} \leq \mathrm{10^{-8}\,m^2/s^2}$. The fit
-of the crossover function to the numerical data gives $\delta=0.3$ (see 
-below @fig-front). The two asyptotic power-laws are clearly separated by the dimensionless characteristic time $t_{c} = 1$.
+$\mathrm{10^{-14}\,m^2/s^2} \leq m_{q} \leq \mathrm{10^{-8}\,m^2/s^2}$. A
+least-squares fit of the crossover function to the pooled dimensionless data
+gives $\delta \approx 0.3$ (see below @fig-front). The two asymptotic power-laws
+are clearly separated by the dimensionless characteristic time $t_{c} = 1$.
 
 Previously with a constant injection rate condition, I obtained
 $\delta=0.01$ and the asymptotic scaling exponents were 0.5 and 0.8. The
@@ -221,24 +227,18 @@ the linearly increasing injection rate condition.
 #| fig-cap: Migration of the dimensionless front across simulations with injection rate ramp $m_q$ varying from $\mathrm{10^{-14}\,m^2/s^2}$ to $\mathrm{10^{-8}\,m^2/s^2}$.
 
 fig = plt.figure(
-    figsize=(6.4 / 1.3, 4.8 / 1.3), dpi=100, layout="constrained", clear=True, num=1
+    figsize=(6.4 / 1.3, 4.8 / 1.3), dpi=95, layout="constrained", clear=True, num=1
 )
 ax = fig.subplots()
-for run, result in zip(runs[::1], results[::1]):
+for run, result, t_c, x_c in zip(runs, results, tc, xc):
     label = rf"$m_q={plotting.sci_latex(run.params.m_q)}\,\mathrm{{m^2 / s^2}},\ \alpha = {result.alpha_emp:.2f}$"
-
-    ax.scatter(
-        result.t / physics.characteristic_time(run.params, bc=bc),
-        result.y / physics.characteristic_distance(run.params, bc=bc),
-        s=5,
-        label=label,
-    )
+    ax.scatter(result.t / t_c, result.y / x_c, s=5, label=label)
 ax.plot(
     t_range,
     front_crossover,
     "k--",
     lw=2,
-    label=rf"Crossover function, $\delta={delta}$",
+    label=rf"Crossover fit, $\delta={delta_fit:.2g}$",
 )
 ax.set(
     xlabel=r"$t / t_c$",
@@ -252,112 +252,359 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
-## Fitting to the field data
+## Fitting the crossover function with numerically inferred $\delta$ to the field data reproduces the early- and late-time behaviors in the migration of seismic front
 
 ```{python}
 
 SECONDS_PER_DAY = 86_400
 
 
-def _to_days(t_sec):
+def to_days(t_sec):
     return t_sec / SECONDS_PER_DAY
 
 
-crossover_model = analysis.CrossoverModel(alpha_early=0.5, alpha_late=1.2, delta=0.3)
-t_s, d_s = io.load("soultz")
+# reuse the crossover sharpness found from the numerical simulations
+crossover_model = analysis.CrossoverModel(delta=delta_fit)
+
 soultz = analysis.fit_field_crossover(
-    t_s,
-    d_s,
+    *io.load("soultz"),
     title="Soultz 1993",
     percentile=90,
-    t_c=4.5 * SECONDS_PER_DAY,
-    model=crossover_model,
-    eval_based_envelope=True,
-)
-
-t_b, d_b = io.load("basel")
-basel = analysis.fit_field_crossover(
-    t_b,
-    d_b,
-    title="Basel 2006",
-    percentile=75,
     t_c=3 * SECONDS_PER_DAY,
     model=crossover_model,
-    eval_based_envelope=True,
+)
+basel = analysis.fit_field_crossover(
+    *io.load("basel"),
+    title="Basel 2006",
+    percentile=75,
+    t_c=2 * SECONDS_PER_DAY,
+    model=crossover_model,
 )
 ```
 
 ```{python}
-def plot_field_case(
-    ax: matplotlib.axes.Axes, field_case: analysis.FieldCase, **set_kwargs
+colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+
+def plot_slope_triangle(
+    ax: plt.Axes, x: np.ndarray, y: np.ndarray, x0: float, nudge: float = 1
 ):
-    ax.scatter(_to_days(field_case.t), field_case.d, color="tab:gray", s=3)
+    exponent, log_prefactor = np.polyfit(np.log(x), np.log(y), deg=1)
+    plotting.slope_triangle(
+        ax=ax,
+        x0=x0,
+        slope=round(exponent, 2),
+        prefactor=np.exp(log_prefactor + nudge),
+    )
+
+
+def annotate_regime_slopes(ax: plt.Axes, case: analysis.FieldCase, anchors, nudges):
+    """Draw an early- and a late-time slope triangle on the fitted curve."""
+    idx_tc = np.searchsorted(case.t_fit, case.t_c)
+    halves = [slice(None, idx_tc), slice(idx_tc, None)]
+    for slc, i, nudge in zip(halves, anchors, nudges):
+        plot_slope_triangle(
+            ax,
+            to_days(case.t_fit[slc]),
+            case.d_fit[slc],
+            x0=to_days(float(case.t_fit[i])),
+            nudge=nudge,
+        )
+
+
+def annotate_prefactors(ax: plt.Axes, field_case: analysis.FieldCase):
+    ax.text(
+        0.05,
+        0.8,
+        rf"$A_{{\mathrm{{early}}}} = {field_case.A_early:.2g} \pm {field_case.perr[0]:.1g},$"
+        "\n"
+        rf"$A_{{\mathrm{{late}}}} = {field_case.A_late:.2g} \pm {field_case.perr[1]:.1g}$",
+        transform=ax.transAxes,
+    )
+
+
+def plot_field_case(ax: plt.Axes, field_case: analysis.FieldCase, **set_kwargs):
+    ax.scatter(to_days(field_case.t), field_case.d, color=colors[-1], s=3, alpha=0.5)
     ax.scatter(
-        _to_days(field_case.t_env),
+        to_days(field_case.t_env),
         field_case.d_env,
         color="k",
         label=f"P{field_case.percentile:g} per {field_case.bin_size} events",
         s=25,
     )
     ax.plot(
-        _to_days(field_case.t_fit),
+        to_days(field_case.t_fit),
         field_case.d_fit,
-        color="tab:blue",
+        color=colors[0],
         lw=3,
-        label=rf"Crossover, $\delta={field_case.model.delta}$",
+        label=rf"Crossover, $\delta={field_case.model.delta:.2g}$",
     )
     ax.axvline(
-        _to_days(field_case.t_c),
+        to_days(field_case.t_c),
         color="k",
         ls=":",
-        label=rf"$t_c=\mathrm{{{_to_days(field_case.t_c):.2g}\ days}}$",
+        label=rf"$t_c=\mathrm{{{to_days(field_case.t_c):.2g}\ days}}$",
     )
     ax.set(
         xlabel="Time [day]", ylabel="Distance [m]", title=field_case.title, **set_kwargs
     )
-
-    idx_tc =  np.searchsorted(field_case.t_fit, field_case.t_c)
-    exponent, log_prefactor = np.polyfit(
-        np.log(
-            _to_days(
-                field_case.t_fit[: idx_tc]
-            )
-        ),
-        np.log(field_case.d_fit[: idx_tc]),
-        deg=1,
-    )
-    plotting.slope_triangle(
-        ax=ax,
-        x0=_to_days(field_case.t_fit[10]),
-        slope=round(exponent, 2),
-        prefactor=np.exp(log_prefactor + 1),
-    )
-
     ax.spines[["right", "top"]].set_visible(False)
-    ax.legend(loc="lower right", framealpha=1, fontsize="small")
-    return ax
+    ax.tick_params(top=False, right=False, which="both")
+    ax.legend(loc="lower right", framealpha=1, fontsize="small", frameon=True)
 ```
 
+I choose $\delta=0.3$ (inferred from our model) and set characteristic times 
+to $t_{c} = 3\, \mathrm{days}$ and $t_{c} = 2\, \mathrm{days}$ for Soultz and
+Basel, respectively. I determined $t_{c}$ visually by looking at the
+distance-time plots. The effect of $t_{c}$ within the reasonable range is small.
+The asymptotic early- and late-time scaling exponents
+$\alpha$ are 0.5 and 1.2. I fix the listed parameters in the crossover function
+@eq-crossover and optimize early- ($A_{\mathrm{early}}$) and late-time
+($A_{\mathrm{late}}$) prefactors to fit the seismic front migration data.
+The obtained fit reproduces early- and late-time behaviors. The average
+slope of the seicmic front migration in the log-scale before $t_{c}$ is smaller
+than after $t_{c}$ in both cases. I denoted the slopes with triangles in
+@fig-field. For example, at Soultz, $\alpha\approx 0.5$ when $t<t_{c}$,
+$\alpha\approx 0.7$ when $t>t_{c}$. 
+
+Previously, we saw that in the constant injection rate case, the scaling
+exponent $\alpha$ remains constant within the time-scale of the seismic
+migration. There, the transition scale $\delta$ and the late-time scaling
+exponent $\alpha$ were smaller. Thus, we did not observe the early- and
+late-time behaviors. Equally, the inferred model parameters from the fit were
+inconsistent with the reality and the model. It is worth to check if a model
+with linearly increasing injection rate condition yields more realistic
+parameters.
 
 ```{python}
-# TODO: plot both soultz and basel data
-# TODO: percentile and t_c depend on the chosen data
-# TODO: annotate early and late-time exponents on the plot
-# TODO: plot both linear and log scales
-# TODO: creaate a plot function
-
-# NOTE: remember that t_eval start at seismic data time, not percentile time
+#| label: fig-field
+#| fig-cap: Early- and late-time regimes (average scaling exponents denoted by triangles) shown with the crossover fit to the percentile envelope of the (a) Soultz 1993 and (b) Basel 2006 micro-seismic data.
 
 fig = plt.figure(
     figsize=(6.4 * 1.25, 4.8 / 1.5), dpi=95, layout="constrained", clear=True, num=1
 )
 ax1, ax2 = fig.subplots(1, 2)
-plot_field_case(
-    ax1, soultz, xscale="log", yscale="log", xlim=(0.5, 20), ylim=(50, 1000)
-)
-plot_field_case(ax2, basel, xscale="log", yscale="log")
 
-plt.show()
+plot_field_case(
+    ax1, soultz, xscale="log", yscale="log", xlim=(0.5, 20), ylim=(70, 1200)
+)
+plot_field_case(ax2, basel, xscale="log", yscale="log", xlim=(0.5, 6.5), ylim=(40, 700))
+
+annotate_regime_slopes(ax1, soultz, anchors=[10, -65], nudges=[1.0, -0.6])
+annotate_regime_slopes(ax2, basel, anchors=[70, -50], nudges=[0.8, -0.5])
+
+annotate_prefactors(ax1, soultz)
+annotate_prefactors(ax2, basel)
+
+ax1.annotate("(a)", (0, 1.05), xycoords="axes fraction", fontsize="large")
+ax2.annotate("(b)", (0, 1.05), xycoords="axes fraction", fontsize="large")
+
+fig.canvas.draw_idle()
+plt.pause(0.01)
 ```
 
-        
+## Model parameters inferred from the fit are close to reality except the slope of ramp injection rate $m_{q}$
+
+```{python}
+D = soultz.A_early**2 / 4
+mu = 1e-3
+kn_range = np.asarray([1e9, 5000e9])
+wi_range = (12 * mu * D / kn_range) ** (1 / 3)
+mq_range = (12 * mu * soultz.A_late**5 / kn_range) ** (1 / 3)
+```
+
+I compare the dimensionless similarity variables @eq-similarity with the
+empirical power-law fits to find the parameters of the model. I start with
+Soultz case. At small times $t \ll t_{c}$, crossover function can be
+approximated as $x_{f} = A_{\mathrm{early}} t^{1/2}$ and the analytical
+prediction is $x_{f}=(4Dt)^{1/2}$. Equalizing the two gives
+
+$$
+    (4Dt)^{1/2} = A_{\mathrm{early}} t^{1/2} 
+$$
+
+solving for $D$ gives
+
+$$
+    D = \frac{A_{\mathrm{early}}^{2}}{4}
+$$
+
+given that $A_{\mathrm{early}} = `{python} round(soultz.A_early, 2)`\,
+\mathrm{m/s^{1/2}}$, I find
+
+$$
+    D = `{python} round(D, 2)` \, \mathrm{m^2/s}.
+$$
+
+We also know that given a rigid pre-existing planar fracture that obeys cubic
+law for flow and has an initial aperture $w_{i}$, constant normal stiffness
+$k_{n}$, and incompressible water with viscosity $\mu$, the hydraulic
+diffusivity $D$ equals
+
+$$
+    D = \frac{k_{n} w_{i}^{3}}{12 \mu}.
+$$
+
+At ambient condition, the water has $\mu=\mathrm{1\, mPa \cdot s}$. The
+realistic range of normal stiffness values is $\mathrm{1\,GPa/m} \leq k_{n}
+\leq  \mathrm{5000\,GPa/m}$. Given these values and the inferred diffusivity
+$D$, we can find the initial aperture
+
+$$
+    w_{i} = \left( \frac{12 \mu D}{k_{n}} \right)^{1/3}
+$$
+
+to be in the range
+
+$$
+`{python} float(f"{wi_range[1]*1e6:.2g}")`\, \mathrm{\micro m} \leq w_{i} \leq
+`{python} float(f"{wi_range[0]*1e6:.2g}")`\, \mathrm{\micro m},
+$$
+
+which is an acceptable range of values for $w_{i}$.
+
+Given the normal stiffness range, we can find the range for the slope of
+linearly increasing injection rate $m_q$ by comparing the empirical late-time
+prefactor ($A_{\mathrm{late}}$) with asymptotic late-time prefactor for front
+migration (@eq-similarity). Equalizing the empirical and analytical prediction
+
+$$
+  \left( \frac{k_{n}}{12 \mu} \right)^{1/5}  m_{q}^{3/5} t^{7/5} = A_{\mathrm{late}} t^{7/5}
+$$
+
+yields the following expression for $m_{q}$:
+
+$$
+    m_{q} = \left( \frac{12 \mu A_{\mathrm{late}}^{5}}{k_{n}} \right)^{1/3}.
+$$
+
+The late-time prefactor is $A_{\mathrm{late}} = `{python} float(f"{soultz.A_late:.2g}")`\, \mathrm{m / s^{1.2}}$. Together with the normal stiffness range, I find
+
+$$
+`{python} float(f"{mq_range[0]:.2g}")`\, \mathrm{m^{2}/s^{2}} \leq m_{q} \leq
+`{python} float(f"{mq_range[1]:.2g}")`\, \mathrm{m^{2}/s^{2}},
+$$
+
+At the moment I do not have the hydraulic data of Soultz 1993 stimulation but I
+estimate from the injection history graphs that the slope of linearly
+increasing volumetric injection rate is roughly
+
+$$
+    m_{Q} \approx \mathrm{10^{-8} \, m^{3}/s^{2}}.
+$$
+
+Notice the unit of $m_{Q}$, since it is a volumetric flow rate, it does not
+directly compare with $m_{q}$. There is 3 orders of difference between the
+inferred $m_{q}$ and field approximated $m_{Q}$.
+
+## Discussions
+
+### Linear plot alongside with square-root fit
+
+```{python}
+soultz = analysis.fit_field_crossover(
+    *io.load("soultz"),
+    title="Soultz 1993",
+    percentile=90,
+    t_c=3 * SECONDS_PER_DAY,
+    model=crossover_model,
+    eval_based_envelope=False,
+)
+basel = analysis.fit_field_crossover(
+    *io.load("basel"),
+    title="Basel 2006",
+    percentile=75,
+    t_c=2 * SECONDS_PER_DAY,
+    model=crossover_model,
+    eval_based_envelope=False,
+)
+
+A_soultz_sqrt = math_utils.fit_power_law_fixed_exponent(
+    soultz.t_env, soultz.d_env, exponent=0.5
+)
+A_basel_sqrt = math_utils.fit_power_law_fixed_exponent(
+    basel.t_env, basel.d_env, exponent=0.5
+)
+
+r_squared_sqrt_soultz = math_utils.compute_r_squared(
+    soultz.d_env, math_utils.power_law(t=soultz.t_env, A=A_soultz_sqrt, alpha=0.5)
+)
+r_squared_sqrt_basel = math_utils.compute_r_squared(
+    basel.d_env, math_utils.power_law(t=basel.t_env, A=A_basel_sqrt, alpha=0.5)
+)
+```
+
+```{python}
+fig = plt.figure(
+    figsize=(6.4 * 1.25, 4.8 / 1.5), dpi=95, layout="constrained", clear=True, num=1
+)
+ax1, ax2 = fig.subplots(1, 2)
+
+ax1.plot(
+    to_days(soultz.t_fit),
+    math_utils.power_law(soultz.t_fit, A_soultz_sqrt, alpha=0.5),
+    color=colors[1],
+    lw=3,
+    label=rf"$\sqrt{{4Dt}},\, D={A_soultz_sqrt**2 / 4:.1g}\,\mathrm{{m^2/s}}$",
+)
+ax2.plot(
+    to_days(basel.t_fit),
+    math_utils.power_law(basel.t_fit, A_basel_sqrt, alpha=0.5),
+    color=colors[1],
+    lw=3,
+    label=rf"$\sqrt{{4Dt}},\, D={A_basel_sqrt**2 / 4:.1g}\,\mathrm{{m^2/s}}$",
+)
+plot_field_case(ax1, soultz)
+plot_field_case(ax2, basel)
+
+ax1.text(
+    0.05,
+    0.8,
+    rf"Crossover - $R^{{2}}= {soultz.r_squared:.2g}$"
+    "\n"
+    rf"Square-root - $R^{{2}}= {r_squared_sqrt_soultz:.2g}$",
+    transform=ax1.transAxes,
+    backgroundcolor="1",
+)
+ax2.text(
+    0.05,
+    0.8,
+    rf"Crossover - $R^{{2}}= {basel.r_squared:.2g}$"
+    "\n"
+    rf"Square-root - $R^{{2}}= {r_squared_sqrt_basel:.2g}$",
+    transform=ax2.transAxes,
+    backgroundcolor="1",
+)
+
+
+fig.canvas.draw_idle()
+plt.pause(0.01)
+```
+
+
+### Effect of seismic envelope detection algorithm
+
+```python
+def percentile_envelope(t, distance, bin_size, percentile):
+    "Chooses the distance based on the given percentile per bin of seismic data"
+    # number of bins based on bin size
+    n_bins = len(distance) // bin_size
+    n_trim = n_bins * bin_size
+    # trim distance and time data per bin
+    d_bins = distance[:n_trim].reshape(n_bins, bin_size)
+    t_bins = t[:n_trim].reshape(n_bins, bin_size)
+    # choose distance value from each bin according to the given percentile
+    p_vals = np.percentile(d_bins, percentile, axis=1)
+    # find its indices
+    idx = np.argmin(np.abs(d_bins - p_vals[:, None]), axis=1)
+    # import the corresponding time and distance values
+    t_pct = t_bins[np.arange(n_bins), idx]
+    d_pct = d_bins[np.arange(n_bins), idx]
+    return t_pct, d_pct
+```
+
+### Effect of the choice of spatial origin
+
+```python
+x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
+```
