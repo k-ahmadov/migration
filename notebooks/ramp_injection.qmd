@@ -11,7 +11,7 @@ format:
         theme: darkly
 execute:
     cache: true
-jupyter: phd
+jupyter: migration
 ---
 
 
@@ -36,11 +36,14 @@ obtained from my code and 3DEC.
 
 ```{python}
 
+from dataclasses import dataclass, field
+
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from fracinj import analysis, io, math_utils, paths, plotting, physics
-
+from fracinj import analysis, detection, io, math_utils, paths, physics, plotting
+from fracinj.types import Vector
 ```
 
 ```{python}
@@ -74,7 +77,7 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
-## Dimensionless similarity variables produce faster migration
+## Dimensional self-similarity analysis produces a super-linear late-time scaling exponent for distance ($\alpha=1.2$)
 
 The similarity variables chanve with the injection condtion, we cannot use the
 previously derived variables. Given the nonlinear diffusion equation 
@@ -110,7 +113,7 @@ $t_{c}$ being the characteristic time. At smaller times $t \leq t_{c}$, the
 similarity behavior is governed by linear diffusion where distance aperture
 scale proportionally to $t^{1/2}$.
 
-### Verifying the derived similarity variables
+### Derived similarity variables superpose the late-time aperture profiles obtained from a numerical solution
 
 Since I derived the dimensionless variables by hand it would be cautios
 to cross-check them with the numerical results of aperture profiles.
@@ -143,7 +146,7 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
-@fig-similarity shows both dimensional and dimensionless aperture profiles. As expected, at large times when the aperture gradient is significant the dimensionless aperture profiles superpose.
+@fig-similarity shows both dimensional and dimensionless aperture profiles. As expected, at large times when the aperture gradient is significant the dimensionless aperture profiles superpose better than at smaller times.
 
 ### Deriving dimensionless front distance
 
@@ -151,8 +154,9 @@ Using @eq-diffusion and @eq-inj-cond, we can derive the following dimensionless 
 $$
     w \to \frac{w}{w_{i}}; \quad x \to \frac{x}{x_{c}},\ x_{c} = \left( \frac{a^{2} w_{i}^{7}}{m_{q}} \right)^{1/3}; \quad t \to \frac{t}{t_{c}},\ t_{c} = \frac{x_{c}^{2}}{a w_{i}^{3}} 
 $$
+where $x_{c}$ and $t_{c}$ are characteristic distance and time, respectively. These characteristic scales can be used to study the evolution of the dimensionless front position across multiple simulations.
 
-## Fitting the crossover function
+## Fitting the crossover function to the numerical data results in $\delta=0.3$, producing "faster" transition than constant injection rate condition
 
 Given that the early-time power-law exponent that describes the migration of
 the stress front is 0.5 and the late-time exponent is 1.2 (@eq-similarity),
@@ -200,30 +204,45 @@ front_crossover = math_utils.crossover(
 )
 ```
 
+I did several numerical simulations (using half-space code) with the slope of the
+injection rate condition $m_{q}$ varying in the range
+$\mathrm{10^{-14}\,m^2/s^2} \leq m_{q} \leq \mathrm{10^{-8}\,m^2/s^2}$. The fit
+of the crossover function to the numerical data gives $\delta=0.3$ (see 
+below @fig-front). The two asyptotic power-laws are clearly separated by the dimensionless characteristic time $t_{c} = 1$.
+
+Previously with a constant injection rate condition, I obtained
+$\delta=0.01$ and the asymptotic scaling exponents were 0.5 and 0.8. The
+results here show that the transition between asymptotic regimes is faster in
+the linearly increasing injection rate condition.
+
+
 ```{python}
+#| label: fig-front
+#| fig-cap: Migration of the dimensionless front across simulations with injection rate ramp $m_q$ varying from $\mathrm{10^{-14}\,m^2/s^2}$ to $\mathrm{10^{-8}\,m^2/s^2}$.
+
 fig = plt.figure(
     figsize=(6.4 / 1.3, 4.8 / 1.3), dpi=100, layout="constrained", clear=True, num=1
 )
 ax = fig.subplots()
 for run, result in zip(runs[::1], results[::1]):
-    label = (
-        rf"$m_q={plotting.sci_latex(run.params.m_q)}\,\mathrm{{m^2 / s}},\ \alpha = {result.alpha_emp:.2f}$",
-    )
-    ax.plot(
+    label = rf"$m_q={plotting.sci_latex(run.params.m_q)}\,\mathrm{{m^2 / s^2}},\ \alpha = {result.alpha_emp:.2f}$"
+
+    ax.scatter(
         result.t / physics.characteristic_time(run.params, bc=bc),
         result.y / physics.characteristic_distance(run.params, bc=bc),
-        ".",
+        s=5,
         label=label,
     )
 ax.plot(
     t_range,
     front_crossover,
     "k--",
+    lw=2,
     label=rf"Crossover function, $\delta={delta}$",
 )
 ax.set(
-    xlabel="Dimensionless time",
-    ylabel="Dimensionless front position",
+    xlabel=r"$t / t_c$",
+    ylabel=r"$x_f / x_c$",
     title="Stress front evolution",
     xscale="log",
     yscale="log",
@@ -233,3 +252,112 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
+## Fitting to the field data
+
+```{python}
+
+SECONDS_PER_DAY = 86_400
+
+
+def _to_days(t_sec):
+    return t_sec / SECONDS_PER_DAY
+
+
+crossover_model = analysis.CrossoverModel(alpha_early=0.5, alpha_late=1.2, delta=0.3)
+t_s, d_s = io.load("soultz")
+soultz = analysis.fit_field_crossover(
+    t_s,
+    d_s,
+    title="Soultz 1993",
+    percentile=90,
+    t_c=4.5 * SECONDS_PER_DAY,
+    model=crossover_model,
+    eval_based_envelope=True,
+)
+
+t_b, d_b = io.load("basel")
+basel = analysis.fit_field_crossover(
+    t_b,
+    d_b,
+    title="Basel 2006",
+    percentile=75,
+    t_c=3 * SECONDS_PER_DAY,
+    model=crossover_model,
+    eval_based_envelope=True,
+)
+```
+
+```{python}
+def plot_field_case(
+    ax: matplotlib.axes.Axes, field_case: analysis.FieldCase, **set_kwargs
+):
+    ax.scatter(_to_days(field_case.t), field_case.d, color="tab:gray", s=3)
+    ax.scatter(
+        _to_days(field_case.t_env),
+        field_case.d_env,
+        color="k",
+        label=f"P{field_case.percentile:g} per {field_case.bin_size} events",
+        s=25,
+    )
+    ax.plot(
+        _to_days(field_case.t_fit),
+        field_case.d_fit,
+        color="tab:blue",
+        lw=3,
+        label=rf"Crossover, $\delta={field_case.model.delta}$",
+    )
+    ax.axvline(
+        _to_days(field_case.t_c),
+        color="k",
+        ls=":",
+        label=rf"$t_c=\mathrm{{{_to_days(field_case.t_c):.2g}\ days}}$",
+    )
+    ax.set(
+        xlabel="Time [day]", ylabel="Distance [m]", title=field_case.title, **set_kwargs
+    )
+
+    idx_tc =  np.searchsorted(field_case.t_fit, field_case.t_c)
+    exponent, log_prefactor = np.polyfit(
+        np.log(
+            _to_days(
+                field_case.t_fit[: idx_tc]
+            )
+        ),
+        np.log(field_case.d_fit[: idx_tc]),
+        deg=1,
+    )
+    plotting.slope_triangle(
+        ax=ax,
+        x0=_to_days(field_case.t_fit[10]),
+        slope=round(exponent, 2),
+        prefactor=np.exp(log_prefactor + 1),
+    )
+
+    ax.spines[["right", "top"]].set_visible(False)
+    ax.legend(loc="lower right", framealpha=1, fontsize="small")
+    return ax
+```
+
+
+```{python}
+# TODO: plot both soultz and basel data
+# TODO: percentile and t_c depend on the chosen data
+# TODO: annotate early and late-time exponents on the plot
+# TODO: plot both linear and log scales
+# TODO: creaate a plot function
+
+# NOTE: remember that t_eval start at seismic data time, not percentile time
+
+fig = plt.figure(
+    figsize=(6.4 * 1.25, 4.8 / 1.5), dpi=95, layout="constrained", clear=True, num=1
+)
+ax1, ax2 = fig.subplots(1, 2)
+plot_field_case(
+    ax1, soultz, xscale="log", yscale="log", xlim=(0.5, 20), ylim=(50, 1000)
+)
+plot_field_case(ax2, basel, xscale="log", yscale="log")
+
+plt.show()
+```
+
+        

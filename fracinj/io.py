@@ -3,12 +3,19 @@
 import pickle
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 import h5py
 import numpy as np
+import pandas as pd
 
+from fracinj import paths
 from fracinj.types import Field, Parameters, Vector, parameter_names
+
+FIELD_DATA = {
+    "soultz": paths.DATA / "SSFS1993-Catalogue_Bourouis.csv",
+    "basel": paths.DATA / "supp2_compilation_existing_catalogs.dat",
+}
 
 
 @dataclass
@@ -109,7 +116,7 @@ def save_run(
 ) -> None:
     """Write a run in the canonical layout read back by ``read_hdf5``."""
     filepath.parent.mkdir(parents=True, exist_ok=True)
-    gzip = dict(compression="gzip", compression_opts=4)
+    gzip = {"compression": "gzip", "compression_opts": 4}
 
     with h5py.File(str(filepath), "w") as f:
         coords = f.create_group("coordinates")
@@ -134,3 +141,86 @@ def save_run(
             dset = g.create_dataset(name, data=value)
             dset.attrs["unit"] = params.unit(name)
             dset.attrs["description"] = params.description(name)
+
+
+SOULTZ_MAX_DISTANCE = 1100
+
+
+def load_soultz(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
+    # load data file
+    df = pd.read_csv(filepath, sep=";")
+    # formatting string for date and time format
+    fmt = "%d/%m/%Y %H:%M:%S.%f"
+    # import time
+    timestamps = pd.to_datetime(
+        df["Date (local)"] + " " + df["Time (local)"], format=fmt
+    )
+    # cut data to injection period
+    date_mask = timestamps < timestamps.iloc[0] + pd.Timedelta(days=18)
+    df = df.loc[date_mask]
+    timestamps = timestamps[date_mask]
+    # import time in seconds
+    t = (timestamps - timestamps.iloc[0]).dt.total_seconds()
+    # import coordinates of events
+    x, y, z = df["East (m)"], df["North (m)"], df["Depth (m)"]
+    # median of first 10 events
+    x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
+    # euclidian distance
+    distance = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)
+    keep = distance <= SOULTZ_MAX_DISTANCE
+    return t.values[keep], distance.values[keep]
+
+
+def load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
+    df = pd.read_csv(
+        filepath,
+        comment="#",
+        sep=r"\s+",
+        names=[
+            "SourceDateTime",
+            "LSrc",
+            "Lat",
+            "Lon",
+            "Dep",
+            "X",
+            "Y",
+            "Z",
+            "Mwx",
+            "MwGEL",
+            "MwSED",
+            "MLSED",
+            "ID",
+            "TpID",
+            "GELID",
+            "SEDID",
+        ],
+    )
+    df.replace(
+        {"-.--": float("nan"), "-.-": float("nan"), r"\-{3,}": float("nan")},
+        inplace=True,
+        regex=True,
+    )
+    df["SourceDateTime"] = pd.to_datetime(df["SourceDateTime"])
+    for col in ["Lat", "Lon", "Dep", "X", "Y", "Z", "Mwx", "MwGEL", "MwSED", "MLSED"]:
+        df[col] = pd.to_numeric(df[col])
+    # injection started at 2006-12-2T18:00, source https://doi.org/10.5194/npg-23-107-2016
+    date_mask = (df["SourceDateTime"] > pd.Timestamp(2006, 12, 2, 22)) & (
+        df["SourceDateTime"] < pd.Timestamp(2006, 12, 9)
+    )
+    df = df.loc[date_mask].reset_index(drop=True)
+    timestamps = df["SourceDateTime"]
+    t = (timestamps - timestamps.iloc[0]).dt.total_seconds()
+    x, y, z = df["X"], df["Y"], df["Z"]
+    x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
+    distance = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)
+    return t.values, distance.values
+
+
+def load(field: Literal["soultz", "basel"]):
+    if field == "soultz":
+        load_func = load_soultz
+    elif field == "basel":
+        load_func = load_basel
+    else:
+        raise ValueError(f"there is no data for the provided field {field!r}")
+    return load_func(FIELD_DATA[field])

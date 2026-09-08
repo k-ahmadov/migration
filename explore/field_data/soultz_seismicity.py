@@ -2,53 +2,14 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from scipy.optimize import curve_fit
 
-from mypackages import math_utils, plotting, typesdefs
-
+from fracinj import detection, io, math_utils, plotting
 
 # %%
-def load(filepath):
-    # load data file
-    df = pd.read_csv(filepath, sep=";")
-    # formatting string for date and time format
-    fmt = "%d/%m/%Y %H:%M:%S.%f"
-    # import time
-    timestamps = pd.to_datetime(
-        df["Date (local)"] + " " + df["Time (local)"], format=fmt
-    )
-    # cut data to injection period
-    date_mask = timestamps < timestamps.iloc[0] + pd.Timedelta(days=18)
-    df = df.loc[date_mask]
-    timestamps = timestamps[date_mask]
-    # import time in seconds
-    t = (timestamps - timestamps.iloc[0]).dt.total_seconds()
-    # import coordinates of events
-    x, y, z = df["East (m)"], df["North (m)"], df["Depth (m)"]
-    # median of first 10 events
-    x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
-    # euclidian distance
-    distance = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)
-    return t.values, distance.values
 
 
-def percentile_envelope(t_days, distance, bin_size, percentile):
-    "Chooses the distance based on the given percentile per bin"
-    # number of bins based on bin size
-    n_bins = len(distance) // bin_size
-    n_trim = n_bins * bin_size
-    # trim distance and time data per bin
-    d_bins = distance[:n_trim].reshape(n_bins, bin_size)
-    t_bins = t_days[:n_trim].reshape(n_bins, bin_size)
-    # choose distance value from each bin according to the given percentile
-    p_vals = np.percentile(d_bins, percentile, axis=1)
-    # find its indices
-    idx = np.argmin(np.abs(d_bins - p_vals[:, None]), axis=1)
-    # import the corresponding time and distance values
-    t_pct = t_bins[np.arange(n_bins), idx]
-    d_pct = d_bins[np.arange(n_bins), idx]
-    return t_pct, d_pct
+def _to_days(t_sec):
+    return t_sec / 86400
 
 
 # TODO: instead of cumulative time intervals pick percentiles from time bins (sliding windows)
@@ -80,65 +41,12 @@ def cumulative_percentile_envelope(
     return t_eval, p_vals
 
 
-def _to_days(t_sec):
-    return t_sec / 86400
-
-
-def fit_crossover_to_data(
-    t: typesdefs.Vector,
-    d: typesdefs.Vector,
-    alpha_early: float,
-    alpha_late: float,
-    delta: float,
-    t_c: float,
-    p0: list[float],
-) -> tuple[list[float], np.ndarray]:
-    """
-    Fit a two-regime power-law crossover model to data by optimizing
-    the prefactors (a, b), holding the exponents, crossover scale,
-    and sharpness fixed.
-
-    Inputs:
-        t: Independent variable (e.g. time).
-        d: Dependent variable / data to fit against.
-        alpha_early, alpha_late: Fixed power-law exponents for the
-            early- and late-time regimes.
-        delta: Sharpness of the crossover transition.
-        t_c: Crossover (transition) scale.
-        p0: Initial guess for [a, b].
-
-    Returns:
-        popt: Best-fit [a, b].
-        perr: 1-sigma uncertainties on [a, b].
-    """
-
-    def crossover_fit(t, a_early, a_late):
-        return math_utils.crossover(
-            t,
-            a=a_early,
-            alpha=alpha_early,
-            b=a_late,
-            beta=alpha_late,
-            x0=t_c,
-            delta=delta,
-        )
-
-    popt, pcov = curve_fit(crossover_fit, t, d, p0=p0, maxfev=10000)
-    perr = np.sqrt(np.diag(pcov))
-
-    a_fit, b_fit = popt
-    print(f"a = {a_fit:.4g} ± {perr[0]:.2g}")
-    print(f"b = {b_fit:.4g} ± {perr[1]:.2g}")
-
-    return popt, perr
-
-
 # %%
-t, d = load(
+t, d = io.load_soultz(
     Path.cwd() / "data" / "SSFS1993-Catalogue_Bourouis.csv",
 )
 
-t_pct, d_pct = percentile_envelope(t, d, bin_size=50, percentile=90)
+t_pct, d_pct = detection.percentile_envelope(t, d, bin_size=50, percentile=90)
 
 # %%
 t_eval = np.geomspace(t_pct[0], t_pct[-1], 500)
@@ -148,7 +56,7 @@ delta = 1e-2
 t_c = 4 * 86400
 
 # evaluate fitted curve
-(A_early, A_late), perr = fit_crossover_to_data(
+(A_early, A_late), perr = math_utils.fit_crossover_to_data(
     t_pct,
     d_pct,
     alpha_early=alpha_early,
@@ -233,9 +141,10 @@ plotting.slope_triangle(
 ax.spines[["right", "top"]].set_visible(False)
 ax.legend(loc="lower right", framealpha=1)
 
-fig.savefig(
-    Path.cwd() / "figures" / "dimensionless-front" / f"field-delta-{delta:.0e}.png", dpi=200
-)
+# fig.savefig(
+#     Path.cwd() / "figures" / "dimensionless-front" / f"field-delta-{delta:.0e}.png",
+#     dpi=200,
+# )
 fig.canvas.draw_idle()
 plt.pause(0.01)
 

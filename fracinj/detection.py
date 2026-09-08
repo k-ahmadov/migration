@@ -48,9 +48,12 @@ def find_field_front(
 
     x_front = np.full(len(field_sub), np.nan)
     valid = denom != 0
-    x_front[valid] = x[i_left[valid]] + (thresh_sub[valid] - w_left[valid]) * (
-        x[i_right[valid]] - x[i_left[valid]]
-    ) / denom[valid]
+    x_front[valid] = (
+        x[i_left[valid]]
+        + (thresh_sub[valid] - w_left[valid])
+        * (x[i_right[valid]] - x[i_left[valid]])
+        / denom[valid]
+    )
     return x_front, has_crossing
 
 
@@ -81,7 +84,9 @@ def self_similar_threshold(
 
     ``pressure``: return the pressure threshold, else the aperture threshold.
     """
-    scale = theta_front * np.sqrt(run.params.q_0**2 * run.t / physics.diffusivity(run.params))
+    scale = theta_front * np.sqrt(
+        run.params.q_0**2 * run.t / physics.diffusivity(run.params)
+    )
     return scale * run.params.k_n if pressure else run.params.w_i + scale
 
 
@@ -91,3 +96,24 @@ def constant_aperture_threshold(run: io.RunData, pct_increase: float) -> Vector:
 
 def constant_pressure_threshold(t: Vector, pc: float) -> Vector:
     return np.full_like(t, pc)
+
+
+# --- Seismic front based on percentile --------------------------------------------
+
+
+def percentile_envelope(t_days, distance, bin_size, percentile):
+    "Chooses the distance based on the given percentile per bin of seismic data"
+    # number of bins based on bin size
+    n_bins = len(distance) // bin_size
+    n_trim = n_bins * bin_size
+    # trim distance and time data per bin
+    d_bins = distance[:n_trim].reshape(n_bins, bin_size)
+    t_bins = t_days[:n_trim].reshape(n_bins, bin_size)
+    # choose distance value from each bin according to the given percentile
+    p_vals = np.percentile(d_bins, percentile, axis=1)
+    # find its indices
+    idx = np.argmin(np.abs(d_bins - p_vals[:, None]), axis=1)
+    # import the corresponding time and distance values
+    t_pct = t_bins[np.arange(n_bins), idx]
+    d_pct = d_bins[np.arange(n_bins), idx]
+    return t_pct, d_pct

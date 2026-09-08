@@ -10,7 +10,7 @@ from typing import Literal
 
 import numpy as np
 
-from fracinj import detection, io, physics
+from fracinj import detection, io, math_utils, physics
 from fracinj.math_utils import fit_power_law
 from fracinj.solvers.exact import solve_linear_diffusion_const_flux
 from fracinj.solvers.similarity import solve_neumann_n3
@@ -56,7 +56,7 @@ class Fit:
         if self.A_ana is None:
             raise ValueError("no analytical model; pass a `regime` to analyze_*")
         t = self.t if t is None else t
-        assert(self.alpha_ana is not None)
+        assert self.alpha_ana is not None
         return self.A_ana * t**self.alpha_ana
 
 
@@ -96,7 +96,10 @@ def _p_inj_series(run: io.RunData, slc: slice) -> tuple[Vector, Vector]:
 
 # TODO: add analytical amplitudes for ramp injection rate
 
-def _front_amplitude(regime: Regime, run: io.RunData, t: Vector, x: Vector) -> tuple[float, float]:
+
+def _front_amplitude(
+    regime: Regime, run: io.RunData, t: Vector, x: Vector
+) -> tuple[float, float]:
     """Return ``(A_ana, zeta)`` for the front position ``x_f = zeta * scale(t)``."""
     mask = t != 0
     if not np.any(mask):
@@ -229,3 +232,120 @@ def local_exponent(t: Vector, x: Vector, window: int = 20) -> tuple[Vector, Vect
 
 def mean_velocity(t: Vector, x: Vector) -> float:
     return (x[-1] - x[0]) / (t[-1] - t[0])
+
+
+def analytical_fit_and_split(t_pct, d_pct, split_frac):
+    """Split into early/late series and fit a fixed-exponent power law to each."""
+    idx_start = int(len(t_pct) * split_frac)
+    t_early, d_early = t_pct[:idx_start], d_pct[:idx_start]
+    t_late, d_late = t_pct[idx_start:], d_pct[idx_start:]
+    A_e = math_utils.fit_power_law_fixed_exponent(
+        t_early, d_early, RIGID.front_exponent
+    )
+    A_l = math_utils.fit_power_law_fixed_exponent(t_late, d_late, SOFT.front_exponent)
+    return (
+        (t_early, A_e * t_early**RIGID.front_exponent, RIGID.front_exponent, A_e),
+        (t_late, A_l * t_late**SOFT.front_exponent, SOFT.front_exponent, A_l),
+    )
+
+
+# --- field-data crossover fits -------------------------------------------
+
+
+@dataclass(frozen=True)
+class CrossoverModel:
+    """Fixed exponents and transition sharpness of a two-regime crossover."""
+
+    alpha_early: float = 0.5
+    alpha_late: float = 1.2
+    delta: float = 0.3
+
+
+@dataclass(frozen=True)
+class FieldCase:
+    """One field seismicity dataset, its per-bin percentile envelope, and the
+    best-fit crossover curve -- everything a plot panel needs, in one immutable
+    value. Build it with :func:`fit_field_crossover`; every field is populated.
+    """
+
+    title: str
+    t: Vector  # raw event times [s]
+    d: Vector  # raw event distances [m]
+    t_c: float  # crossover time scale [s]
+    percentile: float
+    bin_size: int
+    model: CrossoverModel
+    t_env: Vector  # percentile-envelope times [s]
+    d_env: Vector  # percentile-envelope distances [m]
+    t_fit: Vector  # crossover-curve abscissa [s]
+    d_fit: Vector  # crossover-curve ordinate [m]
+    A_early: float  # fitted early-time prefactor
+    A_late: float  # fitted late-time prefactor
+    perr: Vector  # 1-sigma errors on (A_early, A_late)
+
+
+def fit_field_crossover(
+    t: Vector,
+    d: Vector,
+    *,
+    title: str,
+    t_c: float,
+    model: CrossoverModel,
+    eval_based_envelope: bool = True,
+    percentile: float = 90.0,
+    bin_size: int = 50,
+    n_fit: int = 200,
+) -> FieldCase:
+    """Take the per-bin percentile envelope of ``d(t)`` and fit the crossover
+    model to it, optimising only the two prefactors (exponents, ``t_c`` and
+    ``delta`` are held fixed by ``model``).
+    """
+    if len(t) != len(d):
+        raise ValueError(f"t and d differ in length: {len(t)} vs {len(d)}")
+    if not 0.0 < percentile < 100.0:
+        raise ValueError(f"percentile must be in (0, 100), got {percentile}")
+    if t_c <= 0.0:
+        raise ValueError(f"t_c must be positive, got {t_c}")
+
+    t_env, d_env = detection.percentile_envelope(
+        t, d, bin_size=bin_size, percentile=percentile
+    )
+    (A_early, A_late), perr = math_utils.fit_crossover_to_data(
+        t_env,
+        d_env,
+        alpha_early=model.alpha_early,
+        alpha_late=model.alpha_late,
+        delta=model.delta,
+        t_c=t_c,
+        p0=[1.0, 1.0],
+    )
+    if eval_based_envelope:
+        t_positive = np.asarray(t_env)[np.asarray(t_env) > 0.0]
+    else:
+        t_positive = np.asarray(t)[np.asarray(t) > 0.0]
+    t_fit = np.geomspace(t_positive.min(), t_positive.max(), n_fit)
+    d_fit = math_utils.crossover(
+        x=t_fit,
+        a=A_early,
+        alpha=model.alpha_early,
+        b=A_late,
+        beta=model.alpha_late,
+        x0=t_c,
+        delta=model.delta,
+    )
+    return FieldCase(
+        title=title,
+        t=np.asarray(t),
+        d=np.asarray(d),
+        t_c=t_c,
+        percentile=percentile,
+        bin_size=bin_size,
+        model=model,
+        t_env=t_env,
+        d_env=d_env,
+        t_fit=t_fit,
+        d_fit=d_fit,
+        A_early=float(A_early),
+        A_late=float(A_late),
+        perr=perr,
+    )
