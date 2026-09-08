@@ -204,7 +204,7 @@ def load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
     for col in ["Lat", "Lon", "Dep", "X", "Y", "Z", "Mwx", "MwGEL", "MwSED", "MLSED"]:
         df[col] = pd.to_numeric(df[col])
     # injection started at 2006-12-2T18:00, source https://doi.org/10.5194/npg-23-107-2016
-    date_mask = (df["SourceDateTime"] > pd.Timestamp(2006, 12, 2, 22)) & (
+    date_mask = (df["SourceDateTime"] > pd.Timestamp(2006, 12, 2, 18)) & (
         df["SourceDateTime"] < pd.Timestamp(2006, 12, 9)
     )
     df = df.loc[date_mask].reset_index(drop=True)
