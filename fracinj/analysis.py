@@ -11,7 +11,7 @@ from typing import Literal
 import numpy as np
 
 from fracinj import detection, io, math_utils, physics
-from fracinj.math_utils import fit_power_law
+from fracinj.math_utils import compute_r_squared, fit_power_law
 from fracinj.solvers.exact import solve_linear_diffusion_const_flux
 from fracinj.solvers.similarity import solve_neumann_n3
 from fracinj.types import Vector
@@ -282,6 +282,7 @@ class FieldCase:
     A_early: float  # fitted early-time prefactor
     A_late: float  # fitted late-time prefactor
     perr: Vector  # 1-sigma errors on (A_early, A_late)
+    r_squared: float  # R^2
 
 
 def fit_field_crossover(
@@ -333,6 +334,18 @@ def fit_field_crossover(
         x0=t_c,
         delta=model.delta,
     )
+    r_sq = compute_r_squared(
+        d_env,
+        math_utils.crossover(
+            x=t_env,
+            a=A_early,
+            alpha=model.alpha_early,
+            b=A_late,
+            beta=model.alpha_late,
+            x0=t_c,
+            delta=model.delta,
+        ),
+    )
     return FieldCase(
         title=title,
         t=np.asarray(t),
@@ -348,4 +361,5 @@ def fit_field_crossover(
         A_early=float(A_early),
         A_late=float(A_late),
         perr=perr,
+        r_squared=r_sq,
     )

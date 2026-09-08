@@ -93,3 +93,9 @@ def fit_crossover_to_data(
     perr = np.sqrt(np.diag(pcov))
 
     return popt, perr
+
+def compute_r_squared(y_data, y_pred):
+    residuals = y_data - y_pred
+    ss_res = np.sum(residuals**2)
+    ss_tot = np.sum((y_data - np.mean(y_data))**2)
+    return 1 - (ss_res / ss_tot)
