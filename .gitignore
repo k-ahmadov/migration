@@ -30,3 +30,4 @@ overleaf-key.md
 *_files/
 notebooks/*.html
 notebooks/*.pdf
+notebooks/*.tex

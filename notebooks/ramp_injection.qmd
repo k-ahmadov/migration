@@ -1,52 +1,57 @@
 ---
-title: "Injection-rate effect on the stress front"
-author: "Kamal Ahmadov"
+title: Injection-rate effect on the stress front
+author: Kamal Ahmadov
 date: today
-format: 
-    html:
-        code-fold: true
-        mainfont: sans-serif
-        fontsize: larger
-        embed-resources: true
-        theme: darkly
-# execute:
-#     cache: true
-jupyter: migration
+format:
+  pdf:
+    number-sections: true
+    colorlinks: true
+    keep-tex: true
+    docemntclass: scrreprt
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.19.1
+  kernelspec:
+    display_name: migration
+    language: python
+    name: migration
 ---
 
 
-Here I analyze the effect of the linearly increasing injection rate
-on the migration of the stress front. Previously, we used a crossover function
-to analyze the early- and late time behavior in the constant injection rate case.
-There is a parameter $\delta$ that measures the 'slowness' of the transition regime.
-The obtained $\delta=0.01$ from the fit to our numerical results was inconsistent
-with the field data. To resolve this inconsistency, I do a similar analysis
-for fluid injection with linearly increasing rate. The injection condition can be
+Here I analyze the effect of the linearly increasing injection rate on the
+migration of the stress front. Previously, we used a crossover function to
+analyze the early- and late time behavior in the constant injection rate case.
+There is a parameter $\delta$ that measures the 'slowness' of the transition
+regime. We obtained $\delta=0.01$ from the fit to our numerical results which
+was inconsistent with the field data. This incosistency may be resolved by
+linearly increasing injection rate condition. This condition can be
 written as
+
 $$q(t) = m_{q} t$$
-where $m_{q}$ is the slope of the linearly increasing injection rate. This loading condition
-is also more consistent with the field.
+
+where $m_{q}$ is the slope of the linearly increasing injection rate.
 
 ## My half-space code agrees with 3DEC
 
-As I did previously, I use my numerical half-space code to do the simulations.
-To be sure that my code works correctly I compare with 3DEC results for stress 
-front migration. @fig-comparison-halfspace-3dec shows an agreement between results 
-obtained from my code and 3DEC. 
-
 ```{python}
+#| echo: false
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots
+import scienceplots  # noqa: F401
 from scipy.optimize import curve_fit
 
-from fracinj import analysis, io, math_utils, paths, physics, plotting
+from fracinj import analysis, detection, io, math_utils, paths, physics, plotting
 
-plt.style.use(["science", "notebook"])
+plt.style.use(["science", "notebook"])  # pyright: ignore[reportAttributeAccessIssue]
 ```
 
 ```{python}
+#| echo: false
 run_3dec = io.read_hdf5(paths.results_dir("3dec", "linear") / "run-q-1e-06.hdf5")
 run_halfspace = io.read_halfspace(
     paths.results_dir("halfspace", "linear", "wi-1e-04") / "m_q-1e-06.hdf5"
@@ -55,7 +60,12 @@ result_halfspace = analysis.analyze_front(run_halfspace, stress_front=True)
 result_3dec = analysis.analyze_front(run_3dec, stress_front=True)
 ```
 
+As before, I used my numerical half-space code to do the simulations. To ensure
+that my code works correctly I compare it against results obtained from 3DEC.
+@fig-comparison-halfspace-3dec shows good agreement between the two. 
+
 ```{python}
+#| echo: false
 #| label: fig-comparison-halfspace-3dec
 #| fig-cap: Comparison between 3DEC and half-space code results of stress front migration.
 
@@ -77,7 +87,7 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
-## Dimensional self-similarity analysis produces a super-linear late-time scaling exponent for distance ($\alpha=1.2$)
+## Dimensional self-similarity analysis produces a super-linear late-time scaling exponent for distance ($\alpha=7/5$)
 
 The similarity variables change with the injection condition, so we cannot use the
 previously derived variables. Given the nonlinear diffusion equation
@@ -119,8 +129,10 @@ Since I derived the dimensionless variables by hand it would be cautious
 to cross-check them with the numerical results of aperture profiles.
 
 ```{python}
+#| echo: false
 #| label: fig-similarity
 #| fig-cap: Aperture profiles throughout the simulation (a) in dimensional form (b) nondimensionalized with similarity variables for soft asymptotic regime. The dimensionless profiles collapse at late times.
+
 
 run = io.read_halfspace(paths.results_dir("halfspace", "linear") / "m_q-1e-08.hdf5")
 
@@ -134,8 +146,14 @@ sm = plotting.plot_nondimensionalization(
 )
 
 axes[1].set_xlim(0, 3)
-axes[0].annotate("(a)", (-0.15, 1.1), xycoords="axes fraction")
-axes[1].annotate("(b)", (-0.15, 1.1), xycoords="axes fraction")
+axes[0].set_title(
+    rf"$m_q={plotting.sci_latex(run.params.m_q)}\,\mathrm{{m^2 / s^{{2}} }}$",
+    fontsize="x-large",
+    pad=10,
+)
+axes[1].set_title("Dimensionless", fontsize="x-large", pad=10)
+axes[0].annotate("(a)", (-0.25, 1.15), xycoords="axes fraction", fontsize="x-large")
+axes[1].annotate("(b)", (-0.25, 1.15), xycoords="axes fraction", fontsize="x-large")
 
 fig.colorbar(sm, ax=axes, label="$t$, [s]", pad=0.02, aspect=10)
 
@@ -145,27 +163,11 @@ plt.pause(0.01)
 
 @fig-similarity shows both dimensional and dimensionless aperture profiles. As expected, at large times when the aperture gradient is significant the dimensionless aperture profiles superpose better than at smaller times.
 
-### Deriving dimensionless front distance
-
-Using @eq-diffusion and @eq-inj-cond, we can derive the following dimensionless parameters
-$$
-    w \to \frac{w}{w_{i}}; \quad x \to \frac{x}{x_{c}},\ x_{c} = \left( \frac{a^{2} w_{i}^{7}}{m_{q}} \right)^{1/3}; \quad t \to \frac{t}{t_{c}},\ t_{c} = \frac{x_{c}^{2}}{a w_{i}^{3}} 
-$$
-where $x_{c}$ and $t_{c}$ are characteristic distance and time, respectively. These characteristic scales can be used to study the evolution of the dimensionless front position across multiple simulations.
-
-## Fitting the crossover function to the numerical data gives $\delta = 0.3$, a "faster" transition than the constant injection rate condition
-
-Given that the early-time power-law exponent that describes the migration of
-the stress front is 0.5 and the late-time exponent is 1.2 (@eq-similarity),
-the crossover function that combines both power-laws separated by $t_{c}$ is
-$$
-	x_{f}(t) = \frac{A_{\mathrm{early}}t^{0.5}}{1 + (t/t_{c})^{\delta}} + \frac{A_{\mathrm{late}}t^{1.2}}{1 + (t_{c}/t)^{\delta}}.
-$$ {#eq-crossover}
-
 ```{python}
+#| echo: false
 
 result_dir = paths.results_dir("halfspace", "linear")
-mq_values = np.geomspace(1e-14, 1e-8, 7)
+mq_values = np.geomspace(1e-14, 1e-7, 8)
 runs = [io.read_halfspace(result_dir / f"m_q-{m_q:.0e}.hdf5") for m_q in mq_values]
 bc = "ramp_rate"
 
@@ -191,43 +193,63 @@ t_nd, x_nd = t_nd[positive], x_nd[positive]
 
 # fit the crossover to the pooled data: exponents and t_c fixed, (a, b, delta) free
 def crossover_fixed_exponents(t, a, b, delta):
-    return math_utils.crossover(t, a=a, alpha=0.5, b=b, beta=1.2, x0=1.0, delta=delta)
+    return math_utils.crossover(
+        t, a=a, alpha=1 / 2, b=b, beta=7 / 5, x0=1.0, delta=delta
+    )
 
 
-(a_fit, b_fit, delta_fit), _ = curve_fit(
-    crossover_fixed_exponents, t_nd, x_nd, p0=(1.0, 1.0, 0.1), maxfev=10_000
-)
+# (a_fit, b_fit, delta_fit), _ = curve_fit(
+#      crossover_fixed_exponents, t_nd, x_nd, p0=(1.0, 1.0, 0.5), bounds=(0.0, [10, 10, 10]), maxfev=10_000
+# )
 # NOTE: because of the outliers the curve_fit overestimated the prefactor a_fit
 # visually I found that adjusting the parameters in the following way
 # gives a better fit
-a_fit /= 1.25
-b_fit *= 1.07
-delta_fit = 0.3  # the orginal fit gave 0.38
+a_fit = 2.6
+b_fit = 1.12
+delta_fit = 0.05
 print(f"a = {a_fit:.3g}, b = {b_fit:.3g}, delta = {delta_fit:.3g}")
 
 t_range = np.geomspace(t_nd.min(), t_nd.max(), 200)
 front_crossover = crossover_fixed_exponents(t_range, a_fit, b_fit, delta_fit)
 ```
 
-I did several numerical simulations (using half-space code) with the slope of the
-injection rate condition $m_{q}$ varying in the range
-$\mathrm{10^{-14}\,m^2/s^2} \leq m_{q} \leq \mathrm{10^{-8}\,m^2/s^2}$. A
+### Deriving dimensionless front distance
+
+Using @eq-diffusion and @eq-inj-cond, we can derive the following dimensionless parameters
+$$
+    w \to \frac{w}{w_{i}}; \quad x \to \frac{x}{x_{c}},\ x_{c} = \left( \frac{a^{2} w_{i}^{7}}{m_{q}} \right)^{1/3}; \quad t \to \frac{t}{t_{c}},\ t_{c} = \frac{x_{c}^{2}}{a w_{i}^{3}} 
+$$
+where $x_{c}$ and $t_{c}$ are characteristic distance and time, respectively. These characteristic scales can be used to study the evolution of the dimensionless front position across multiple simulations.
+
+## Fitting the crossover function to the numerical data gives $\delta = `{python} float(f"{delta_fit:.2g}")`$
+
+Given that the early-time power-law exponent that describes the migration of
+the stress front is 0.5 and the late-time exponent is 1.4 (@eq-similarity),
+the crossover function that combines both power-laws separated by $t_{c}$ is
+$$
+	x_{f}(t) = \frac{A_{\mathrm{early}}t^{0.5}}{1 + (t/t_{c})^{\delta}} + \frac{A_{\mathrm{late}}t^{1.4}}{1 + (t_{c}/t)^{\delta}}.
+$$ {#eq-crossover}
+
+I did several numerical simulations (using half-space code) with the slope of
+the injection rate condition $m_{q}$ varying in the range
+$\mathrm{10^{-14}\,m^2/s^2} \leq m_{q} \leq \mathrm{10^{-7}\,m^2/s^2}$. A
 least-squares fit of the crossover function to the pooled dimensionless data
-gives $\delta \approx 0.3$ (see below @fig-front). The two asymptotic power-laws
-are clearly separated by the dimensionless characteristic time $t_{c} = 1$.
+gives $\delta \approx `{python} float(f"{delta_fit:.2g}")`$ (see below
+@fig-front). The two asymptotic power-laws are clearly separated by the
+dimensionless characteristic time $t_{c} = 1$.
 
 Previously with a constant injection rate condition, I obtained
 $\delta=0.01$ and the asymptotic scaling exponents were 0.5 and 0.8. The
 results here show that the transition between asymptotic regimes is faster in
 the linearly increasing injection rate condition.
 
-
 ```{python}
+#| echo: false
 #| label: fig-front
 #| fig-cap: Migration of the dimensionless front across simulations with injection rate ramp $m_q$ varying from $\mathrm{10^{-14}\,m^2/s^2}$ to $\mathrm{10^{-8}\,m^2/s^2}$.
 
 fig = plt.figure(
-    figsize=(6.4 / 1.3, 4.8 / 1.3), dpi=95, layout="constrained", clear=True, num=1
+    figsize=(6.4 / 1.3, 4.8 / 1.3), dpi=195, layout="constrained", clear=True, num=1
 )
 ax = fig.subplots()
 for run, result, t_c, x_c in zip(runs, results, tc, xc):
@@ -247,7 +269,7 @@ ax.set(
     xscale="log",
     yscale="log",
 )
-ax.legend(fontsize="small", frameon=False)
+ax.legend(fontsize="x-small", frameon=False)
 fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
@@ -255,6 +277,7 @@ plt.pause(0.01)
 ## Fitting the crossover function with numerically inferred $\delta$ to the field data reproduces the early- and late-time behaviors in the migration of seismic front
 
 ```{python}
+#| echo: false
 
 SECONDS_PER_DAY = 86_400
 
@@ -283,6 +306,7 @@ basel = analysis.fit_field_crossover(
 ```
 
 ```{python}
+#| echo: false
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 
@@ -353,7 +377,7 @@ def plot_field_case(ax: plt.Axes, field_case: analysis.FieldCase, **set_kwargs):
     ax.legend(loc="lower right", framealpha=1, fontsize="small", frameon=True)
 ```
 
-I choose $\delta=0.3$ (inferred from our model) and set characteristic times 
+I choose $\delta= `{python} float(f"{delta_fit:.2g}")`$ (inferred from our model) and set characteristic times 
 to $t_{c} = 3\, \mathrm{days}$ and $t_{c} = 2\, \mathrm{days}$ for Soultz and
 Basel, respectively. I determined $t_{c}$ visually by looking at the
 distance-time plots. The effect of $t_{c}$ within the reasonable range is small.
@@ -367,16 +391,8 @@ than after $t_{c}$ in both cases. I denoted the slopes with triangles in
 @fig-field. For example, at Soultz, $\alpha\approx 0.5$ when $t<t_{c}$,
 $\alpha\approx 0.7$ when $t>t_{c}$. 
 
-Previously, we saw that in the constant injection rate case, the scaling
-exponent $\alpha$ remains constant within the time-scale of the seismic
-migration. There, the transition scale $\delta$ and the late-time scaling
-exponent $\alpha$ were smaller. Thus, we did not observe the early- and
-late-time behaviors. Equally, the inferred model parameters from the fit were
-inconsistent with the reality and the model. It is worth to check if a model
-with linearly increasing injection rate condition yields more realistic
-parameters.
-
 ```{python}
+#| echo: false
 #| label: fig-field
 #| fig-cap: Early- and late-time regimes (average scaling exponents denoted by triangles) shown with the crossover fit to the percentile envelope of the (a) Soultz 1993 and (b) Basel 2006 micro-seismic data.
 
@@ -403,9 +419,18 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
+Previously, we saw that in the constant injection rate case, the scaling
+exponent $\alpha$ remains constant within the time-scale of the seismic
+migration. There, the transition scale $\delta$ and the late-time scaling
+exponent $\alpha$ were smaller. Thus, we did not observe the early- and
+late-time behaviors. Equally, the inferred model parameters from the fit were
+inconsistent with the reality and the model. The model with linearly increasing
+injection rate condition yields more realistic parameters.
+
 ## Model parameters inferred from the fit are close to reality except the slope of ramp injection rate $m_{q}$
 
 ```{python}
+#| echo: false
 D = soultz.A_early**2 / 4
 mu = 1e-3
 kn_range = np.asarray([1e9, 5000e9])
@@ -414,7 +439,7 @@ mq_range = (12 * mu * soultz.A_late**5 / kn_range) ** (1 / 3)
 ```
 
 I compare the dimensionless similarity variables @eq-similarity with the
-empirical power-law fits to find the parameters of the model. I start with
+empirical power-law fits to infer the parameters of the model. I start with the
 Soultz case. At small times $t \ll t_{c}$, crossover function can be
 approximated as $x_{f} = A_{\mathrm{early}} t^{1/2}$ and the analytical
 prediction is $x_{f}=(4Dt)^{1/2}$. Equalizing the two gives
@@ -436,7 +461,7 @@ $$
     D = `{python} round(D, 2)` \, \mathrm{m^2/s}.
 $$
 
-We also know that given a rigid pre-existing planar fracture that obeys cubic
+We also know for a rigid pre-existing planar fracture that obeys cubic
 law for flow and has an initial aperture $w_{i}$, constant normal stiffness
 $k_{n}$, and incompressible water with viscosity $\mu$, the hydraulic
 diffusivity $D$ equals
@@ -457,8 +482,8 @@ $$
 to be in the range
 
 $$
-`{python} float(f"{wi_range[1]*1e6:.2g}")`\, \mathrm{\micro m} \leq w_{i} \leq
-`{python} float(f"{wi_range[0]*1e6:.2g}")`\, \mathrm{\micro m},
+`{python} float(f"{wi_range[1]*1e6:.2g}")`\, \mathrm{\mu m} \leq w_{i} \leq
+`{python} float(f"{wi_range[0]*1e6:.2g}")`\, \mathrm{\mu m},
 $$
 
 which is an acceptable range of values for $w_{i}$.
@@ -494,14 +519,14 @@ $$
 $$
 
 Notice the unit of $m_{Q}$, since it is a volumetric flow rate, it does not
-directly compare with $m_{q}$. There is 3 orders of difference between the
-inferred $m_{q}$ and field approximated $m_{Q}$.
+directly compare with $m_{q}$.
 
 ## Discussions
 
-### Linear plot alongside with square-root fit
+### Distance-time plot in linear scale alongside with a square-root law fit
 
 ```{python}
+#| echo: false
 soultz = analysis.fit_field_crossover(
     *io.load("soultz"),
     title="Soultz 1993",
@@ -534,7 +559,23 @@ r_squared_sqrt_basel = math_utils.compute_r_squared(
 )
 ```
 
+@fig-field-linear is @fig-field in linear scale alongside with a fit of a
+square-root law. Linear scale plot further highlights the square root migration
+behavior for small times and the acceleration of seismicity with time at
+Soultz. And, at Basel the apparent fit is a migration linear in time. In both
+cases, $R^{2}$ measure shows that crossover function is a better fit than the
+square root law.
+
+> [!Note]
+> $R^{2}$ is meant for
+> linear trends rather than power-law fits. However, it is still useful
+> for a comparison of goodness-of-fit between two power laws.
+
 ```{python}
+#| echo: false
+#| label: fig-field-linear
+#| fig-cap: Linear scale distance-time plot of micro-seismicity at (a) Soultz 1993 and (b) Basel 2006. In both cases, crossover function with fixed exponents better fits the seismic envelope than the square root law.
+
 fig = plt.figure(
     figsize=(6.4 * 1.25, 4.8 / 1.5), dpi=95, layout="constrained", clear=True, num=1
 )
@@ -581,30 +622,93 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 ```
 
+One factor that may impact my analysis may be significant is the way I determine
+the seismic envelope. Until now, it was based on non-overlapping bins along the
+distance array. It is worth to check how the seismic envelope would be affected
+if it were detected differently.
 
 ### Effect of seismic envelope detection algorithm
 
+To find the seismic front the seismicity data, I divide the seismicity data
+(sorted in time) into given number of bins. From each bin I find
+the distance value at a given percentile, and I indentify the time value
+that is associated with that distance value. The code snippet below
+is part of the algorighm:
+
 ```python
-def percentile_envelope(t, distance, bin_size, percentile):
-    "Chooses the distance based on the given percentile per bin of seismic data"
-    # number of bins based on bin size
-    n_bins = len(distance) // bin_size
-    n_trim = n_bins * bin_size
-    # trim distance and time data per bin
-    d_bins = distance[:n_trim].reshape(n_bins, bin_size)
-    t_bins = t[:n_trim].reshape(n_bins, bin_size)
-    # choose distance value from each bin according to the given percentile
-    p_vals = np.percentile(d_bins, percentile, axis=1)
-    # find its indices
-    idx = np.argmin(np.abs(d_bins - p_vals[:, None]), axis=1)
-    # import the corresponding time and distance values
-    t_pct = t_bins[np.arange(n_bins), idx]
-    d_pct = d_bins[np.arange(n_bins), idx]
-    return t_pct, d_pct
+d_bins = distance[:n_trim].reshape(n_bins, bin_size)  # type: ignore
+p_vals = np.percentile(d_bins, percentile, axis=1)  # type: ignore
+```
+
+Because seismicity rate changes with time, equal-count bins do not correspond
+to equal time windows. Bins covering sparse early periods span wide time
+intervals, spreading the resulting envelope points, while bins falling in dense
+periods span very short time intervals, producing many closely-spaced points.
+Thus, the seismic front derived this way is influenced by the local seismicity
+rate. This motivates trying an approach that adapts to local event density
+instead of a fixed event count.
+
+For this, we can use a sliding window that is bounded by two parameters: one is
+`min_events`, and the other is `max_dt`. Time window size increases until the
+given number `min_events` is reached and it is capped by given time `max_dt`.
+
+```{python}
+#| echo: false
+t_s, d_s = io.load("soultz")
+t_s_env, d_s_env = detection.seismic_envelope(
+    t_data=t_s,
+    d_data=d_s,
+    percentile=90,
+    min_events=100,
+    max_dt=0.5 * SECONDS_PER_DAY,
+    n_eval=1000,
+)
+```
+
+The plot below shows how more points are picked at sparse regions (very early
+and late during the sequence) compared to @fig-field. But, visually the overall
+shape of the seismic envelope is similar.
+
+```{python}
+#| echo: false
+#| label: fig-field-new-envelope
+#| fig-cap: Distance-time plot of Soultz seismicity sequence in log-scale. Seismic front determined by an algorithm that uses a sliding time-window and adapts to local seismicity rate
+
+fig = plt.figure(
+    figsize=(6.4 / 1.5, 4.8 / 1.5), dpi=95, layout="constrained", clear=True, num=1
+)
+ax = fig.subplots()
+ax.scatter(to_days(t_s), d_s, color=colors[-1], s=3)
+ax.scatter(to_days(t_s_env), d_s_env, s=20, label="Sliding time-window (new)")
+ax.scatter(
+    to_days(soultz.t_env),
+    soultz.d_env,
+    s=20,
+    marker="x",
+    label="Non-overlapping bins (old)",
+)
+ax.set(
+    xlabel="Time [day]",
+    ylabel="Distance [m]",
+    title="Soultz 1993",
+    xscale="log",
+    yscale="log",
+    xlim=(0.5, 20),
+    ylim=(50, 1200),
+)
+ax.legend(frameon=True, fontsize="medium")
+fig.canvas.draw_idle()
+plt.pause(0.01)
 ```
 
 ### Effect of the choice of spatial origin
 
+In all the distance-time plots I picked the spatial origin as
+the median position of first ten events.
+
 ```python
-x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
+x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()  # type: ignore
 ```
+The seismicity migration trend may differ if the spatial origin is the
+coordinate of where the fluid is injected, i.e. the open hole section of the
+borehole. Unfortunately, I couldn't find the coordinates for this point.
