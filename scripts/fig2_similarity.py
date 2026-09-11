@@ -8,9 +8,9 @@ from fracinj.solvers.similarity import solve_neumann_n3
 
 # %% --- Data ---------------------------------------------------------------
 
-result_dir = paths.results_dir("3dec", "runs-wi-1e-05")
-run_rigid = io.read_hdf5(result_dir / "run-q-5e-09.hdf5")
-run_soft = io.read_hdf5(result_dir / "run-q-5e-05.hdf5")
+result_dir = paths.results_dir("3dec", "wi-1e-05")
+run_rigid = io.read_hdf5(result_dir / "q-5e-09.hdf5")
+run_soft = io.read_hdf5(result_dir / "q-5e-05.hdf5")
 
 # Analytical / semi-analytical reference curves
 zeta_n0 = np.linspace(0, 5, 100)

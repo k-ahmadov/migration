@@ -170,20 +170,20 @@ def default_parameters(bc: RateBC = RateBC.CONST) -> Parameters:
         Nx_sn=256,
         Nt=500,
     )
-    setattr(params, bc.value, 1e-8)
+    setattr(params, bc.value, 5e-7)
     return params
 
 
 def main() -> None:
-    bc = RateBC.RAMP
+    bc = RateBC.CONST
     params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "linear")
-    m_q_values = np.geomspace(1e-14, 1e-7, 8)
+    out_dir = paths.results_dir("halfspace", "stress-bc")
 
-    sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
+    # m_q_values = np.geomspace(1e-14, 1e-7, 8)
+    # sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
 
-    # out_file = out_dir / f"{bc.value}-{getattr(params, bc.value):.0e}.hdf5"
-    # run_simulation(params, out_file, bc=bc)
+    out_file = out_dir / f"{bc.value}-{getattr(params, bc.value):.0e}.hdf5"
+    run_simulation(params, out_file, bc=bc)
 
 
 if __name__ == "__main__":
