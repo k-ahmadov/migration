@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from fracinj import paths
 from fracinj.analysis import analytical_fit_and_split
 from fracinj.detection import percentile_envelope
-from fracinj.io import load_basel, load_soultz
+from fracinj.io import _load_basel, _load_soultz
 
 # %%
 
@@ -70,11 +70,11 @@ def plot_front(
 
 # %% ---- Data ----------------------------------------------------------
 
-t_s, d_s = load_soultz(paths.DATA / "SSFS1993-Catalogue_Bourouis.csv")
+t_s, d_s = _load_soultz(paths.DATA / "SSFS1993-Catalogue_Bourouis.csv")
 t_pct_s, d_pct_s = percentile_envelope(t_s, d_s, bin_size=50, percentile=90)
 early_s, late_s = analytical_fit_and_split(t_pct_s, d_pct_s, split_frac=1 / 4)
 
-t_b, d_b = load_basel(paths.DATA / "supp2_compilation_existing_catalogs.dat")
+t_b, d_b = _load_basel(paths.DATA / "supp2_compilation_existing_catalogs.dat")
 t_pct_b, d_pct_b = percentile_envelope(t_b, d_b, bin_size=50, percentile=75)
 early_b, late_b = analytical_fit_and_split(t_pct_b, d_pct_b, split_frac=1 / 4)
 

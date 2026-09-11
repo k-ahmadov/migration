@@ -146,7 +146,7 @@ def save_run(
 SOULTZ_MAX_DISTANCE = 1100
 
 
-def load_soultz(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
+def _load_soultz(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
     # load data file
     df = pd.read_csv(filepath, sep=";")
     # formatting string for date and time format
@@ -171,7 +171,7 @@ def load_soultz(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
     return t.values[keep], distance.values[keep]
 
 
-def load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
+def _load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
     df = pd.read_csv(
         filepath,
         comment="#",
@@ -218,9 +218,9 @@ def load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
 
 def load(field: Literal["soultz", "basel"]):
     if field == "soultz":
-        load_func = load_soultz
+        load_func = _load_soultz
     elif field == "basel":
-        load_func = load_basel
+        load_func = _load_basel
     else:
         raise ValueError(f"there is no data for the provided field {field!r}")
     return load_func(FIELD_DATA[field])

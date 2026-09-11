@@ -21,14 +21,14 @@ def save_figure(fig, name: str, *, ext: str = "eps", overleaf: bool = False) -> 
 
 
 def slope_triangle(
-    ax,
+    ax: plt.Axes,
     x0: float,
     prefactor: float,
     slope: float,
     dx_log: float = 0.3,
     label_slope: bool = True,
     inverse: bool = False,
-    polygon_lw: float = 1.0,
+    polygon_lw: float = 1.5,
     **text_kwargs,
 ):
     """Annotate a slope triangle on an existing log-log axis."""

@@ -95,6 +95,7 @@ def _p_inj_series(run: io.RunData, slc: slice) -> tuple[Vector, Vector]:
 # --- analytical amplitudes ---------------------------------------------------
 
 # TODO: add analytical amplitudes for ramp injection rate
+# TODO: add analytical amplitudes for constant pressure injection
 
 
 def _front_amplitude(
@@ -205,6 +206,11 @@ def front_early(run: io.RunData, **kw) -> Fit:
 def front_late(run: io.RunData, **kw) -> Fit:
     return analyze_front(run, regime=SOFT, window="late", **kw)
 
+def p_inj_rigid(run: io.RunData, **kw) -> Fit:
+    return analyze_p_inj(run, regime=RIGID, **kw)
+
+def p_inj_soft(run: io.RunData, **kw) -> Fit:
+    return analyze_p_inj(run, regime=SOFT, **kw)
 
 def p_inj_early(run: io.RunData, **kw) -> Fit:
     return analyze_p_inj(run, regime=RIGID, window="early", **kw)
@@ -256,8 +262,8 @@ def analytical_fit_and_split(t_pct, d_pct, split_frac):
 class CrossoverModel:
     """Fixed exponents and transition sharpness of a two-regime crossover."""
 
-    alpha_early: float = 0.5
-    alpha_late: float = 1.2
+    alpha_early: float = 1/2
+    alpha_late: float = 7/5
     delta: float = 0.3
 
 
