@@ -5,7 +5,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
-from fracinj import io, analysis, detection, physics
+from fracinj import physics
 
 # %% --- Plotting ---------------------------------------------------------------
 
@@ -24,7 +24,11 @@ def plot_front_rigid(ax, result: front_analysis.AnalyticalFrontResults, title: s
         rf"$\zeta_f={result.zeta_front:.1f}$, $D={D:.1f}~\mathsf{{m^2/s}}$",
     )
     slope_triangle(
-        ax, x0=t[len(t) // 10], prefactor=result.A_ana, slope=result.alpha_ana, dx_log=0.5
+        ax,
+        x0=t[len(t) // 10],
+        prefactor=result.A_ana,
+        slope=result.alpha_ana,
+        dx_log=0.5,
     )
     # ax.text(
     #     t[int(0.01 * len(t))],  # pyright: ignore[reportIndexIssue]
@@ -59,7 +63,11 @@ def plot_front_soft(ax, result: front_analysis.AnalyticalFrontResults, title: st
         label=f"Fit - $x_f = {result.A_emp:.1f} \\, t^{{{result.alpha_emp:.1f}}}$",
     )
     slope_triangle(
-        ax, x0=t[len(t) // 100], prefactor=result.A_ana, slope=result.alpha_ana, dx_log=0.3
+        ax,
+        x0=t[len(t) // 100],
+        prefactor=result.A_ana,
+        slope=result.alpha_ana,
+        dx_log=0.3,
     )
     slope_triangle(
         ax,
@@ -257,10 +265,12 @@ run_2 = file_io.read_run(result_dir / "run-q-1e-04.hdf5")
 run_3 = file_io.read_run(result_dir / "run-q-1e-03.hdf5")
 
 results_0 = front_analysis.analyze_rigid(
-    run_0, threshold=front_detection.self_similar_front_threshold(run_0, theta_front=0.1)
+    run_0,
+    threshold=front_detection.self_similar_front_threshold(run_0, theta_front=0.1),
 )
 results_1 = front_analysis.analyze(
-    run_1, threshold=front_detection.self_similar_front_threshold(run_1, theta_front=0.1)
+    run_1,
+    threshold=front_detection.self_similar_front_threshold(run_1, theta_front=0.1),
 )
 results_2 = front_analysis.analyze(
     # run_2, threshold=front_detection.self_similar_front_threshold(run_2, theta_front=0.1)

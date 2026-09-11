@@ -42,10 +42,7 @@ def cumulative_percentile_envelope(
 
 
 # %%
-t, d = io.load_soultz(
-    Path.cwd() / "data" / "SSFS1993-Catalogue_Bourouis.csv",
-)
-
+t, d = io.load("soultz")
 t_pct, d_pct = detection.percentile_envelope(t, d, bin_size=50, percentile=90)
 
 # %%
@@ -153,19 +150,22 @@ plt.pause(0.01)
 D = A_early**2 / 4
 print(D)
 mu = 1e-3
-w_i = 1e-5
-k_n = 12 * D * mu / w_i**3
+# w_i = 1e-5
+# k_n = 12 * D * mu / w_i**3
+k_n = np.asarray([1e9, 5000e9])
+w_i = (12 * D * mu / k_n)**(1/3)
 
-print(f"k_n = {k_n / 1e9:.5f} GPa/m")
+print(f"k_n = {k_n / 1e9} GPa/m")
+print(f"w_i = {w_i * 1e6} micro m")
 
 a = k_n / 12 / mu
 q_0 = (A_late**5 / a) ** (1 / 3)
-print(f"q_0 = {q_0:.1e} m^2/s")
+print(f"q_0 = {q_0} m^2/s")
 
 L = 1e3
 # dimensionless deformation parameter
 epsilon = w_i / (L * q_0 / a) ** (1 / 4)
-print(f"epsilon = {epsilon:.2g}")
+print(f"epsilon = {epsilon}")
 
 t_c_val = _to_days(a * w_i**5 / q_0**2)
-print(f"t_c = {t_c_val:.2g} days")
+print(f"t_c = {t_c_val} days")
