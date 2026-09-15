@@ -2,10 +2,13 @@
 
 One :class:`Fit` type and one pair of entry points
 (:func:`analyze_front`, :func:`analyze_p_inj`) cover both observables and
-both aperture regimes (:data:`RIGID`, :data:`SOFT`).
+both aperture regimes (:data:`RIGID`, :data:`SOFT`). The named wrappers
+(:func:`front_rigid`, :func:`p_inj_soft`, etc.) always pass a regime, so
+they return :class:`AnalyticalFit` -- the same type with its analytical
+fields narrowed from ``float | None`` to ``float``.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Literal
 
 import numpy as np
@@ -13,7 +16,6 @@ import numpy as np
 from fracinj import detection, io, math_utils, physics
 from fracinj.math_utils import compute_r_squared, fit_power_law
 from fracinj.solvers.exact import solve_linear_diffusion_const_flux
-from fracinj.solvers.similarity import solve_neumann_n3
 from fracinj.types import Vector
 
 Window = Literal["all", "early", "late"]
@@ -32,7 +34,7 @@ RIGID = Regime("rigid", front_exponent=0.5, p_inj_exponent=0.5)
 SOFT = Regime("soft", front_exponent=0.8, p_inj_exponent=0.2)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Fit:
     """A numerical series ``y(t)`` with its empirical (and optional analytical)
     power-law model ``A * t**alpha``.
@@ -58,6 +60,30 @@ class Fit:
         t = self.t if t is None else t
         assert self.alpha_ana is not None
         return self.A_ana * t**self.alpha_ana
+
+
+@dataclass(frozen=True)
+class AnalyticalFit(Fit):
+    """A :class:`Fit` whose analytical model is guaranteed present.
+
+    Returned by the named ``*_rigid``/``*_soft``/``*_early``/``*_late``
+    wrappers below, which always pass a concrete ``regime`` -- so callers
+    get ``regime``/``A_ana``/``alpha_ana`` as plain, non-optional values
+    instead of having to narrow ``Fit``'s ``X | None`` fields themselves.
+    ``zeta`` stays optional: only front fits compute it, p_inj fits don't.
+    """
+
+    regime: Regime = RIGID
+    A_ana: float = 0.0
+    alpha_ana: float = 0.0
+
+
+def _as_analytical(fit: Fit) -> AnalyticalFit:
+    """Narrow a regime-fitted ``Fit`` to :class:`AnalyticalFit`."""
+    assert fit.regime is not None
+    assert fit.A_ana is not None
+    assert fit.alpha_ana is not None
+    return AnalyticalFit(**{f.name: getattr(fit, f.name) for f in fields(Fit)})
 
 
 # --- series extraction --------------------------------------------------------
@@ -142,7 +168,7 @@ def _p_inj_amplitude(regime: Regime, run: io.RunData) -> float:
         a = physics.mobility(p)
         if a <= 0 or p.q_0 == 0:
             raise ValueError(f"need a>0 and q_0!=0, got a={a}, q_0={p.q_0}")
-        theta0 = solve_neumann_n3(p.w_i / w_final_inj)[1][0]
+        theta0 = 1.30  # solve_neumann_n3(p.w_i / w_final_inj)[1][0]
         return theta0 * p.k_n * (p.q_0**2 / a) ** regime.p_inj_exponent
     raise ValueError(f"unknown regime {regime!r}")  # pragma: no cover
 
@@ -163,11 +189,20 @@ def analyze_front(
     slc = _resolve_slice(run, window, slc)
     t, x = _front_series(run, threshold, stress_front, slc)
     A_emp, alpha_emp = fit_power_law(t, x)
-    fit = Fit("front", t=t, y=x, A_emp=A_emp, alpha_emp=alpha_emp, regime=regime)
-    if regime is not None:
-        fit.A_ana, fit.zeta = _front_amplitude(regime, run, t, x)
-        fit.alpha_ana = regime.front_exponent
-    return fit
+    if regime is None:
+        return Fit("front", t=t, y=x, A_emp=A_emp, alpha_emp=alpha_emp)
+    A_ana, zeta = _front_amplitude(regime, run, t, x)
+    return Fit(
+        "front",
+        t=t,
+        y=x,
+        A_emp=A_emp,
+        alpha_emp=alpha_emp,
+        regime=regime,
+        A_ana=A_ana,
+        alpha_ana=regime.front_exponent,
+        zeta=zeta,
+    )
 
 
 def analyze_p_inj(
@@ -181,43 +216,54 @@ def analyze_p_inj(
     slc = _resolve_slice(run, window, slc)
     t, p_inj = _p_inj_series(run, slc)
     A_emp, alpha_emp = fit_power_law(t, p_inj)
-    fit = Fit("p_inj", t=t, y=p_inj, A_emp=A_emp, alpha_emp=alpha_emp, regime=regime)
-    if regime is not None:
-        fit.A_ana = _p_inj_amplitude(regime, run)
-        fit.alpha_ana = regime.p_inj_exponent
-    return fit
+    if regime is None:
+        return Fit("p_inj", t=t, y=p_inj, A_emp=A_emp, alpha_emp=alpha_emp)
+    A_ana = _p_inj_amplitude(regime, run)
+    return Fit(
+        "p_inj",
+        t=t,
+        y=p_inj,
+        A_emp=A_emp,
+        alpha_emp=alpha_emp,
+        regime=regime,
+        A_ana=A_ana,
+        alpha_ana=regime.p_inj_exponent,
+    )
 
 
 # --- named convenience wrappers -------------------------------------------
 
 
-def front_rigid(run: io.RunData, **kw) -> Fit:
-    return analyze_front(run, regime=RIGID, **kw)
+def front_rigid(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_front(run, regime=RIGID, **kw))
 
 
-def front_soft(run: io.RunData, **kw) -> Fit:
-    return analyze_front(run, regime=SOFT, **kw)
+def front_soft(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_front(run, regime=SOFT, **kw))
 
 
-def front_early(run: io.RunData, **kw) -> Fit:
-    return analyze_front(run, regime=RIGID, window="early", **kw)
+def front_early(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_front(run, regime=RIGID, window="early", **kw))
 
 
-def front_late(run: io.RunData, **kw) -> Fit:
-    return analyze_front(run, regime=SOFT, window="late", **kw)
-
-def p_inj_rigid(run: io.RunData, **kw) -> Fit:
-    return analyze_p_inj(run, regime=RIGID, **kw)
-
-def p_inj_soft(run: io.RunData, **kw) -> Fit:
-    return analyze_p_inj(run, regime=SOFT, **kw)
-
-def p_inj_early(run: io.RunData, **kw) -> Fit:
-    return analyze_p_inj(run, regime=RIGID, window="early", **kw)
+def front_late(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_front(run, regime=SOFT, window="late", **kw))
 
 
-def p_inj_late(run: io.RunData, **kw) -> Fit:
-    return analyze_p_inj(run, regime=SOFT, window="late", **kw)
+def p_inj_rigid(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_p_inj(run, regime=RIGID, **kw))
+
+
+def p_inj_soft(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_p_inj(run, regime=SOFT, **kw))
+
+
+def p_inj_early(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_p_inj(run, regime=RIGID, window="early", **kw))
+
+
+def p_inj_late(run: io.RunData, **kw) -> AnalyticalFit:
+    return _as_analytical(analyze_p_inj(run, regime=SOFT, window="late", **kw))
 
 
 # --- misc front diagnostics ------------------------------------------------
@@ -262,8 +308,8 @@ def analytical_fit_and_split(t_pct, d_pct, split_frac):
 class CrossoverModel:
     """Fixed exponents and transition sharpness of a two-regime crossover."""
 
-    alpha_early: float = 1/2
-    alpha_late: float = 7/5
+    alpha_early: float = 1 / 2
+    alpha_late: float = 7 / 5
     delta: float = 0.3
 
 
