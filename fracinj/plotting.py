@@ -23,42 +23,57 @@ def save_figure(fig, name: str, *, ext: str = "eps", overleaf: bool = False) -> 
 def slope_triangle(
     ax: plt.Axes,
     x0: float,
-    prefactor: float,
     slope: float,
+    *,
+    prefactor: float | None = None,
+    y0_data: float | None = None,
     dx_log: float = 0.3,
     label_slope: bool = True,
     inverse: bool = False,
-    polygon_lw: float = 1.5,
+    color: str = "k",
     **text_kwargs,
 ):
-    """Annotate a slope triangle on an existing log-log axis."""
-    y0 = prefactor * x0**slope
+    """Annotate a slope triangle on an existing log-log axis.
+
+    Anchor it either at a curve value (``prefactor``, giving
+    ``y0 = prefactor * x0**slope``) or directly (``y0_data``) -- exactly one
+    of the two must be given. ``inverse`` flips the right-angle corner from
+    bottom-right to top-left, for annotating a curve from the other side
+    (e.g. two power laws sharing the same stretch of the plot).
+    """
+    if (prefactor is None) == (y0_data is None):
+        raise ValueError("provide exactly one of `prefactor` or `y0_data`")
+    y0 = prefactor * x0**slope if y0_data is None else y0_data
+
     x1 = x0 * 10**dx_log
     y2 = y0 * 10 ** (slope * dx_log)
+    # the horizontal ("1") and vertical (slope) legs swap sides in inverse mode
+    horizontal_y = y2 if inverse else y0
+    vertical_x = x0 if inverse else x1
 
-    ax.add_patch(
-        Polygon(
-            [[x0, y0], [x1, y0], [x1, y2]],
-            fill=False,
-            edgecolor="k",
-            linewidth=polygon_lw,
-        )
+    vertices = (
+        [[x0, y0], [x0, y2], [x1, y2]] if inverse else [[x0, y0], [x1, y0], [x1, y2]]
     )
+    ax.add_patch(Polygon(vertices, fill=False, edgecolor=color))
+
     ax.annotate(
         "1",
-        xy=((x0 * x1) ** 0.5, y0),
+        xy=((x0 * x1) ** 0.5, horizontal_y),
         xytext=(0, 5) if inverse else (0, -12),
         textcoords="offset points",
         ha="center",
+        color=color,
         **text_kwargs,
     )
     if label_slope:
         ax.annotate(
-            str(slope),
-            xy=(x1, (y0 * y2) ** 0.5),
-            xytext=(6, 0),
+            f"{slope:.2g}",
+            xy=(vertical_x, (y0 * y2) ** 0.5),
+            xytext=(-6, 0) if inverse else (6, 0),
             textcoords="offset points",
-            ha="left",
+            ha="right" if inverse else "left",
+            va="center",
+            color=color,
             **text_kwargs,
         )
 
@@ -119,5 +134,8 @@ def plot_profiles(
 
 
 def sci_latex(x: float) -> str:
-    mantissa, exponent = f"{x:.0e}".split("e")
-    return rf"{mantissa}\cdot 10^{{{int(exponent)}}}"
+    mantissa, exponent = f"{x:.1e}".split("e")
+    if float(mantissa) == 1.0:
+        return rf"10^{{{int(exponent)}}}"
+    else:
+        return rf"{mantissa}\times 10^{{{int(exponent)}}}"
