@@ -1,0 +1,8 @@
+aux/
+out/
+indent.log
+*-eps-converted-to.pdf
+
+# the root .gitignore's bare "figures/" rule would otherwise also catch
+# this legitimate source figures/ subfolder
+!figures/
