@@ -9,7 +9,7 @@ fields narrowed from ``float | None`` to ``float``.
 """
 
 from dataclasses import dataclass, fields
-from typing import Literal
+from typing import Callable, Literal
 
 import numpy as np
 
@@ -26,6 +26,13 @@ class Regime:
     """A self-similar aperture regime and its power-law exponents."""
 
     name: str
+    n: float
+    i: float
+    coefficient: Callable
+
+
+
+
     front_exponent: float
     p_inj_exponent: float
 

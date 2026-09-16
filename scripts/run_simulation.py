@@ -4,7 +4,6 @@ python scripts/run_simulation.py            # single run, constant rate
 """
 
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 
 import numpy as np
@@ -13,17 +12,6 @@ from fracinj import paths, physics
 from fracinj.io import save_run
 from fracinj.solvers import aperture, elastic
 from fracinj.types import Field, Parameters, Vector
-
-
-class RateBC(str, Enum):
-    """Left boundary condition; the value is the driving Parameters field."""
-
-    CONST = "q_0"
-    RAMP = "m_q"
-
-    @property
-    def dimensionalize_key(self) -> physics.RateBC:
-        return "const_rate" if self is RateBC.CONST else "ramp_rate"
 
 
 @dataclass(frozen=True)
@@ -41,24 +29,27 @@ class ElasticResult:
     sn: Field
 
 
-def run_fvm(params: Parameters, *, bc: RateBC = RateBC.CONST) -> FVMResult:
+def run_fvm(params: Parameters) -> FVMResult:
     nx, nt = int(params.Nx_p), int(params.Nt)
     if nx <= 0 or nt <= 0 or params.T < 0:
         raise ValueError("need Nx_p > 0, Nt > 0, T >= 0")
 
-    scales = physics.dimensionalize(params, bc.dimensionalize_key)
+    scales = physics.cubic_scales(params, pin="length")
     w_hat = aperture.solve_diffusion(
         num_nodes=nx,
         num_steps=nt,
-        w_initial=params.w_i / scales.w,
-        t_final=params.T / scales.t,
+        w_initial=params.w_i / scales.w_c,
+        t_final=params.T / scales.t_c,
         k_func=lambda w: w**3,
-        left_bc_constant_rate=(bc is RateBC.CONST),
+        left_bc_constant_rate=physics.is_constant_rate(params),
     )
-    w = w_hat * scales.w
+    w = w_hat * scales.w_c
+    t = np.linspace(params.T / (nt - 1), params.T, nt - 1)
+    if w.shape[0] != t.size:
+        raise ValueError("Time array size does not patch solver size")
     return FVMResult(
         x=np.linspace(0, params.L, nx),
-        t=np.linspace(params.T / (nt - 1), params.T, nt - 1),
+        t=t,
         p=params.k_n * (w - params.w_i),
         w=w,
     )
@@ -77,16 +68,14 @@ class _InterpRHS:
         return np.interp(s * self.L, self.x_mirror, self.y)
 
 
-def run_elastic(
-    params: Parameters, x_fvm: Vector, p_tx: Field, bc: RateBC = RateBC.CONST
-) -> ElasticResult:
+def run_elastic(params: Parameters, x_fvm: Vector, p_tx: Field) -> ElasticResult:
     nt = int(p_tx.shape[0])
     if x_fvm.ndim != 1 or p_tx.ndim != 2 or p_tx.shape[1] != x_fvm.size:
         raise ValueError("expected p_tx of shape (Nt, Nx) with Nx == x_fvm.size")
 
     E_plane = physics.plane_strain_modulus(params)
     lam = (4.0 / np.pi) * params.k_n * params.L / E_plane
-    sn_char = physics.dimensionalize(params, bc=bc.dimensionalize_key).sn
+    sn_char = physics.cubic_scales(params, pin="length").sn_c
 
     x_mirror = np.concatenate((-x_fvm[:0:-1], x_fvm))  # avoid double-counting x=0
     rhs = _InterpRHS(x_mirror, params.L)
@@ -105,24 +94,20 @@ def run_elastic(
         _, sn_hat, _ = elastic.FIE_log_sing(lam, rhs, int(params.Nx_sn))
         sn_tx[i] = sn_hat * sn_char
 
-    t = np.arange(nt, dtype=np.float64) * (params.T / nt)
+    t = np.linspace(params.T / nt, params.T, nt)
     keep = x_out >= 0
     return ElasticResult(x=x_out[keep], t=t, sn=sn_tx[:, keep])
 
 
-def run_simulation(
-    params: Parameters, out_filepath: Path, *, bc: RateBC = RateBC.CONST
-) -> None:
-    if getattr(params, bc.value) == 0.0:
-        raise ValueError(f"Parameters.{bc.value} must be set for bc={bc.name}")
+def run_simulation(params: Parameters, out_filepath: Path) -> None:
 
-    params.T = physics.dimensionalize(params, bc.dimensionalize_key).t
+    params.T = physics.cubic_scales(params, pin="length").t_c
     print(f"Simulation duration: {params.T:.3g} s")
 
-    fvm = run_fvm(params, bc=bc)
+    fvm = run_fvm(params)
     print("FVM simulation finished")
 
-    el = run_elastic(params, fvm.x, fvm.p, bc=bc)
+    el = run_elastic(params, fvm.x, fvm.p)
     print("Elastic half-space solution finished")
 
     save_run(
@@ -143,8 +128,6 @@ def sweep(
     field: str,
     values: np.ndarray,
     out_dir: Path,
-    *,
-    bc: RateBC = RateBC.CONST,
 ) -> None:
     """Run one simulation per value of ``params.<field>``.
 
@@ -155,10 +138,10 @@ def sweep(
     for value in values:
         setattr(params, field, float(value))
         print(f"running {field}={value:.1e}")
-        run_simulation(params, out_dir / f"{field}-{value:.0e}.hdf5", bc=bc)
+        run_simulation(params, out_dir / f"{field}-{value:.0e}.hdf5")
 
 
-def default_parameters(bc: RateBC = RateBC.CONST) -> Parameters:
+def default_parameters(bc_param: str) -> Parameters:
     params = Parameters(
         k_n=200e9,
         L=100.0,
@@ -170,17 +153,17 @@ def default_parameters(bc: RateBC = RateBC.CONST) -> Parameters:
         Nx_sn=256,
         Nt=500,
     )
-    setattr(params, bc.value, 5e-7)
+    setattr(params, bc_param, 5e-7)
     return params
 
 
 def main() -> None:
-    bc = RateBC.CONST
+    bc = "q_0"
     params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "wi-1e-05")
+    out_dir = paths.results_dir("halfspace", "wi-1e-05-debug")
 
     q0_values = np.geomspace(1e-10, 1e-6, 5)
-    sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir, bc=bc)
+    sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
 
     # m_q_values = np.geomspace(1e-14, 1e-7, 8)
     # sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
