@@ -22,7 +22,7 @@ def mobility(params: Parameters) -> float:
 
 def _reference_aperture(params: Parameters) -> float:
     """Aperture the linear diffusivity is linearised about."""
-    if params.DP != 0.0:
+    if params.DP > 0.0:
         return params.w_i + params.DP / params.k_n
     return params.w_i
 
@@ -38,20 +38,22 @@ def plane_strain_modulus(params: Parameters) -> float:
 
 def characteristic_distance(params: Parameters, bc: RateBC = "const_rate"):
     a = mobility(params)
-    if bc == "const_rate":
-        if params.q_0 == 0.0:
-            raise ValueError("dimensionalize(bc='const_rate') needs params.q_0 != 0")
-        x_char = a * params.w_i**4 / params.q_0
-    elif bc == "ramp_rate":
-        if params.m_q == 0.0:
-            raise ValueError("dimensionalize(bc='ramp_rate') needs params.m_q != 0")
-        x_char = (a**2 * params.w_i**7 / params.m_q) ** (1 / 3)
-    else:
-        raise ValueError(f"unknown boundary condition {bc!r}")
+    match bc:
+        case "const_rate":
+            if params.q_0 == 0.0:
+                raise ValueError(
+                    "dimensionalize(bc='const_rate') needs params.q_0 != 0"
+                )
+            x_char = a * params.w_i**4 / params.q_0
+        case "ramp_rate":
+            if params.m_q == 0.0:
+                raise ValueError("dimensionalize(bc='ramp_rate') needs params.m_q != 0")
+            x_char = (a**2 * params.w_i**7 / params.m_q) ** (1 / 3)
+        case _:
+            raise ValueError(f"unknown boundary condition {bc!r}")
     return x_char
 
 
-# TODO: maybe add nondimensionazation type aware characteristic time
 def characteristic_time(params: Parameters, bc: RateBC = "const_rate"):
     a = mobility(params)
     t_char = characteristic_distance(params, bc=bc) ** 2 / (a * params.w_i**3)
@@ -60,16 +62,19 @@ def characteristic_time(params: Parameters, bc: RateBC = "const_rate"):
 
 def characteristic_aperture(params: Parameters, bc: RateBC = "const_rate"):
     a = mobility(params)
-    if bc == "const_rate":
-        if params.q_0 == 0.0:
-            raise ValueError("dimensionalize(bc='const_rate') needs params.q_0 != 0")
-        w_char = (params.L * params.q_0 / a) ** 0.25
-    elif bc == "ramp_rate":
-        if params.m_q == 0.0:
-            raise ValueError("dimensionalize(bc='ramp_rate') needs params.m_q != 0")
-        w_char = (params.L**3 * params.m_q / a**2) ** (1 / 7)
-    else:  # pragma: no cover - guarded by the Literal type
-        raise ValueError(f"unknown boundary condition {bc!r}")
+    match bc:
+        case "const_rate":
+            if params.q_0 == 0.0:
+                raise ValueError(
+                    "dimensionalize(bc='const_rate') needs params.q_0 != 0"
+                )
+            w_char = (params.L * params.q_0 / a) ** 0.25
+        case "ramp_rate":
+            if params.m_q == 0.0:
+                raise ValueError("dimensionalize(bc='ramp_rate') needs params.m_q != 0")
+            w_char = (params.L**3 * params.m_q / a**2) ** (1 / 7)
+        case _:
+            raise ValueError(f"unknown boundary condition {bc!r}")
     return w_char
 
 
@@ -115,7 +120,9 @@ def nondimensionalize_rigid(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Similarity variables for the rigid (linear-diffusion) regime."""
     if bc != "const_rate":
-        raise NotImplementedError("nondimensionalize_rigid only supports bc='const_rate'")
+        raise NotImplementedError(
+            "nondimensionalize_rigid only supports bc='const_rate'"
+        )
     D = diffusivity(params)
     tc = _time_column(t, w)
     zeta = x / np.sqrt(D * tc)
@@ -133,16 +140,17 @@ def nondimensionalize_soft(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Similarity variables for the soft (n=3 nonlinear-diffusion) regime
     for constant and linearly increasing injection rate."""
-    if bc == "const_rate":
-        q = params.q_0
-        zeta_t_exp = 4
-        theta_t_exp = 1
-    elif bc == "ramp_rate":
-        q = params.m_q
-        zeta_t_exp = 7
-        theta_t_exp = 3
-    else:
-        raise ValueError(f"unknown boundary condition {bc!r}")
+    match bc:
+        case "const_rate":
+            q = params.q_0
+            zeta_t_exp = 4
+            theta_t_exp = 1
+        case "ramp_rate":
+            q = params.m_q
+            zeta_t_exp = 7
+            theta_t_exp = 3
+        case _:
+            raise ValueError(f"unknown boundary condition {bc!r}")
     a = mobility(params)
     tc = _time_column(t, w)
     zeta = x / (a * q**3 * tc**zeta_t_exp) ** (1 / 5)
