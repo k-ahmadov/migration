@@ -134,12 +134,12 @@ def _front_amplitude(
     p = run.params
     if regime is RIGID:
         D = physics.diffusivity(p)
-        scale = (D * t[mask]) ** regime.front_exponent
         amp_unit = D**regime.front_exponent
+        scale = amp_unit * t[mask] ** regime.front_exponent
     elif regime is SOFT:
         a, q = physics.mobility(p), p.q_0
-        scale = a ** (1 / 5) * q ** (3 / 5) * t[mask] ** regime.front_exponent
         amp_unit = (a * q**3) ** (1 / 5)
+        scale = amp_unit * t[mask] ** regime.front_exponent
     else:  # pragma: no cover
         raise ValueError(f"unknown regime {regime!r}")
     zeta = float(np.mean(x[mask] / scale))
