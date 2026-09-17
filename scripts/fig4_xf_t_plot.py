@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
 from fracinj import analysis, io, paths, plotting
-from fracinj.analysis import RIGID, SOFT, Fit, Regime
+from fracinj.analysis import RIGID_CONST, SOFT_CONST, Fit, Regime
 
 # %%
 
@@ -24,9 +24,9 @@ class Case:
 
 
 CASES: dict[float, Case] = {
-    5e-5: Case(SOFT, marker="x", xytext=(0, 20), ann_pos_frac=20),
+    5e-5: Case(SOFT_CONST, marker="x", xytext=(0, 20), ann_pos_frac=20),
     5e-7: Case(None, marker="1", xytext=(-25, -80), ann_pos_frac=20),
-    5e-9: Case(RIGID, marker=".", xytext=(-40, -50), ann_pos_frac=150, early_only=True),
+    5e-9: Case(RIGID_CONST, marker=".", xytext=(-40, -50), ann_pos_frac=150, early_only=True),
 }
 
 

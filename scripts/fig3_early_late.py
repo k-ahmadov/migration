@@ -12,10 +12,10 @@ idx_tc = 30 * (int(np.searchsorted(run.t, t_c)) + 1)
 
 numerical = analysis.analyze_front(run, stress_front=True)
 early = analysis.analyze_front(
-    run, regime=analysis.RIGID, stress_front=True, slc=slice(None, idx_tc)
+    run, regime=analysis.RIGID_CONST, stress_front=True, slc=slice(None, idx_tc)
 )
 late = analysis.analyze_front(
-    run, regime=analysis.SOFT, stress_front=True, slc=slice(idx_tc, None)
+    run, regime=analysis.SOFT_CONST, stress_front=True, slc=slice(idx_tc, None)
 )
 
 # %% --- Figure ---------------------------------------------------------

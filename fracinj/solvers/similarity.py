@@ -31,7 +31,9 @@ _ZETA_MAX = 5.0
 _NEWTON_GUESS = {"dirichlet": -1.0, "neumann": 3.26}  # on u'(0) / u(0) respectively
 
 
-def _integrate(rhs, y0, *, zeta_max: float, n_points: int) -> tuple[np.ndarray, np.ndarray]:
+def _integrate(
+    rhs, y0, *, zeta_max: float, n_points: int
+) -> tuple[np.ndarray, np.ndarray]:
     zeta = np.linspace(0, zeta_max, n_points)
     sol = solve_ivp(
         rhs, (0, zeta_max), y0, t_eval=zeta, method="RK45", atol=1e-8, rtol=1e-6
@@ -69,7 +71,9 @@ def solve_similarity(
             u0 = max(u[0], floor)
             return [u[1], -zeta * u[1] / (2 * u0 ** (n * exponent))]
 
-        y0_of = lambda guess: [1.0, guess]
+        def y0_of(guess):
+            return [1.0, guess]
+
         target = theta_inf ** (n + 1)
     elif bc == "neumann":
         # u'' = c * (u**e - zeta * u**(e-1) * u'),  u'(0) = -(n+1), shoot on u(0)
@@ -79,7 +83,9 @@ def solve_similarity(
             u0 = max(u[0], floor)
             return [u[1], c * (u0**exponent - zeta * u0 ** (exponent - 1) * u[1])]
 
-        y0_of = lambda guess: [guess, -(n + 1)]
+        def y0_of(guess):
+            return [guess, -(n + 1)]
+
         target = theta_inf ** (n + 1)
     else:  # pragma: no cover - guarded by the Literal type
         raise ValueError(f"unknown boundary condition {bc!r}")

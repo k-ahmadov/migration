@@ -8,7 +8,7 @@ calibration, not part of the figure.
 import sympy as sp
 
 from fracinj.math_utils import fit_power_law_fixed_exponent
-from fracinj.analysis import RIGID, SOFT
+from fracinj.analysis import RIGID_CONST, SOFT_CONST
 from scripts.fig5_field_migration import (
     d_pct_s,
     percentile_envelope,  # noqa: F401  (kept for interactive re-use)
@@ -18,8 +18,8 @@ from scripts.fig5_field_migration import (
 
 def prefactors(t_pct, d_pct, split_frac):
     idx = int(len(t_pct) * split_frac)
-    A_e = fit_power_law_fixed_exponent(t_pct[:idx], d_pct[:idx], RIGID.front_exponent)
-    A_l = fit_power_law_fixed_exponent(t_pct[idx:], d_pct[idx:], SOFT.front_exponent)
+    A_e = fit_power_law_fixed_exponent(t_pct[:idx], d_pct[:idx], RIGID_CONST.front_exponent)
+    A_l = fit_power_law_fixed_exponent(t_pct[idx:], d_pct[idx:], SOFT_CONST.front_exponent)
     return A_e, A_l
 
 

@@ -8,7 +8,7 @@ plt.style.use(["science", "bright", "latex-sans"])  # pyright: ignore[reportAttr
 plt.rcParams["font.family"] = "sans-serif"
 
 # %%
-result_dir = paths.results_dir("halfspace", "wi-1e-05")
+result_dir = paths.results_dir("halfspace", "wi-1e-05-debug")
 q0_values = np.geomspace(1e-10, 1e-6, 5)
 
 runs = [io.read_halfspace(result_dir / f"q_0-{q0:.0e}.hdf5") for q0 in q0_values]
@@ -24,8 +24,7 @@ result_rigid = analysis.p_inj_rigid(
 )
 result_soft = analysis.p_inj_soft(runs[-1])
 
-bc = "const_rate"
-tc = [physics.characteristic_time(run.params, bc=bc) for run in runs]
+tc = [physics.const_rate_fixed_aperture_cubic(run.params).t_c for run in runs]
 pc = [run.params.k_n * run.params.w_i for run in runs]
 t_nd = np.concatenate([res.t / t_c for res, t_c in zip(results, tc)])
 w_nd = np.concatenate([res.y / p_c for res, p_c in zip(results, pc)])
