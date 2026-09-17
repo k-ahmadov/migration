@@ -19,10 +19,10 @@ results = [
     for i, run in enumerate(runs)
 ]
 
-result_rigid = analysis.p_inj_rigid(
+result_rigid = analysis.p_inj_rigid_const(
     runs[0], slc=slice(int(len(runs[0].t) * keep_fraction[0]))
 )
-result_soft = analysis.p_inj_soft(runs[-1])
+result_soft = analysis.p_inj_soft_const(runs[-1])
 
 tc = [physics.const_rate_fixed_aperture_cubic(run.params).t_c for run in runs]
 pc = [run.params.k_n * run.params.w_i for run in runs]

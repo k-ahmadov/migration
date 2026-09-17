@@ -1,44 +1,17 @@
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
+import scienceplots  # noqa: F401
 
 from fracinj import detection, io, math_utils, plotting
+
+plt.style.use(["science", "bright", "latex-sans"])  # pyright: ignore[reportAttributeAccessIssue]
+plt.rcParams["font.family"] = "sans-serif"
 
 # %%
 
 
 def _to_days(t_sec):
     return t_sec / 86400
-
-
-# TODO: instead of cumulative time intervals pick percentiles from time bins (sliding windows)
-def cumulative_percentile_envelope(
-    t_sec, distance, percentile, t_eval=None, min_events=10
-):
-    """
-    Percentile of distance among all events up to time t, evaluated
-    on a set of times t_eval (defaults to a log-spaced grid).
-    """
-    order = np.argsort(t_sec)
-    t_sorted = t_sec[order]
-    d_sorted = distance[order]
-
-    if t_eval is None:
-        t_eval = np.linspace(
-            t_sorted[min_events - 1],  # start once we have min_events
-            t_sorted[-1],
-            200,
-        )
-
-    p_vals = np.full_like(t_eval, np.nan, dtype=float)
-    for i, t in enumerate(t_eval):
-        mask = t_sorted <= t
-        n = mask.sum()
-        if n >= min_events:
-            p_vals[i] = np.percentile(d_sorted[mask], percentile)
-
-    return t_eval, p_vals
 
 
 # %%
@@ -49,7 +22,7 @@ t_pct, d_pct = detection.percentile_envelope(t, d, bin_size=50, percentile=90)
 t_eval = np.geomspace(t_pct[0], t_pct[-1], 500)
 alpha_early = 0.5
 alpha_late = 0.8
-delta = 1e-2
+delta = 5e-2
 t_c = 4 * 86400
 
 # evaluate fitted curve
@@ -74,9 +47,7 @@ d_fit = math_utils.crossover(
 )
 
 # %%  Plot
-fig, ax = plt.subplots(
-    figsize=(6.4 / 1.4, 4.8 / 1.4), dpi=100, layout="constrained", clear=True, num=1
-)
+fig, ax = plt.subplots(figsize=(3.5, 2.6), dpi=200,  clear=True, num=1, layout="constrained")
 ax.scatter(_to_days(t), d, color="tab:gray", s=3)
 ax.scatter(_to_days(t_pct), d_pct, color="k", label="P90 per 50 events", s=25)
 ax.plot(
@@ -136,11 +107,11 @@ plotting.slope_triangle(
 )
 
 ax.spines[["right", "top"]].set_visible(False)
-ax.legend(loc="lower right", framealpha=1)
+ax.tick_params(top=False, right=False, which="both")
+ax.legend(loc="lower right", framealpha=1, frameon=True)
 
 # fig.savefig(
-#     Path.cwd() / "figures" / "dimensionless-front" / f"field-delta-{delta:.0e}.png",
-#     dpi=200,
+#     "/home/kahmadov/phd/migration/tex/2026-09-10_summary/figures/soultz-crossover.eps"
 # )
 fig.canvas.draw_idle()
 plt.pause(0.01)
@@ -153,7 +124,7 @@ mu = 1e-3
 # w_i = 1e-5
 # k_n = 12 * D * mu / w_i**3
 k_n = np.asarray([1e9, 5000e9])
-w_i = (12 * D * mu / k_n)**(1/3)
+w_i = (12 * D * mu / k_n) ** (1 / 3)
 
 print(f"k_n = {k_n / 1e9} GPa/m")
 print(f"w_i = {w_i * 1e6} micro m")

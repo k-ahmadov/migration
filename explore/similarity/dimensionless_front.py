@@ -13,7 +13,7 @@ plt.rcParams["font.family"] = "sans-serif"
 # Load & analyze runs
 # ---------------------------------------------------------------------------
 
-result_dir = paths.results_dir("halfspace", "wi-1e-05-debug")
+result_dir = paths.results_dir("halfspace", "wi-1e-05")
 q0_values = np.geomspace(1e-10, 1e-6, 5)
 
 runs = [io.read_halfspace(result_dir / f"q_0-{q0:.0e}.hdf5") for q0 in q0_values]
@@ -27,10 +27,10 @@ results = [
     for i, run in enumerate(runs)
 ]
 
-result_rigid = analysis.front_rigid(
+result_rigid = analysis.front_rigid_const(
     runs[0], stress_front=True, slc=slice(int(len(runs[0].t) * keep_fraction[0]))
 )
-result_soft = analysis.front_soft(runs[-1], stress_front=True)
+result_soft = analysis.front_soft_const(runs[-1], stress_front=True)
 
 scales = [physics.const_rate_fixed_aperture_cubic(run.params) for run in runs]
 tc = [scale.t_c for scale in scales]
@@ -106,7 +106,7 @@ ax.set(
     yscale="log",
 )
 # fig.savefig(
-#     "/home/kahmadov/phd/migration/documents/2026-09-10-summary/figures/dimless-pressure.eps"
+#     "/home/kahmadov/phd/migration/tex/2026-09-10_summary/figures/dimless-front.eps"
 # )
 fig.canvas.draw_idle()
 plt.pause(0.01)
@@ -180,7 +180,7 @@ ax.set(
     yscale="log",
 )
 # fig.savefig(
-#     "/home/kahmadov/phd/migration/documents/2026-09-10-summary/figures/dimless-pressure.eps"
+#     "/home/kahmadov/phd/migration/tex/2026-09-10_summary/figures/dimless-front-crossover.eps"
 # )
 fig.canvas.draw_idle()
 plt.pause(0.01)

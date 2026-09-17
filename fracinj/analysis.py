@@ -1,132 +1,195 @@
 """Power-law analysis of front and injection-point histories.
 
-One :class:`Fit` type and one pair of entry points
-(:func:`analyze_front`, :func:`analyze_p_inj`) cover both observables and
-both aperture regimes (:data:`RIGID`, :data:`SOFT`). The named wrappers
-(:func:`front_rigid`, :func:`p_inj_soft`, etc.) always pass a regime, so
-they return :class:`AnalyticalFit` -- the same type with its analytical
-fields narrowed from ``float | None`` to ``float``.
+One :class:`Fit` type and one pair of entry points (:func:`analyze_front`,
+:func:`analyze_p_inj`) cover both observables, both aperture regimes and both
+injection rates.
+
+Exponents are derived from ``(n, i)`` rather than stored:
+
+    front = P(n, i) / (n + 2)        P = n(1+i) + 1
+    p_inj = (1 + 2i) / (n + 2)
+
+    regime         n  i   front   p_inj
+    rigid/const    0  0   1/2     1/2
+    soft /const    3  0   4/5     1/5
+    rigid/ramp     0  1   1/2     3/2
+    soft /ramp     3  1   7/5     3/5
+
+The rigid front exponent is 1/2 for both rates: a linear diffusion front goes
+as sqrt(D t) however the fluid is injected, and only the injection-point
+pressure feels the rate. soft/ramp gives 7/5, which is the exponent used as
+``CrossoverModel.alpha_late``.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, fields
-from typing import Callable, Literal
+from typing import Literal
 
 import numpy as np
 
 from fracinj import detection, io, math_utils, physics
-from fracinj.math_utils import compute_r_squared, fit_power_law
+from fracinj.math_utils import fit_power_law
 from fracinj.types import Parameters, Vector
 
+Quantity = Literal["front", "p_inj"]
+RegimeName = Literal["rigid", "soft"]
+Rate = Literal["const", "ramp"]
 Window = Literal["all", "early", "late"]
 
+# theta0 for linear diffusion under constant flux: w(0,t) = 2q sqrt(t/D)/sqrt(pi)
+# against the scale (q^2 t / D)^(1/2).
+THETA0_RIGID_CONST = 2.0 / np.sqrt(np.pi)  # 1.128379...
+THETA0_SOFT_CONST = 1.328
 
-def check_out_rate(params: Parameters) -> float:
-    q_0 = getattr(params, "q_0", 0.0) or 0.0
-    m_q = getattr(params, "m_q", 0.0) or 0.0
 
-    if q_0 > 0.0 and m_q > 0.0:
+def rate_of(params: Parameters, expect_i: float | None = None) -> float:
+    """Return ``q`` for whichever rate boundary condition is configured.
+
+    ``expect_i`` guards against analysing a run with a mismatched regime: a
+    ramp run read through a constant-rate regime would otherwise feed ``m_q``
+    into ``i=0`` formulas and return a plausible, wrong number.
+    """
+    q, i = physics._rate_bc(params)
+    if expect_i is not None and i != expect_i:
         raise ValueError(
-            "both q_0 and m_q are set; the rate boundary condition is ambiguous"
+            f"regime expects i={expect_i:g}, but the run is configured with "
+            f"i={i:g}; pass the matching regime"
         )
-    if q_0 > 0.0:
-        return q_0
-    if m_q > 0.0:
-        return m_q
-    raise ValueError("no rate boundary condition: neither q_0 nor m_q is set")
+    return q
+
+
+# --- regime ------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Regime:
-    """A self-similar aperture regime and its power-law exponents."""
+    """A self-similar aperture regime, parameterised by ``(n, i)``."""
 
-    name: str
+    name: RegimeName
+    rate: Rate
     n: float
     i: float
     coefficient: Callable[[Parameters], float]
-    # TODO: make it be determined by the similarity ode solver
-    theta0: float
+    # TODO: determine theta0 from the similarity ODE solver.
+    # None means no analytical p_inj amplitude is available for this regime.
+    theta0: float | None
 
-    def _np2(self):
-        return self.n + 2
+    @property
+    def _np2(self) -> float:
+        return self.n + 2.0
 
-    def front_exponent(self):
-        return physics.P(self.n, self.i) / self._np2()
+    @property
+    def front_exponent(self) -> float:
+        return physics.P(self.n, self.i) / self._np2
 
-    def p_inj_exponent(self):
-        return (1 + 2 * self.i) / self._np2()
+    @property
+    def p_inj_exponent(self) -> float:
+        return (1.0 + 2.0 * self.i) / self._np2
 
-    def front_amplitude(self, params: Parameters):
+    def _coefficient(self, params: Parameters) -> float:
         a = self.coefficient(params)
-        q = check_out_rate(params)
-        return (a * q**self.n) ** (1 / self._np2())
+        if a <= 0.0:
+            raise ValueError(f"coefficient must be positive, got {a}")
+        return a
 
-    def p_inj_amplitude(self, params: Parameters):
-        a = self.coefficient(params)
-        q = check_out_rate(params)
-        return (q**2 / a) ** (1 / self._np2())
+    def front_amplitude(self, params: Parameters) -> float:
+        """Similarity length amplitude ``(a q^n)^(1/(n+2))``."""
+        a = self._coefficient(params)
+        return (a * rate_of(params, self.i) ** self.n) ** (1.0 / self._np2)
+
+    def p_inj_amplitude(self, params: Parameters) -> float:
+        """Similarity aperture amplitude ``(q^2/a)^(1/(n+2))``."""
+        a = self._coefficient(params)
+        return (rate_of(params, self.i) ** 2 / a) ** (1.0 / self._np2)
 
 
-RIGID_CONST = Regime(
-    name="rigid",
-    n=0,
-    i=0,
-    coefficient=physics.diffusivity,
-    theta0=1.126,
-)
+REGIME_DISPATCH: dict[tuple[RegimeName, Rate], Regime] = {
+    ("rigid", "const"): Regime(
+        name="rigid",
+        rate="const",
+        n=0.0,
+        i=0.0,
+        coefficient=physics.diffusivity,
+        theta0=THETA0_RIGID_CONST,
+    ),
+    ("soft", "const"): Regime(
+        name="soft",
+        rate="const",
+        n=3.0,
+        i=0.0,
+        coefficient=physics.mobility,
+        theta0=THETA0_SOFT_CONST,
+    ),
+    # Ramp exponents are exact; the amplitudes are not yet derived, so theta0
+    # is None. Front fits still work -- zeta is estimated from the data.
+    ("rigid", "ramp"): Regime(
+        name="rigid",
+        rate="ramp",
+        n=0.0,
+        i=1.0,
+        coefficient=physics.diffusivity,
+        theta0=THETA0_RIGID_CONST,
+    ),
+    ("soft", "ramp"): Regime(
+        name="soft",
+        rate="ramp",
+        n=3.0,
+        i=1.0,
+        coefficient=physics.mobility,
+        theta0=THETA0_SOFT_CONST,
+    ),
+}
 
-SOFT_CONST = Regime(name="soft", n=3, i=0, coefficient=physics.mobility, theta0=1.328)
+
+def regime_for(name: RegimeName, rate: Rate = "const") -> Regime:
+    """Look up a regime, listing valid keys on failure."""
+    try:
+        return REGIME_DISPATCH[(name, rate)]
+    except KeyError:
+        valid = ", ".join(f"{n}/{r}" for n, r in sorted(REGIME_DISPATCH))
+        raise ValueError(f"no regime {name!r}/{rate!r}; valid: {valid}") from None
+
+
+# --- fit types ---------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Fit:
-    """A numerical series ``y(t)`` with its empirical (and optional analytical)
-    power-law model ``A * t**alpha``.
+    """A numerical series ``y(t)`` with its empirical power-law model
+    ``A_emp * t**alpha_emp``.
+
+    Carries no analytical model. A fit that has one is an
+    :class:`AnalyticalFit`, which *adds* the three fields rather than
+    overriding optional versions of them -- so there is no ``X | None`` for a
+    caller to narrow, and no field-override for a type checker to object to.
     """
 
-    quantity: Literal["front", "p_inj"]
+    quantity: Quantity
     t: Vector
     y: Vector
     A_emp: float
     alpha_emp: float
-    regime: Regime | None = None
-    A_ana: float | None = None
-    alpha_ana: float | None = None
-    zeta: float | None = None
 
     def empirical(self, t: Vector | None = None) -> Vector:
         t = self.t if t is None else t
         return self.A_emp * t**self.alpha_emp
 
-    def analytical(self, t: Vector | None = None) -> Vector:
-        if self.A_ana is None:
-            raise ValueError("no analytical model; pass a `regime` to analyze_*")
-        t = self.t if t is None else t
-        assert self.alpha_ana is not None
-        return self.A_ana * t**self.alpha_ana
-
 
 @dataclass(frozen=True)
 class AnalyticalFit(Fit):
-    """A :class:`Fit` whose analytical model is guaranteed present.
+    """A :class:`Fit` that also carries the analytical model for a regime.
 
-    Returned by the named ``*_rigid``/``*_soft``/``*_early``/``*_late``
-    wrappers below, which always pass a concrete ``regime`` -- so callers
-    get ``regime``/``A_ana``/``alpha_ana`` as plain, non-optional values
-    instead of having to narrow ``Fit``'s ``X | None`` fields themselves.
-    ``zeta`` stays optional: only front fits compute it, p_inj fits don't.
+    ``zeta`` stays optional: only front fits estimate it, p_inj fits don't.
     """
 
-    regime: Regime = RIGID_CONST
-    A_ana: float = 0.0
-    alpha_ana: float = 0.0
+    regime: Regime
+    A_ana: float
+    alpha_ana: float
+    zeta: float | None = None
 
-
-def _as_analytical(fit: Fit) -> AnalyticalFit:
-    """Narrow a regime-fitted ``Fit`` to :class:`AnalyticalFit`."""
-    assert fit.regime is not None
-    assert fit.A_ana is not None
-    assert fit.alpha_ana is not None
-    return AnalyticalFit(**{f.name: getattr(fit, f.name) for f in fields(Fit)})
+    def analytical(self, t: Vector | None = None) -> Vector:
+        t = self.t if t is None else t
+        return self.A_ana * t**self.alpha_ana
 
 
 # --- series extraction --------------------------------------------------------
@@ -149,22 +212,20 @@ def _front_series(
         )
         return run.t[slc][:idx_cut], x_front
     if threshold is not None:
+        # p lives on the FVM grid (x_vert, Nx_p), not the elastic grid (x_sc).
         x_front, has_crossing = detection.find_field_front(
-            run.x_sc, run.p[slc], threshold
+            run.x_vert, run.p[slc], threshold
         )
         return run.t[slc][has_crossing], x_front
     raise ValueError("provide `threshold` or set stress_front=True")
 
 
 def _p_inj_series(run: io.RunData, slc: slice) -> tuple[Vector, Vector]:
-    _, p = io.sort_fields(run.x_sc, run.p)
+    _, p = io.sort_fields(run.x_vert, run.p)
     return run.t[slc], p[slc, 0]
 
 
 # --- analytical amplitudes ---------------------------------------------------
-
-# TODO: add analytical amplitudes for ramp injection rate
-# TODO: add analytical amplitudes for constant pressure injection
 
 
 def _front_amplitude(
@@ -175,44 +236,60 @@ def _front_amplitude(
     if not np.any(mask):
         raise ValueError("no non-zero front times -- cannot estimate zeta")
     amp_unit = regime.front_amplitude(p)
-    scale = amp_unit * t[mask] ** regime.front_exponent()
+    scale = amp_unit * t[mask] ** regime.front_exponent
     zeta = float(np.mean(x[mask] / scale))
     return zeta * amp_unit, zeta
 
 
 def _p_inj_amplitude(regime: Regime, p: Parameters) -> float:
     """Asymptotic prefactor of ``p_inj(t) ~ A * t**alpha``."""
+    if regime.theta0 is None:
+        raise NotImplementedError(
+            f"no analytical p_inj amplitude for the {regime.name}/{regime.rate} "
+            "regime yet; the exponent is exact, so fit the prefactor "
+            "empirically via analyze_p_inj(run) with regime=None"
+        )
     return p.k_n * regime.theta0 * regime.p_inj_amplitude(p)
 
 
 # --- entry points -----------------------------------------------------------
 
 
+def _empirical_fields(fit: Fit) -> dict:
+    """The empirical half of a fit, as kwargs for :class:`AnalyticalFit`."""
+    return {f.name: getattr(fit, f.name) for f in fields(Fit)}
+
+
 def analyze_front(
     run: io.RunData,
     *,
-    regime: Regime | None = None,
     window: Window = "all",
     threshold: Vector | None = None,
     stress_front: bool = False,
     slc: slice | None = None,
 ) -> Fit:
-    """Fit the front position history; add an analytical model if ``regime`` is given."""
+    """Fit the front position history, empirically.
+
+    For the analytical model of a given regime, see :func:`front_regime`.
+    """
     slc = _resolve_slice(run, window, slc)
     t, x = _front_series(run, threshold, stress_front, slc)
     A_emp, alpha_emp = fit_power_law(t, x)
-    if regime is None:
-        return Fit("front", t=t, y=x, A_emp=A_emp, alpha_emp=alpha_emp)
-    A_ana, zeta = _front_amplitude(regime, run.params, t, x)
-    return Fit(
-        "front",
-        t=t,
-        y=x,
-        A_emp=A_emp,
-        alpha_emp=alpha_emp,
+    return Fit("front", t=t, y=x, A_emp=A_emp, alpha_emp=alpha_emp)
+
+
+def front_regime(run: io.RunData, regime: Regime, **kw) -> AnalyticalFit:
+    """Fit the front position history and attach ``regime``'s analytical model.
+
+    Extra keyword arguments go to :func:`analyze_front`.
+    """
+    fit = analyze_front(run, **kw)
+    A_ana, zeta = _front_amplitude(regime, run.params, fit.t, fit.y)
+    return AnalyticalFit(
+        **_empirical_fields(fit),
         regime=regime,
         A_ana=A_ana,
-        alpha_ana=regime.front_exponent(),
+        alpha_ana=regime.front_exponent,
         zeta=zeta,
     )
 
@@ -220,63 +297,119 @@ def analyze_front(
 def analyze_p_inj(
     run: io.RunData,
     *,
-    regime: Regime | None = None,
     window: Window = "all",
     slc: slice | None = None,
 ) -> Fit:
-    """Fit the injection-point pressure history; add an analytical model if ``regime`` is given."""
+    """Fit the injection-point pressure history, empirically.
+
+    For the analytical model of a given regime, see :func:`p_inj_regime`.
+    """
     slc = _resolve_slice(run, window, slc)
     t, p_inj = _p_inj_series(run, slc)
     A_emp, alpha_emp = fit_power_law(t, p_inj)
-    if regime is None:
-        return Fit("p_inj", t=t, y=p_inj, A_emp=A_emp, alpha_emp=alpha_emp)
-    A_ana = _p_inj_amplitude(regime, run.params)
-    return Fit(
-        "p_inj",
-        t=t,
-        y=p_inj,
-        A_emp=A_emp,
-        alpha_emp=alpha_emp,
+    return Fit("p_inj", t=t, y=p_inj, A_emp=A_emp, alpha_emp=alpha_emp)
+
+
+def p_inj_regime(run: io.RunData, regime: Regime, **kw) -> AnalyticalFit:
+    """Fit the injection-point pressure and attach ``regime``'s analytical model.
+
+    Extra keyword arguments go to :func:`analyze_p_inj`. Raises
+    ``NotImplementedError`` for regimes whose ``theta0`` is not yet derived
+    (currently both ramp regimes) -- use :func:`analyze_p_inj` for those.
+    """
+    fit = analyze_p_inj(run, **kw)
+    return AnalyticalFit(
+        **_empirical_fields(fit),
         regime=regime,
-        A_ana=A_ana,
-        alpha_ana=regime.p_inj_exponent(),
+        A_ana=_p_inj_amplitude(regime, run.params),
+        alpha_ana=regime.p_inj_exponent,
     )
 
 
-# --- named convenience wrappers -------------------------------------------
+# --- analysis dispatch -------------------------------------------------------
+
+# Each regime has a natural window: rigid dominates early, soft dominates late.
+_NATURAL_WINDOW: dict[RegimeName, Window] = {"rigid": "early", "soft": "late"}
+
+_ENTRY_POINTS: dict[Quantity, Callable[..., AnalyticalFit]] = {
+    "front": front_regime,
+    "p_inj": p_inj_regime,
+}
 
 
-def front_rigid(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_front(run, regime=RIGID_CONST, **kw))
+def _wrap(
+    fn: Callable[..., AnalyticalFit], regime: Regime, **fixed
+) -> Callable[..., AnalyticalFit]:
+    def wrapper(run: io.RunData, **kw) -> AnalyticalFit:
+        return fn(run, regime, **fixed, **kw)
+
+    return wrapper
 
 
-def front_soft(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_front(run, regime=SOFT_CONST, **kw))
+def _build_analysis_dispatch() -> dict[
+    tuple[Quantity, RegimeName, Rate, Window], Callable[..., AnalyticalFit]
+]:
+    """One wrapper per (quantity, regime, rate, window).
+
+    Windows are restricted to "all" and each regime's natural window (early
+    for rigid, late for soft) -- see the ``analyze`` docstring for why.
+    """
+    table: dict[tuple[Quantity, RegimeName, Rate, Window], Callable] = {}
+    for quantity, analyze_fn in _ENTRY_POINTS.items():
+        for (name, rate), regime in REGIME_DISPATCH.items():
+            for window in ("all", _NATURAL_WINDOW[name]):
+                key = (quantity, name, rate, window)
+                table[key] = _wrap(analyze_fn, regime, window=window)
+    return table
 
 
-def front_early(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_front(run, regime=RIGID_CONST, window="early", **kw))
+ANALYSIS_DISPATCH = _build_analysis_dispatch()
 
 
-def front_late(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_front(run, regime=SOFT_CONST, window="late", **kw))
+def analyze(
+    run: io.RunData,
+    quantity: Quantity,
+    regime: RegimeName,
+    rate: Rate = "const",
+    window: Window = "all",
+    **kw,
+) -> AnalyticalFit:
+    """Fit ``quantity`` for a given regime, rate and window.
+
+    ``analyze(run, "front", "soft", window="late")`` replaces the old
+    ``front_late_const(run)``; pass ``rate="ramp"`` for the ramp variants.
+    """
+    key = (quantity, regime, rate, window)
+    try:
+        fn = ANALYSIS_DISPATCH[key]
+    except KeyError:
+        natural = _NATURAL_WINDOW.get(regime)
+        if natural is not None and window not in ("all", natural):
+            raise ValueError(
+                f"window {window!r} is not paired with the {regime!r} regime; "
+                f"use 'all' or {natural!r}, or call analyze_{quantity} directly "
+                "with an explicit slice"
+            ) from None
+        valid = ", ".join("/".join(k) for k in sorted(ANALYSIS_DISPATCH))
+        raise ValueError(f"no analysis for {'/'.join(key)}; valid: {valid}") from None
+    return fn(run, **kw)
 
 
-def p_inj_rigid(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_p_inj(run, regime=RIGID_CONST, **kw))
+# --- named wrappers, kept for existing call sites ---------------------------
 
+front_rigid_const = ANALYSIS_DISPATCH["front", "rigid", "const", "all"]
+front_early_const = ANALYSIS_DISPATCH["front", "rigid", "const", "early"]
+front_soft_const = ANALYSIS_DISPATCH["front", "soft", "const", "all"]
+front_late_const = ANALYSIS_DISPATCH["front", "soft", "const", "late"]
+p_inj_rigid_const = ANALYSIS_DISPATCH["p_inj", "rigid", "const", "all"]
+p_inj_early_const = ANALYSIS_DISPATCH["p_inj", "rigid", "const", "early"]
+p_inj_soft_const = ANALYSIS_DISPATCH["p_inj", "soft", "const", "all"]
+p_inj_late_const = ANALYSIS_DISPATCH["p_inj", "soft", "const", "late"]
 
-def p_inj_soft(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_p_inj(run, regime=SOFT_CONST, **kw))
-
-
-def p_inj_early(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_p_inj(run, regime=RIGID_CONST, window="early", **kw))
-
-
-def p_inj_late(run: io.RunData, **kw) -> AnalyticalFit:
-    return _as_analytical(analyze_p_inj(run, regime=SOFT_CONST, window="late", **kw))
-
+front_rigid_ramp = ANALYSIS_DISPATCH["front", "rigid", "ramp", "all"]
+front_early_ramp = ANALYSIS_DISPATCH["front", "rigid", "ramp", "early"]
+front_soft_ramp = ANALYSIS_DISPATCH["front", "soft", "ramp", "all"]
+front_late_ramp = ANALYSIS_DISPATCH["front", "soft", "ramp", "late"]
 
 # --- misc front diagnostics ------------------------------------------------
 
@@ -304,22 +437,22 @@ def analytical_fit_and_split(t_pct, d_pct, split_frac):
     t_early, d_early = t_pct[:idx_start], d_pct[:idx_start]
     t_late, d_late = t_pct[idx_start:], d_pct[idx_start:]
     A_e = math_utils.fit_power_law_fixed_exponent(
-        t_early, d_early, RIGID_CONST.front_exponent()
+        t_early, d_early, REGIME_DISPATCH["rigid", "const"].front_exponent
     )
     A_l = math_utils.fit_power_law_fixed_exponent(
-        t_late, d_late, SOFT_CONST.front_exponent()
+        t_late, d_late, REGIME_DISPATCH["soft", "const"].front_exponent
     )
     return (
         (
             t_early,
-            A_e * t_early ** RIGID_CONST.front_exponent(),
-            RIGID_CONST.front_exponent(),
+            A_e * t_early ** REGIME_DISPATCH["rigid", "const"].front_exponent,
+            REGIME_DISPATCH["rigid", "const"].front_exponent,
             A_e,
         ),
         (
             t_late,
-            A_l * t_late ** SOFT_CONST.front_exponent(),
-            SOFT_CONST.front_exponent(),
+            A_l * t_late ** REGIME_DISPATCH["soft", "const"].front_exponent,
+            REGIME_DISPATCH["soft", "const"].front_exponent,
             A_l,
         ),
     )
@@ -410,7 +543,7 @@ def fit_field_crossover(
         x0=t_c,
         delta=model.delta,
     )
-    r_sq = compute_r_squared(
+    r_sq = math_utils.compute_r_squared(
         d_env,
         math_utils.crossover(
             x=t_env,
