@@ -101,8 +101,8 @@ def run_elastic(params: Parameters, x_fvm: Vector, p_tx: Field) -> ElasticResult
 
 def run_simulation(params: Parameters, out_filepath: Path) -> None:
 
-    params.T = physics.cubic_scales(params, pin="length").t_c
-    print(f"Simulation duration: {params.T:.3g} s")
+    # params.T = physics.cubic_scales(params, pin="length").t_c
+    # print(f"Simulation duration: {params.T:.3g} s")
 
     fvm = run_fvm(params)
     print("FVM simulation finished")
@@ -150,26 +150,27 @@ def default_parameters(bc_param: str) -> Parameters:
         E=60e9,
         nu=0.25,
         Nx_p=512,
-        Nx_sn=256,
+        Nx_sn=512,
         Nt=500,
+        T=500.0,
     )
-    setattr(params, bc_param, 5e-7)
+    setattr(params, bc_param, 1e-7)
     return params
 
 
 def main() -> None:
-    bc = "q_0"
+    bc = "m_q"
     params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "wi-1e-05-debug")
+    out_dir = paths.results_dir("halfspace", "ramp")
 
-    q0_values = np.geomspace(1e-10, 1e-6, 5)
-    sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
+    # q0_values = np.geomspace(1e-10, 1e-6, 5)
+    # sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
 
     # m_q_values = np.geomspace(1e-14, 1e-7, 8)
     # sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
 
-    # out_file = out_dir / f"{bc.value}-{getattr(params, bc.value):.0e}.hdf5"
-    # run_simulation(params, out_file, bc=bc)
+    out_file = out_dir / f"{bc}-{getattr(params, bc):.0e}.hdf5"
+    run_simulation(params, out_file)
 
 
 if __name__ == "__main__":
