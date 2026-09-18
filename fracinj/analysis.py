@@ -410,6 +410,10 @@ front_rigid_ramp = ANALYSIS_DISPATCH["front", "rigid", "ramp", "all"]
 front_early_ramp = ANALYSIS_DISPATCH["front", "rigid", "ramp", "early"]
 front_soft_ramp = ANALYSIS_DISPATCH["front", "soft", "ramp", "all"]
 front_late_ramp = ANALYSIS_DISPATCH["front", "soft", "ramp", "late"]
+p_inj_rigid_ramp = ANALYSIS_DISPATCH["p_inj", "rigid", "ramp", "all"]
+p_inj_early_ramp = ANALYSIS_DISPATCH["p_inj", "rigid", "ramp", "early"]
+p_inj_soft_ramp = ANALYSIS_DISPATCH["p_inj", "soft", "ramp", "all"]
+p_inj_late_ramp = ANALYSIS_DISPATCH["p_inj", "soft", "ramp", "late"]
 
 # --- misc front diagnostics ------------------------------------------------
 
