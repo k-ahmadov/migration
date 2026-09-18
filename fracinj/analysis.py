@@ -79,11 +79,11 @@ class Regime:
         return self.n + 2.0
 
     @property
-    def front_exponent(self) -> float:
+    def distance_exponent(self) -> float:
         return physics.P(self.n, self.i) / self._np2
 
     @property
-    def p_inj_exponent(self) -> float:
+    def aperture_exponent(self) -> float:
         return (1.0 + 2.0 * self.i) / self._np2
 
     def _coefficient(self, params: Parameters) -> float:
@@ -92,12 +92,12 @@ class Regime:
             raise ValueError(f"coefficient must be positive, got {a}")
         return a
 
-    def front_amplitude(self, params: Parameters) -> float:
+    def distance_amplitude(self, params: Parameters) -> float:
         """Similarity length amplitude ``(a q^n)^(1/(n+2))``."""
         a = self._coefficient(params)
         return (a * rate_of(params, self.i) ** self.n) ** (1.0 / self._np2)
 
-    def p_inj_amplitude(self, params: Parameters) -> float:
+    def aperture_amplitude(self, params: Parameters) -> float:
         """Similarity aperture amplitude ``(q^2/a)^(1/(n+2))``."""
         a = self._coefficient(params)
         return (rate_of(params, self.i) ** 2 / a) ** (1.0 / self._np2)
@@ -235,8 +235,8 @@ def _front_amplitude(
     mask = t != 0
     if not np.any(mask):
         raise ValueError("no non-zero front times -- cannot estimate zeta")
-    amp_unit = regime.front_amplitude(p)
-    scale = amp_unit * t[mask] ** regime.front_exponent
+    amp_unit = regime.distance_amplitude(p)
+    scale = amp_unit * t[mask] ** regime.distance_exponent
     zeta = float(np.mean(x[mask] / scale))
     return zeta * amp_unit, zeta
 
@@ -249,7 +249,7 @@ def _p_inj_amplitude(regime: Regime, p: Parameters) -> float:
             "regime yet; the exponent is exact, so fit the prefactor "
             "empirically via analyze_p_inj(run) with regime=None"
         )
-    return p.k_n * regime.theta0 * regime.p_inj_amplitude(p)
+    return p.k_n * regime.theta0 * regime.aperture_amplitude(p)
 
 
 # --- entry points -----------------------------------------------------------
@@ -289,7 +289,7 @@ def front_regime(run: io.RunData, regime: Regime, **kw) -> AnalyticalFit:
         **_empirical_fields(fit),
         regime=regime,
         A_ana=A_ana,
-        alpha_ana=regime.front_exponent,
+        alpha_ana=regime.distance_exponent,
         zeta=zeta,
     )
 
@@ -322,7 +322,7 @@ def p_inj_regime(run: io.RunData, regime: Regime, **kw) -> AnalyticalFit:
         **_empirical_fields(fit),
         regime=regime,
         A_ana=_p_inj_amplitude(regime, run.params),
-        alpha_ana=regime.p_inj_exponent,
+        alpha_ana=regime.aperture_exponent,
     )
 
 
@@ -441,22 +441,22 @@ def analytical_fit_and_split(t_pct, d_pct, split_frac):
     t_early, d_early = t_pct[:idx_start], d_pct[:idx_start]
     t_late, d_late = t_pct[idx_start:], d_pct[idx_start:]
     A_e = math_utils.fit_power_law_fixed_exponent(
-        t_early, d_early, REGIME_DISPATCH["rigid", "const"].front_exponent
+        t_early, d_early, REGIME_DISPATCH["rigid", "const"].distance_exponent
     )
     A_l = math_utils.fit_power_law_fixed_exponent(
-        t_late, d_late, REGIME_DISPATCH["soft", "const"].front_exponent
+        t_late, d_late, REGIME_DISPATCH["soft", "const"].distance_exponent
     )
     return (
         (
             t_early,
-            A_e * t_early ** REGIME_DISPATCH["rigid", "const"].front_exponent,
-            REGIME_DISPATCH["rigid", "const"].front_exponent,
+            A_e * t_early ** REGIME_DISPATCH["rigid", "const"].distance_exponent,
+            REGIME_DISPATCH["rigid", "const"].distance_exponent,
             A_e,
         ),
         (
             t_late,
-            A_l * t_late ** REGIME_DISPATCH["soft", "const"].front_exponent,
-            REGIME_DISPATCH["soft", "const"].front_exponent,
+            A_l * t_late ** REGIME_DISPATCH["soft", "const"].distance_exponent,
+            REGIME_DISPATCH["soft", "const"].distance_exponent,
             A_l,
         ),
     )
