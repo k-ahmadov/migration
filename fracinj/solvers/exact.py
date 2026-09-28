@@ -12,6 +12,15 @@ def solve_linear_diffusion_const_flux(
     return np.sqrt(4 / np.pi) * np.exp(-(zeta**2) / 4) - zeta * erfc(zeta / 2)
 
 
+def solve_linear_diffusion_ramp_flux(
+    zeta: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    """1D linear diffusion, semi-infinite, ramp-flux BC, zero initial aperture."""
+    return (zeta**2 + 4) / (3 * np.sqrt(np.pi)) * np.exp(-(zeta**2) / 4) - (
+        zeta**3 + 6 * zeta
+    ) / 6 * erfc(zeta / 2)
+
+
 def solve_linear_radial_diffusion(
     theta_inf: float, zeta_b: float, zeta: NDArray[np.float64]
 ) -> NDArray[np.float64]:

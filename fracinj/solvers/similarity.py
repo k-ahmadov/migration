@@ -120,3 +120,41 @@ def solve_neumann_n1(theta_inf: float = 0.0):
 
 def solve_neumann_n3(theta_inf: float = 0.0):
     return solve_similarity(3, "neumann", theta_inf)
+
+
+# ramp injection n = 3
+
+
+def solve_neumann_ramp_n3(
+    theta_inf: float = 0.0,
+    *,
+    zeta_max: float = _ZETA_MAX,
+    n_points: int = 100,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Similarity profile ``theta(zeta)`` for exponent ``n`` and boundary condition ``bc``.
+
+    Returns ``(zeta, theta)``.
+    """
+    n = 3
+    exponent = 1 / (n + 1)  # theta = u ** exponent
+    floor = 1e-5
+
+    c = 1 / 5
+
+    def rhs(zeta, u):
+        u0 = max(u[0], floor)
+        return [u[1], c * (12 * u0**exponent - 7 * zeta * u0 ** (exponent - 1) * u[1])]
+
+    def y0_of(guess):
+        return [guess, -(n + 1)]
+
+    target = theta_inf ** (n + 1)
+
+    def objective(guess):
+        _, y = _integrate(rhs, y0_of(guess), zeta_max=zeta_max, n_points=n_points)
+        return y[0, -1] - target
+
+    guess = newton(objective, 3.0)
+    zeta, y = _integrate(rhs, y0_of(guess), zeta_max=zeta_max, n_points=n_points)
+
+    return zeta, _invert(y[0], exponent)
