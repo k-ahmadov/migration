@@ -12,3 +12,7 @@ Subpackages
     fracinj.analysis  power-law fits of front / injection-point histories
     fracinj.io        readers and writers for run data
 """
+
+import matplotlib.pyplot as plt
+
+plt.style.use(["science", "bright"])
