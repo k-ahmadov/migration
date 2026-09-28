@@ -95,8 +95,8 @@ x_nd = np.concatenate([res.y / x for res, x in zip(results_front, xc)])
 positive = t_nd > 0
 t_nd, x_nd = t_nd[positive], x_nd[positive]
 t_range_nd = np.geomspace(t_nd.min(), t_nd.max(), 200)
-rigid_p_inj = result_p_inj_rigid.analytical(t_range_nd * tc[0]) / pc[0] / 1.3
-soft_p_inj = result_p_inj_soft.analytical(t_range_nd * tc[-1]) / pc[-1] / 1.2
+rigid_p_inj = result_p_inj_rigid.analytical(t_range_nd * tc[0]) / pc[0]
+soft_p_inj = result_p_inj_soft.analytical(t_range_nd * tc[-1]) / pc[-1]
 rigid_front = result_front_rigid.analytical(t_range_nd * tc[0]) / xc[0]
 soft_front = result_front_soft.analytical(t_range_nd * tc[-1]) / xc[-1]
 
@@ -253,8 +253,17 @@ def marker_style(i, p):
 def plot_front_data(ax, params, results_front, scales):
     for i, (rf, sc) in enumerate(zip(results_front, scales)):
         tf, yf = rf.t / sc.t_c, rf.y / sc.x_c
-        ax.plot(tf[tf > 0], yf[tf > 0], "o", mfc="none", mec="k", mew=0.6, ms=3,
-                markevery=0.05, label="Numerical" if i == 0 else None)
+        ax.plot(
+            tf[tf > 0],
+            yf[tf > 0],
+            "o",
+            mfc="none",
+            mec="k",
+            mew=0.6,
+            ms=3,
+            markevery=0.05,
+            label="Numerical" if i == 0 else None,
+        )
 
 
 # %%
@@ -275,7 +284,9 @@ handles = plot_front_data(
     scales=scales,
 )
 
-(l_cross,) = ax.plot(t_range_nd, x_front_crossover, "-", color="tab:blue", lw=1.2, label="Crossover")
+(l_cross,) = ax.plot(
+    t_range_nd, x_front_crossover, "-", color="tab:blue", lw=1.2, label="Crossover"
+)
 (l_asym,) = ax.plot(
     t_range_nd, rigid_front, color="tab:gray", ls=":", lw=1, label="Asymptotes"
 )

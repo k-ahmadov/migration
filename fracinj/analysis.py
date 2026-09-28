@@ -40,6 +40,8 @@ Window = Literal["all", "early", "late"]
 # against the scale (q^2 t / D)^(1/2).
 THETA0_RIGID_CONST = 2.0 / np.sqrt(np.pi)  # 1.128379...
 THETA0_SOFT_CONST = 1.328
+THETA0_RIGID_RAMP = 4.0 / (3 * np.sqrt(np.pi))
+THETA0_SOFT_RAMP = 1.1443  # fracinj.solvers.similarity.solve_neumann_ramp_n3()
 
 
 def rate_of(params: Parameters, expect_i: float | None = None) -> float:
@@ -128,7 +130,7 @@ REGIME_DISPATCH: dict[tuple[RegimeName, Rate], Regime] = {
         n=0.0,
         i=1.0,
         coefficient=physics.diffusivity,
-        theta0=THETA0_RIGID_CONST,
+        theta0=THETA0_RIGID_RAMP,
     ),
     ("soft", "ramp"): Regime(
         name="soft",
@@ -136,7 +138,7 @@ REGIME_DISPATCH: dict[tuple[RegimeName, Rate], Regime] = {
         n=3.0,
         i=1.0,
         coefficient=physics.mobility,
-        theta0=THETA0_SOFT_CONST,
+        theta0=THETA0_SOFT_RAMP,
     ),
 }
 
