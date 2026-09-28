@@ -101,8 +101,8 @@ def run_elastic(params: Parameters, x_fvm: Vector, p_tx: Field) -> ElasticResult
 
 def run_simulation(params: Parameters, out_filepath: Path) -> None:
 
-    # params.T = physics.cubic_scales(params, pin="length").t_c
-    # print(f"Simulation duration: {params.T:.3g} s")
+    params.T = physics.cubic_scales(params, pin="length").t_c * 1.2
+    print(f"Simulation duration: {params.T:.3g} s")
 
     fvm = run_fvm(params)
     print("FVM simulation finished")
@@ -144,24 +144,24 @@ def sweep(
 def default_parameters(bc_param: str) -> Parameters:
     params = Parameters(
         k_n=200e9,
-        L=100.0,
+        L=2000.0,
         mu=1e-3,
         w_i=1e-5,
         E=60e9,
         nu=0.25,
-        Nx_p=512,
+        Nx_p=1024,
         Nx_sn=512,
-        Nt=500,
-        T=500.0,
+        Nt=2000,
+        # T=500.0,
     )
-    setattr(params, bc_param, 1e-7)
+    setattr(params, bc_param, 1e-13)
     return params
 
 
 def main() -> None:
     bc = "m_q"
     params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "ramp")
+    out_dir = paths.results_dir("halfspace", "ramp", "L-2km")
 
     # q0_values = np.geomspace(1e-10, 1e-6, 5)
     # sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
