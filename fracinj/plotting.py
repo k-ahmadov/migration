@@ -2,8 +2,12 @@
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Sequence
 
+import matplotlib.figure
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from matplotlib.transforms import Transform
 import numpy as np
 from matplotlib import cm
 from matplotlib import colors as mcolors
@@ -76,6 +80,101 @@ def slope_triangle(
             color=color,
             **text_kwargs,
         )
+
+
+def click_slope(ax: plt.Axes, triangle: bool = False, **text_kwargs) -> list[float]:
+    """Click point pairs on `ax` to measure a slope each."""
+    log = ax.get_xscale() == "log"
+    slopes = []
+
+    while True:
+        pts = plt.ginput(2, timeout=0)
+        if len(pts) < 2:  # Escape/Enter pressed instead of a 2nd click
+            break
+        (x0, y0), (x1, y1) = pts
+        if log:
+            slope = (np.log(y1) - np.log(y0)) / (np.log(x1) - np.log(x0))
+        else:
+            slope = (y1 - y0) / (x1 - x0)
+
+        ax.plot([x0, x1], [y0, y1], "k-")
+        if triangle:
+            slope_triangle(
+                ax=ax,
+                x0=(x0 * x1) ** 0.5 if log else (x0 + x1) / 2,
+                slope=slope,
+                y0_data=(y0 * y1) ** 0.5 if log else (y0 + y1) / 2,
+            )
+        ax.annotate(
+            rf"$\angle$ {slope:.2f}",
+            (
+                (x0 * x1) ** 0.5 if log else (x0 + x1) / 2,
+                (y0 * y1) ** 0.5 if log else (y0 + y1) / 2,
+            ),
+            xytext=(0, -4),
+            textcoords="offset points",
+            va="top",
+            **text_kwargs,
+        )
+        ax.figure.canvas.draw_idle()
+        slopes.append(slope)
+        print(f"∠ {slope:.3g}")
+
+    return slopes
+
+
+def annotate_panel_labels(
+    axes: list[plt.Axes], xy: tuple[float, float] = (0.25, 0.95), **kwargs
+) -> None:
+    ascii_value = ord("a")
+    for i, ax in enumerate(axes):
+        ax.annotate(
+            f"({chr(ascii_value + i)})",
+            xy,
+            xycoords="axes fraction",
+            backgroundcolor="white",
+            **kwargs
+        )
+
+
+def add_rectangle(
+    ax: plt.Axes, xlim: tuple[float, float], ylim: tuple[float, float], **kwargs
+) -> None:
+    x0, x1 = xlim
+    y0, y1 = ylim
+    rect = mpatches.Rectangle(
+        xy=(x0, y0),
+        width=x1 - x0,
+        height=y1 - y0,
+        **kwargs
+    )
+    ax.add_patch(rect)
+
+
+def connect_rectangle_to_zoom(
+    fig: matplotlib.figure.Figure,
+    ax_zoom: plt.Axes,
+    ax_main: plt.Axes,
+    p1: tuple[float, float],
+    p2: tuple[float, float],
+    **kwargs
+):
+    c1 = mpatches.ConnectionPatch(
+        xyA=p1,
+        coordsA=ax_main.transData,
+        xyB=p1,
+        coordsB=ax_zoom.transData,
+        **kwargs
+    )
+    fig.add_artist(c1)
+    c2 = mpatches.ConnectionPatch(
+        xyA=p2,
+        coordsA=ax_main.transData,
+        xyB=p2,
+        coordsB=ax_zoom.transData,
+        **kwargs
+    )
+    fig.add_artist(c2)
 
 
 def plot_nondimensionalization(

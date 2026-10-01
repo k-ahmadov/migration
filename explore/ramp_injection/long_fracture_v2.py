@@ -172,7 +172,7 @@ zeta_semi_soft, theta_semi_soft = solve_neumann_ramp_n3(zeta_max=2.0)
 
 mosaic: list = [["main", "similarity-late"], ["zoom-early", "similarity-early"]]
 fig = plt.figure(
-    figsize=(2 * COLUMN_WIDTH, 2 * COLUMN_WIDTH / GOLDEN_RATIO),
+    figsize=(1.8 * COLUMN_WIDTH, 1.8 * COLUMN_WIDTH / GOLDEN_RATIO),
     layout="constrained",
     dpi=100,
     num=1,
@@ -196,7 +196,9 @@ sm = plot_aperture_profiles(
 axes["similarity-early"].plot(zeta_ana, theta_ana, "k-", label="Analytical")
 axes["similarity-early"].legend()
 
-axes["similarity-late"].plot(zeta_semi_soft, theta_semi_soft, "k-", label="Semi-analytical")
+axes["similarity-late"].plot(
+    zeta_semi_soft, theta_semi_soft, "k-", label="Semi-analytical"
+)
 axes["similarity-late"].legend()
 
 numerical = tuple(
@@ -247,5 +249,122 @@ fig.colorbar(
 
 plt.pause(0.01)
 
-fig.savefig("/home/kahmadov/phd/migration/figures/paper/ramp-profiles-similarity-v3.eps")
-fig.savefig("/home/kahmadov/phd/migration/tex/2026-09-10_summary/figures/ramp-profiles-similarity-v3.eps")
+# fig.savefig("/home/kahmadov/phd/migration/figures/paper/ramp-profiles-similarity-v3.eps")
+# fig.savefig("/home/kahmadov/phd/migration/tex/2026-09-28/figures/ramp-profiles-similarity-v3.eps")
+
+# %% zoom inside main
+
+
+def plot_aperture_profiles_v2(
+    ax_main: plt.Axes,
+    ax_zoom: plt.Axes,
+    ax_similarity_early: plt.Axes,
+    ax_similarity_late: plt.Axes,
+    run: io.RunData,
+    rigid: analysis.Regime,
+    soft: analysis.Regime,
+    *,
+    t_window: tuple[float, float] = (0.0, 1.0),
+    n_profiles: int = 12,
+    cmap: str = "cividis",
+):
+    n_t = len(run.t)
+    start = max(int(t_window[0] * n_t), 1)  # skip t = 0 (log scale)
+    stop = int(t_window[1] * n_t)
+
+    # log-spaced in *time*, snapped to nearest available sample
+    t_targets = np.geomspace(run.t[start], run.t[stop - 1], n_profiles)
+    idx = np.unique(np.searchsorted(run.t, t_targets).clip(start, stop - 1))
+
+    norm = mpl.colors.LogNorm(vmin=run.t[idx[0]], vmax=run.t[idx[-1]])
+    colors = mpl.colormaps[cmap](norm(run.t[idx]))  # pyright: ignore
+    p = run.params
+
+    for k, color in zip(idx, colors):
+        ax_main.plot(run.x_vert, run.w[k] * M_TO_MICRON, color=color)
+        ax_zoom.plot(run.x_vert, run.w[k] * M_TO_MICRON, color=color)
+        theta_rigid = (run.w[k] - run.params.w_i) / (
+            rigid.aperture_amplitude(p) * run.t[k] ** rigid.aperture_exponent
+        )
+        zeta_rigid = run.x_vert / (
+            rigid.distance_amplitude(p) * run.t[k] ** rigid.distance_exponent
+        )
+        ax_similarity_early.plot(zeta_rigid, theta_rigid, color=color, zorder=-k)
+        theta_soft = (run.w[k] - run.params.w_i) / (
+            soft.aperture_amplitude(p) * run.t[k] ** soft.aperture_exponent
+        )
+        zeta_soft = run.x_vert / (
+            soft.distance_amplitude(p) * run.t[k] ** soft.distance_exponent
+        )
+        ax_similarity_late.plot(zeta_soft, theta_soft, color=color)
+    return mpl.cm.ScalarMappable(norm=norm, cmap=cmap)  # pyright: ignore
+
+
+# %%
+mosaic: list = [["main", "similarity-late"], ["main", "similarity-early"]]
+fig = plt.figure(
+    figsize=(2 * COLUMN_WIDTH, 1.4 * COLUMN_WIDTH / GOLDEN_RATIO),
+    layout="constrained",
+    dpi=200,
+    num=1,
+    clear=True,
+)
+axes: dict[str, plt.Axes] = fig.subplot_mosaic(mosaic, width_ratios=[GOLDEN_RATIO, 1])  # pyright: ignore
+
+x0, x1, y0, y1 = -3, 100, 9.95, 12
+ax_zoom = axes["main"].inset_axes(
+    [0.2, 0.2, 0.4, 0.4 / GOLDEN_RATIO], transform=axes["main"].transAxes
+)
+
+sm = plot_aperture_profiles_v2(
+    axes["main"],
+    ax_zoom,
+    axes["similarity-early"],
+    axes["similarity-late"],
+    run,
+    RIGID,
+    SOFT,
+    t_window=(0.002, 1.0),
+    n_profiles=12,
+    cmap="viridis_r",
+)
+
+ax_zoom.set(
+    xlim=(x0, x1),
+    ylim=(y0, y1),
+)
+ax_zoom.tick_params(
+    axis="both", which="both", length=0, labelbottom=False, labelleft=False
+)
+
+
+axes["main"].set(xlabel=r"Distance $x$ (m)", ylabel=r"Aperture $w$ ($\mu$m)")
+
+axes["similarity-early"].set(
+    xlabel=r"$x / \sqrt{ D t }$",
+    ylabel=r"$w / m_{\mathrm{q}} \sqrt{ t^{3}/D } $",
+    xlim=(-0.2, 4),
+)
+axes["similarity-late"].set(
+    xlabel=r"$x / \left( a m_{\mathrm{q}}^{3} t^{7} \right) ^{1/5}$",
+    ylabel=r"$w / \left( m_{\mathrm{q}}^{2} t^{3} / a \right)^{1/5}$",
+    xlim=(-0.2, 4),
+)
+
+axes["similarity-early"].sharey(axes["similarity-late"])
+
+fig.colorbar(
+    sm,
+    ax=list(axes.values()),
+    label="Time $t$ (s)",
+    location="right",
+    # aspect=50,
+)
+
+fig.canvas.draw()
+
+inset_indicator = axes["main"].indicate_inset_zoom(ax_zoom, edgecolor="0.6", alpha=1)
+inset_indicator.connectors[0].set_visible(False) # pyright: ignore
+inset_indicator.connectors[3].set_visible(False) # pyright: ignore
+
+plt.pause(0.5)

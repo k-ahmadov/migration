@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.legend_handler import HandlerTuple
 
-from fracinj import analysis, io, paths, physics
+from fracinj import analysis, io, paths, physics, plotting
 from fracinj.solvers.exact import solve_linear_diffusion_ramp_flux
 from fracinj.solvers.similarity import solve_neumann_ramp_n3
 
@@ -197,6 +197,8 @@ axes["similarity-early"].set(
     xlim=(-0.2, 4),
 )
 
+plotting.annotate_panel_labels([axes["similarity-early"], axes["zoom-early"], axes["main"]])
+
 fig.colorbar(
     sm,
     ax=list(axes.values()),
@@ -206,5 +208,6 @@ fig.colorbar(
 )
 
 plt.pause(0.01)
+
 # fig.savefig("/home/kahmadov/phd/migration/figures/paper/ramp-profiles-similarity-v2.eps")
-# fig.savefig("/home/kahmadov/phd/migration/tex/2026-09-10_summary/figures/ramp-profiles-similarity-v2.eps")
+# fig.savefig("/home/kahmadov/phd/migration/tex/2026-09-28/figures/ramp-profiles-similarity-v2.eps")
