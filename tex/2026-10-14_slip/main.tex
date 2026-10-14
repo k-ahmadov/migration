@@ -1,0 +1,55 @@
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{cmbright}
+\usepackage{sfmath}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{hyperref}
+
+\usepackage[backend=biber,style=authoryear,
+	maxcitenames=1,uniquelist=false,uniquename=false]{biblatex}
+\addbibresource{references.bib}
+
+\begin{document}
+
+\title{Summary of the last week}
+\author{Kamal Ahmadov}
+\date{\today}
+\maketitle
+
+My goal here is to solve for fault slip due to a pressure distribution $p(x,t)$
+at a given time.
+
+The fault obeys a Mohr-Coulomb friction law with a local shear strength
+$$
+	\tau(x,t) = f[\sigma_{0} - p(x,t)].
+$$
+The shear stress drop $\Delta \tau(x,t)$ equals the quasi-static changes due to a distribution of slip $\delta$
+\begin{equation}\label{eq:quasi-static}
+	\Delta \tau(x,t) = \frac{G'}{\pi} \int_{-a}^{a} \frac{\partial_{s}
+		\delta(s,t)}{s - x}   \, ds
+\end{equation}
+Where $G'=G/[2(1-\nu)]$ is in-plane (mode II) effective shear modulus and $a$ is
+the crack-tip position.
+
+The parameters of the problem can be scaled as
+$$
+	\frac{x}{a} \to x, \quad  \frac{p - p_{0}}{\Delta p} \to p,\quad \frac{\tau -
+		\tau_{0}}{f \Delta p} \to \tau, \quad \frac{\delta G}{f \Delta p a} \to \delta
+$$
+The scaling non-dimensionalizes Eq. \ref{eq:quasi-static} into
+\begin{equation}\label{eq:dimless-quasi-static}
+	T - p(ax) = - \frac{1}{\pi} \int_{-1}^{1} \frac{\partial_{s} \delta(s, t)}{x - s}
+	\, ds
+\end{equation}
+where $T$ is the stress injection parameter
+$$
+	T = \frac{1 - \tau/f \sigma'_{0}}{\Delta p / \sigma'_{0}}
+$$
+
+\printbibliography
+
+\end{document}

@@ -16,7 +16,7 @@ COLUMN_WIDTH = 3.4
 GOLDEN_RATIO = (1 + 5**0.5) / 2
 
 # %%
-filepath = paths.results_dir("halfspace", "ramp", "L-2km") / "m_q-1e-13.hdf5"
+filepath = paths.results_dir("halfspace", "ramp", "long") / "m_q-1e-13.hdf5"
 run = io.read_halfspace(filepath)
 
 RIGID = analysis.Regime(
@@ -110,11 +110,11 @@ sm = plot_aperture_profiles(
     cmap="viridis_r",
 )
 
-axes["similarity-early"].plot(zeta_ana, theta_ana, "k-", label="Analytical $(n=0)$")
+axes["similarity-early"].plot(zeta_ana, theta_ana, "k-", label="Rigid $(n=0)$")
 axes["similarity-early"].legend()
 
 axes["similarity-late"].plot(
-    zeta_semi_soft, theta_semi_soft, "k-", label="Semi-analytical\n$(n=3)$"
+    zeta_semi_soft, theta_semi_soft, "k-", label="Soft $(n=3)$"
 )
 axes["similarity-late"].legend(loc="upper right")
 
@@ -147,13 +147,13 @@ axes["main"].yaxis.set_minor_locator(AutoMinorLocator(2))
 axes["similarity-early"].set(
     xlabel=r"$x / \sqrt{ D t }$",
     ylabel=r"$w / m_{\mathrm{q}} \sqrt{ t^{3}/D } $",
-    xlim=(-0.2, 4),
+    xlim=(0, 4),
     yticks=[0, 1],
 )
 axes["similarity-late"].set(
     xlabel=r"$x / \left( a m_{\mathrm{q}}^{3} t^{7} \right) ^{1/5}$",
     ylabel=r"$w / \left( m_{\mathrm{q}}^{2} t^{3} / a \right)^{1/5}$",
-    xlim=(-0.2, 4),
+    xlim=(0, 2),
     yticks=[0, 1],
 )
 
@@ -187,4 +187,7 @@ plotting.annotate_panel_labels(
 fig.canvas.draw_idle()
 plt.pause(0.01)
 
-# fig.savefig("test.png")
+# %%
+plotting.save_figure(fig, "similarity-inset", overleaf=True)
+
+# fig.savefig("similarity-inset.eps")

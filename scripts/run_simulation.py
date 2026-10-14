@@ -144,7 +144,7 @@ def sweep(
 def default_parameters(bc_param: str) -> Parameters:
     params = Parameters(
         k_n=200e9,
-        L=2000.0,
+        L=3000.0,
         mu=1e-3,
         w_i=1e-5,
         E=60e9,
@@ -161,7 +161,7 @@ def default_parameters(bc_param: str) -> Parameters:
 def main() -> None:
     bc = "m_q"
     params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "ramp", "L-2km")
+    out_dir = paths.results_dir("halfspace", "ramp", "long")
 
     # q0_values = np.geomspace(1e-10, 1e-6, 5)
     # sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)

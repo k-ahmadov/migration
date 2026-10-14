@@ -110,8 +110,8 @@ def solve_dirichlet_n1(theta_inf: float = 0.0):
     return solve_similarity(1, "dirichlet", theta_inf)
 
 
-def solve_dirichlet_n3(theta_inf: float = 0.0):
-    return solve_similarity(3, "dirichlet", theta_inf, n_points=500)
+def solve_dirichlet_n3(theta_inf: float = 0.0, *, zeta_max: float):
+    return solve_similarity(3, "dirichlet", theta_inf, n_points=500, zeta_max=zeta_max)
 
 
 def solve_neumann_n1(theta_inf: float = 0.0):

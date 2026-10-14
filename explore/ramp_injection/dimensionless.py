@@ -1,14 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots  # noqa: F401
 
 from fracinj import analysis, io, math_utils, paths, physics, plotting
 
-plt.style.use(["science", "bright", "latex-sans"])  # pyright: ignore[reportAttributeAccessIssue]
-plt.rcParams["font.family"] = "sans-serif"
-
-
-COLUMN_WIDTH = 3.25  # in
+COLUMN_WIDTH = 3.4  # in
 
 # %%
 
@@ -16,7 +11,7 @@ COLUMN_WIDTH = 3.25  # in
 def annotate_tc(ax: plt.Axes, y: float) -> None:
     ax.axvline(1, color="tab:gray", ls="--")
     ax.annotate(
-        r"$\hat{t}_{\mathrm{c}}=1$",
+        r"$\hat{t}_{\mathsf{c}}=1$",
         (1, y),
         color="tab:gray",
         ha="center",
@@ -39,7 +34,7 @@ def plot_numerical_results(ax1, ax2, params, results_front, results_p_inj, scale
             "mew": 0.7,
             "ms": 3.5,
             "ls": "none",
-            "label": rf"$m_\mathrm{{q}}={plotting.sci_latex(p.m_q)}\,\mathrm{{m^2/s}}$",
+            "label": rf"$m_\mathsf{{q}}={plotting.sci_latex(p.m_q)}\,\mathsf{{m^2/s}}$",
         }
         tp, yp = rp.t / sc.t_c, rp.y / (sc.w_c * p.k_n)
         tf, yf = rf.t / sc.t_c, rf.y / sc.x_c
@@ -130,7 +125,7 @@ plotting.slope_triangle(
     dx_log=0.7,
 )
 ax1.annotate(
-    r"Rigid, $\theta_0 k_{\mathrm{n}} m_{\mathrm{q}} \sqrt{ t^{3}/D }$",
+    r"Rigid, $\theta_0 k_{\mathsf{n}} m_{\mathsf{q}} \sqrt{ t^{3}/D }$",
     xy=(t_range_nd[50], rigid_p_inj[50]),
     xytext=(40, 45),
     textcoords="offset points",
@@ -148,7 +143,7 @@ plotting.slope_triangle(
     inverse=True,
 )
 ax1.annotate(
-    r"Soft, $\theta_0 k_{\mathrm{n}} \left( m_{\mathrm{q}}^{2} t^{3} / a \right)^{1/5}$",
+    r"Soft, $\theta_0 k_{\mathsf{n}} \left( m_{\mathsf{q}}^{2} t^{3} / a \right)^{1/5}$",
     xy=(t_range_nd[-50], soft_p_inj[-50]),
     xytext=(0, -40),
     textcoords="offset points",
@@ -167,7 +162,7 @@ plotting.slope_triangle(
     dx_log=0.7,
 )
 ax2.annotate(
-    r"Rigid, $\zeta_{\mathrm{f}} \sqrt{ D t }$",
+    r"Rigid, $\zeta_{\mathsf{f}} \sqrt{ D t }$",
     xy=(t_range_nd[50], rigid_front[50]),
     xytext=(10, 30),
     textcoords="offset points",
@@ -185,7 +180,7 @@ plotting.slope_triangle(
     inverse=True,
 )
 ax2.annotate(
-    r"Soft, $\zeta_{\mathrm{f}} \left( a m_{\mathrm{q}}^{3} t^{7} \right)^{1/5}  $",
+    r"Soft, $\zeta_{\mathsf{f}} \left( a m_{\mathsf{q}}^{3} t^{7} \right)^{1/5}  $",
     xy=(t_range_nd[-30], soft_front[-30]),
     xytext=(-10, -50),
     textcoords="offset points",
@@ -197,18 +192,18 @@ annotate_tc(ax=ax2, y=1e2)
 
 for ax in [ax1, ax2]:
     ax.set(
-        # xlabel=r"$t/t_{\mathrm{c}},\ t_{\mathrm{c}} = \left( \dfrac{a w_{\mathrm{i}}^{5}}{m_{\mathrm{q}}^{2}} \right)^{1/3} $",
+        # xlabel=r"$t/t_{\mathsf{c}},\ t_{\mathsf{c}} = \left( \dfrac{a w_{\mathsf{i}}^{5}}{m_{\mathsf{q}}^{2}} \right)^{1/3} $",
         xlabel=r"Dimensionless time $\hat{t}$",
         xscale="log",
         yscale="log",
     )
 ax1.set(
-    # ylabel=r"$p_{0} / p_{\mathrm{c}}, \ p_{c}= k_{\mathrm{n}} w_{\mathrm{i}}$",
+    # ylabel=r"$p_{0} / p_{\mathsf{c}}, \ p_{c}= k_{\mathsf{n}} w_{\mathsf{i}}$",
     ylabel=r"Dimensionless pressure $\hat{p}$",
 )
 ax2.set(
-    # ylabel=r"$x / x_{\mathrm{c}},\ x_{\mathrm{c}} = \left( \dfrac{a^{2} w_{\mathrm{i}}^{7}}{m_{\mathrm{q}}} \right)^{1/3} $"
-    ylabel=r"Dimensionless front $\hat{x}_{\mathrm{f}}$"
+    # ylabel=r"$x / x_{\mathsf{c}},\ x_{\mathsf{c}} = \left( \dfrac{a^{2} w_{\mathsf{i}}^{7}}{m_{\mathsf{q}}} \right)^{1/3} $"
+    ylabel=r"Dimensionless front $\hat{x}_{\mathsf{f}}$"
 )
 
 
@@ -246,7 +241,7 @@ def marker_style(i, p):
         "mew": 0.7,
         "ms": 3.5,
         "ls": "none",
-        "label": rf"$m_\mathrm{{q}}={plotting.sci_latex(p.m_q)}\,\mathrm{{m^2/s}}$",
+        "label": rf"$m_\mathsf{{q}}={plotting.sci_latex(p.m_q)}\,\mathsf{{m^2/s}}$",
     }
 
 
@@ -294,7 +289,7 @@ ax.plot(t_range_nd, soft_front, color="tab:gray", ls=":", lw=1)
 
 ax.set(
     xlabel=r"Dimensionless time $\hat{t}$",
-    ylabel=r"Dimensionless front $\hat{x}_{\mathrm{f}}$",
+    ylabel=r"Dimensionless front $\hat{x}_{\mathsf{f}}$",
     xscale="log",
     yscale="log",
     ylim=(x_nd.min() / 2, x_nd.max() * 2),
@@ -307,3 +302,78 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 # fig.savefig("/home/kahmadov/phd/migration/figures/paper/ramp-inj-crossover.eps")
 # fig.savefig("/home/kahmadov/phd/migration/tex/2026-09-10_summary/figures/ramp-inj-crossover.eps")
+
+
+# %%
+def plot_front_data_markers(ax, params, results_front, scales):
+    sc_plots = []
+    for i, (rf, sc, p) in enumerate(zip(results_front, scales, params)):
+        tf, yf = rf.t / sc.t_c, rf.y / sc.x_c
+        sc, =ax.plot(
+            tf[tf > 0],
+            yf[tf > 0],
+            markevery=0.05,
+            **marker_style(i, p),
+            # label="Numerical" if i == 0 else None,
+        )
+        sc_plots.append(sc)
+    return sc_plots
+# %% combining two plots
+
+fig = plt.figure(
+    figsize=(1.5 * COLUMN_WIDTH, 0.675*COLUMN_WIDTH),
+    dpi=150,
+    layout="constrained",
+    clear=True,
+    num=2,
+)
+ax = fig.subplots()
+
+handles = plot_front_data_markers(
+    ax,
+    params=[run.params for run in runs],
+    results_front=results_front,
+    scales=scales,
+)
+
+(l_cross,) = ax.plot(
+    t_range_nd, x_front_crossover, "-", color="tab:blue", lw=1.2, label="Crossover"
+)
+(l_asym,) = ax.plot(
+    t_range_nd, rigid_front, color="tab:gray", ls=":", lw=1, label="Asymptotes"
+)
+ax.annotate(
+    r"Rigid, $\zeta_{\mathsf{f}} \sqrt{ D t }$",
+    xy=(t_range_nd[50], rigid_front[50]),
+    xytext=(10, 30),
+    textcoords="offset points",
+    ha="right",
+    arrowprops={"arrowstyle": "<-"},
+)
+
+ax.plot(t_range_nd, soft_front, color="tab:gray", ls=":", lw=1)
+
+ax.annotate(
+    r"Soft, $\zeta_{\mathsf{f}} \left( a m_{\mathsf{q}}^{3} t^{7} \right)^{1/5}  $",
+    xy=(t_range_nd[-30], soft_front[-30]),
+    xytext=(-10, -50),
+    textcoords="offset points",
+    ha="center",
+    va="top",
+    arrowprops={"arrowstyle": "<-"},
+)
+ax.set(
+    xlabel=r"Dimensionless time $\hat{t}$",
+    ylabel=r"Dimensionless front $\hat{x}_{\mathsf{f}}$",
+    xscale="log",
+    yscale="log",
+    ylim=(x_nd.min() / 2, x_nd.max() * 2),
+)
+annotate_tc(ax=ax, y=1e2)
+ax.legend(handles=[l_cross, l_asym], loc="upper left")
+fig.legend(handles=handles, loc="outside right upper", ncol =1)
+
+# fig.savefig("/home/kahmadov/phd/migration/figures/paper/ramp-front-dimensionles.eps")
+
+fig.canvas.draw_idle()
+plt.pause(0.01)
