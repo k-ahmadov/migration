@@ -34,6 +34,7 @@ def _assemble(
     dt: float,
     t_new: float,
     left_bc_constant_rate: bool,
+    t_stop: float | None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     dx = 1.0 / (num_nodes - 1)
     gamma = dt / dx**2
@@ -56,6 +57,8 @@ def _assemble(
 
     d = np.zeros(num_nodes)
     q = 1.0 if left_bc_constant_rate else t_new
+    if t_stop is not None and t_new > t_stop:
+        q = 0.0  # shut-in: the left node becomes no-flux
     d[0] = dt / dx * q
     return a, b, c, d
 
@@ -67,11 +70,13 @@ def solve_diffusion(
     t_final: float,
     k_func: KFunc,
     left_bc_constant_rate: bool = True,
+    t_stop: float | None = None,
 ) -> np.ndarray:
     """Solve ``d w/dt = d/dx (k(w) dw/dx)`` in dimensionless form (implicit Euler).
 
     Pass ``k_func = lambda w: w**3`` for the n=3 nonlinear case, or
-    ``lambda w: np.ones_like(w)`` for linear diffusion.
+    ``lambda w: np.ones_like(w)`` for linear diffusion. Injection stops after
+    the dimensionless time ``t_stop`` (``None``: inject throughout).
 
     Returns
     -------
@@ -85,7 +90,7 @@ def solve_diffusion(
     for n in range(num_steps - 1):
         w_n = w[n, :]
         a, b, c, d = _assemble(
-            num_nodes, w_n, k_func, dt, (n + 1) * dt, left_bc_constant_rate
+            num_nodes, w_n, k_func, dt, (n + 1) * dt, left_bc_constant_rate, t_stop
         )
         w[n + 1, :] = solve_banded((1, 1), _to_banded(a, b, c), d + w_n)
     return w[1:, :]

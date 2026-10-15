@@ -39,6 +39,7 @@ class Parameters:
     q_0: float = _p("m^2/s", "Constant injection rate")
     m_q: float = _p("m^2/s^2", "Injection-rate ramp slope")
     DP: float = _p("Pa", "Constant overpressure")
+    t_stop: float = _p("s", "Shut-in time (0: inject throughout)")
 
     # --- optional aperture bounds ---------------------------------------
     w_max: float = _p("m", "Maximum aperture")

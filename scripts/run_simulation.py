@@ -1,6 +1,8 @@
 """Run the FVM aperture solve + elastic half-space solve and store the result.
 
 python scripts/run_simulation.py            # single run, constant rate
+
+Set ``SHUT_IN`` in ``main`` to stop injection at that fraction of t_c.
 """
 
 from dataclasses import dataclass
@@ -42,6 +44,7 @@ def run_fvm(params: Parameters) -> FVMResult:
         t_final=params.T / scales.t_c,
         k_func=lambda w: w**3,
         left_bc_constant_rate=physics.is_constant_rate(params),
+        t_stop=params.t_stop / scales.t_c if params.t_stop > 0 else None,
     )
     w = w_hat * scales.w_c
     t = np.linspace(params.T / (nt - 1), params.T, nt - 1)
@@ -99,10 +102,16 @@ def run_elastic(params: Parameters, x_fvm: Vector, p_tx: Field) -> ElasticResult
     return ElasticResult(x=x_out[keep], t=t, sn=sn_tx[:, keep])
 
 
-def run_simulation(params: Parameters, out_filepath: Path) -> None:
-
-    params.T = physics.cubic_scales(params, pin="length").t_c * 1.2
+def run_simulation(
+    params: Parameters, out_filepath: Path, shut_in: float | None = None
+) -> None:
+    """``shut_in``: stop injecting at ``shut_in * t_c`` (``None``: inject throughout)."""
+    t_c = physics.cubic_scales(params, pin="length").t_c
+    params.T = t_c * 1.2
+    params.t_stop = shut_in * t_c if shut_in is not None else 0.0
     print(f"Simulation duration: {params.T:.3g} s")
+    if params.t_stop > 0:
+        print(f"Shut-in at t = {params.t_stop:.3g} s")
 
     fvm = run_fvm(params)
     print("FVM simulation finished")
@@ -158,10 +167,14 @@ def default_parameters(bc_param: str) -> Parameters:
     return params
 
 
+SHUT_IN = 0.25  # stop injection at SHUT_IN * t_c (t_c pinned to L); None: never
+
+
 def main() -> None:
     bc = "m_q"
     params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "ramp", "long")
+    sub = "long" if SHUT_IN is None else f"shut-in-{SHUT_IN:g}tc"
+    out_dir = paths.results_dir("halfspace", "ramp", sub)
 
     # q0_values = np.geomspace(1e-10, 1e-6, 5)
     # sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
@@ -170,7 +183,7 @@ def main() -> None:
     # sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
 
     out_file = out_dir / f"{bc}-{getattr(params, bc):.0e}.hdf5"
-    run_simulation(params, out_file)
+    run_simulation(params, out_file, shut_in=SHUT_IN)
 
 
 if __name__ == "__main__":
