@@ -1,11 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots  # noqa: F401
 
 from fracinj import analysis, io, math_utils, paths, physics, plotting
 
-plt.style.use(["science", "bright", "latex-sans"])  # pyright: ignore[reportAttributeAccessIssue]
-plt.rcParams["font.family"] = "sans-serif"
+plt.style.use(["science", "bright"])
 
 # %%
 
@@ -160,7 +158,7 @@ ax.annotate(
     backgroundcolor="1",
 )
 
-l1, =ax.plot(
+(l1,) = ax.plot(
     t_range_nd,
     x_front_crossover,
     "k--",
