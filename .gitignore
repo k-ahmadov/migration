@@ -31,3 +31,6 @@ overleaf-key.md
 notebooks/*.html
 notebooks/*.pdf
 notebooks/*.tex
+.ipynb_checkpoints/
+3dec/migration.temp
+3dec/migration.backup
