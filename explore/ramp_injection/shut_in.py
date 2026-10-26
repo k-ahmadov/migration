@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from fracinj import detection, io, paths
+from fracinj import detection, io, paths, plotting
 
 DAY = 86400.0
 CW, GR = 3.4, 1.618
@@ -16,7 +16,7 @@ x_s, sn = io.sort_fields(run.x_sc, run.sn)
 
 n_profiles = 10
 # evenly spaced in time, snapped to stored samples
-t_targets = np.linspace(run.t[-1] / n_profiles, run.t[-1], n_profiles)
+t_targets = np.linspace(run.t[20], run.t[-1], n_profiles)
 idx = np.unique(np.searchsorted(run.t, t_targets).clip(0, len(run.t) - 1))
 colors = plt.cm.viridis(np.linspace(0, 1, len(idx)))
 

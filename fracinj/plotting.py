@@ -2,12 +2,10 @@
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import Sequence
 
 import matplotlib.figure
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from matplotlib.transforms import Transform
 import numpy as np
 from matplotlib import cm
 from matplotlib import colors as mcolors
@@ -133,7 +131,7 @@ def annotate_panel_labels(
             xy,
             xycoords="axes fraction",
             backgroundcolor="white",
-            **kwargs
+            **kwargs,
         )
 
 
@@ -142,12 +140,7 @@ def add_rectangle(
 ) -> None:
     x0, x1 = xlim
     y0, y1 = ylim
-    rect = mpatches.Rectangle(
-        xy=(x0, y0),
-        width=x1 - x0,
-        height=y1 - y0,
-        **kwargs
-    )
+    rect = mpatches.Rectangle(xy=(x0, y0), width=x1 - x0, height=y1 - y0, **kwargs)
     ax.add_patch(rect)
 
 
@@ -157,22 +150,14 @@ def connect_rectangle_to_zoom(
     ax_main: plt.Axes,
     p1: tuple[float, float],
     p2: tuple[float, float],
-    **kwargs
+    **kwargs,
 ):
     c1 = mpatches.ConnectionPatch(
-        xyA=p1,
-        coordsA=ax_main.transData,
-        xyB=p1,
-        coordsB=ax_zoom.transData,
-        **kwargs
+        xyA=p1, coordsA=ax_main.transData, xyB=p1, coordsB=ax_zoom.transData, **kwargs
     )
     fig.add_artist(c1)
     c2 = mpatches.ConnectionPatch(
-        xyA=p2,
-        coordsA=ax_main.transData,
-        xyB=p2,
-        coordsB=ax_zoom.transData,
-        **kwargs
+        xyA=p2, coordsA=ax_main.transData, xyB=p2, coordsB=ax_zoom.transData, **kwargs
     )
     fig.add_artist(c2)
 

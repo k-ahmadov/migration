@@ -107,7 +107,7 @@ def run_simulation(
 ) -> None:
     """``shut_in``: stop injecting at ``shut_in * t_c`` (``None``: inject throughout)."""
     t_c = physics.cubic_scales(params, pin="length").t_c
-    params.T = t_c * 1.2
+    params.T = t_c * 2
     params.t_stop = shut_in * t_c if shut_in is not None else 0.0
     print(f"Simulation duration: {params.T:.3g} s")
     if params.t_stop > 0:
@@ -153,7 +153,7 @@ def sweep(
 def default_parameters(bc_param: str) -> Parameters:
     params = Parameters(
         k_n=200e9,
-        L=3000.0,
+        L=1000.0,
         mu=1e-3,
         w_i=1e-5,
         E=60e9,

@@ -147,13 +147,13 @@ axes["main"].yaxis.set_minor_locator(AutoMinorLocator(2))
 axes["similarity-early"].set(
     xlabel=r"$x / \sqrt{ D t }$",
     ylabel=r"$w / m_{\mathrm{q}} \sqrt{ t^{3}/D } $",
-    xlim=(0, 4),
+    xlim=(0, 3),
     yticks=[0, 1],
 )
 axes["similarity-late"].set(
     xlabel=r"$x / \left( a m_{\mathrm{q}}^{3} t^{7} \right) ^{1/5}$",
     ylabel=r"$w / \left( m_{\mathrm{q}}^{2} t^{3} / a \right)^{1/5}$",
-    xlim=(0, 2),
+    xlim=(0, 1.5),
     yticks=[0, 1],
 )
 
@@ -181,13 +181,14 @@ fig.colorbar(
 )
 
 plotting.annotate_panel_labels(
-    [axes["main"], ax_zoom, axes["similarity-early"], axes["similarity-late"]], xy=(0.15, 0.98)
+    [axes["main"], ax_zoom, axes["similarity-early"], axes["similarity-late"]],
+    xy=(0.15, 0.98),
 )
 
 fig.canvas.draw_idle()
 plt.pause(0.01)
 
 # %%
-plotting.save_figure(fig, "similarity-inset", overleaf=True)
+# plotting.save_figure(fig, "similarity-inset", overleaf=True)
 
 # fig.savefig("similarity-inset.eps")
