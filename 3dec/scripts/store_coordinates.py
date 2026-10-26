@@ -20,6 +20,7 @@ def _filter_elements(
     pos_y: Callable[[Any], float],
     get_id: Callable[[Any], int],
     y_threshold: float = 2e-1,
+    x_decimals: int = 6,
 ) -> tuple[FloatArray, IntArray]:
     x_vals: list[float] = []
     id_vals: list[int] = []
@@ -29,9 +30,11 @@ def _filter_elements(
             id_vals.append(get_id(elem))
     x_arr = np.asarray(x_vals, dtype=np.float64)
     id_arr = np.asarray(id_vals, dtype=np.int32)
-    x_uniq, ind = np.unique(x_arr, return_index=True)
-    ids_uniq = id_arr[ind]
-    return (x_uniq, ids_uniq)
+    # The same x on different y-rows differs in the last digits, so exact
+    # np.unique keeps near-duplicate points (~1e-15 m apart). Round before
+    # de-duplicating (1e-6 m << mesh size), but keep the original x values.
+    _, ind = np.unique(np.round(x_arr, x_decimals), return_index=True)
+    return (x_arr[ind], id_arr[ind])
 
 
 # --- Coordinates container ---
@@ -52,7 +55,11 @@ class Coordinates:
     subcontacts: ElementCoords
     flowzones: ElementCoords
 
-    def __init__(self, y_threshold: float = float(it.fish.get('mesh_size_min'))) -> None:
+    def __init__(self, y_threshold: float | None = None) -> None:
+        # default: one zone size (`dx` from geometry.dat); read here, not as a
+        # default argument, so the FISH global is looked up only when called
+        if y_threshold is None:
+            y_threshold = float(it.fish.get("dx"))
         v = it.flowplane.vertex.Vertex
         sc = it.block.subcontact.Subcontact
         z = it.flowplane.zone.Zone
@@ -80,6 +87,14 @@ class Param:
     value: float
     unit: str
     description: str
+
+
+# inj_key -> (unit, description), as in fracinj.Parameters
+INJECTION_DRIVERS: dict[str, tuple[str, str]] = {
+    "q_0": ("m^2/s", "Constant injection rate"),
+    "m_q": ("m^2/s^2", "Injection-rate ramp slope"),
+    "DP": ("Pa", "Constant overpressure"),
+}
 
 
 # --- HDF5 writing ---
@@ -127,33 +142,27 @@ def main() -> None:
     def fish(key: str) -> float:
         return float(it.fish.get(key))
 
-    def fish_or(key: str, default: float) -> float:
-        try:
-            return float(it.fish.get(key))
-        except Exception:
-            return default
-
     parameters: dict[str, Param] = {
         "k_n": Param(fish("k_n"), "Pa/m", "Normal stiffness"),
         "k_s": Param(fish("k_s"), "Pa/m", "Shear stiffness"),
-        "L": Param(fish("L"), "m", "Model size (cube)"),
+        "L": Param(fish("L"), "m", "Fracture length"),
         "mu": Param(fish("mu"), "Pa.s", "Fluid viscosity"),
         "w_i": Param(fish("w_i"), "m", "Initial aperture"),
         "w_min": Param(fish("w_min"), "m", "Minimum aperture"),
         "w_max": Param(fish("w_max"), "m", "Maximum aperture"),
         "E": Param(fish("E"), "Pa", "Young's modulus"),
         "nu": Param(fish("nu"), "-", "Poisson's ratio"),
+        "T": Param(fish("T_fin"), "s", "Simulated duration"),
+        "sigma0": Param(
+            fish("sigma0"), "Pa", "In-situ normal stress sigma_zz (compression < 0)"
+        ),
     }
 
-    # The `q_0` global holds a constant injection rate, or -- when
-    # `ramp_injection` is set (see inject.dat, Option 3) -- the slope of a
-    # linearly increasing rate. Store it under the matching key/unit.
-    if fish_or("ramp_injection", 0.0) != 0.0:
-        parameters["m_q"] = Param(
-            fish("q_0"), "m^2/s^2", "Injection-rate ramp slope"
-        )
-    else:
-        parameters["q_0"] = Param(fish("q_0"), "m^2/s", "Applied injection rate")
+    # Injection driver: `inj_key` (set by injection.dat) is q_0, m_q or DP,
+    # matching the mutually exclusive drivers of fracinj.Parameters.
+    key = str(it.fish.get("inj_key"))
+    unit, description = INJECTION_DRIVERS[key]
+    parameters[key] = Param(fish("inj_value"), unit, description)
 
     save_coordinates_hdf5(out_file, coords, parameters)
 

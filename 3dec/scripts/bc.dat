@@ -1,0 +1,40 @@
+; roller boundary at the face looking towards us and the one opposite to it
+block gridpoint apply velocity-y 0    range position-y [W]
+block gridpoint apply velocity-y 0    range position-y [-W]
+
+; roller boundary at injection face to symmetry
+block gridpoint apply velocity-x 0    range position-x 0
+
+
+[global sigma0=-10e6]
+;[global p0=2e6]
+
+; in-situ stress condition - sigma_zz = -10 MPa
+block insitu stress 0 0 [sigma0] 0 0 0 nodisplacements
+; block insitu pore-pressure [p0]
+; stress boundary condition on top and bottom
+block face apply stress-zz [sigma0] range pos-z [L/2]
+block face apply stress-zz [sigma0] range pos-z [-L/2]
+; both z faces carry stress, so pin one gridpoint (bottom far
+; corner) to remove the rigid-body translation in z
+block gridpoint apply velocity-z 0 range pos-x [L] pos-y [-W] pos-z [-L/2]
+
+
+; solving for the initial state
+; initial equilibrium - mechanical
+model fluid active off
+block fluid property bulk 0.0
+model history mechanical unbalanced-maximum
+model solve ratio 1e-7
+
+; inital equilibrium - fluid
+model fluid active on
+model mechanical active off
+block fluid property bulk [K_w]
+model cycle 1000
+
+; reset the fluid clock so the injection starts at t = 0
+model fluid time-total 0
+
+block gridpoint initialize displacement 0 0 0
+block contact reset displacement

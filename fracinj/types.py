@@ -34,6 +34,7 @@ class Parameters:
     mu: float = _p("Pa.s", "Fluid viscosity")
     nu: float = _p("-", "Poisson's ratio")
     w_i: float = _p("m", "Initial aperture")
+    sigma0: float = _p("Pa", "In-situ normal stress sigma_zz (compression < 0)")
 
     # --- injection driver (regime dependent) ------------------------------
     q_0: float = _p("m^2/s", "Constant injection rate")

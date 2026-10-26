@@ -17,8 +17,8 @@ block zone prop density [rho] bulk [K] shear [G]
 
 ; fluid properties
 ; the bulk modulus (K_w) of water is 2e9
-; choose smaller bulk modulus value 
-; but keep it large enough so that K_w/w_i >> k_n
+; choose smaller bulk modulus value (larger fluid timestep)
+; but keep it large enough so that K_w/w >> k_n for the opened
 [global mu = 1e-3]
 [global K_w = 2e9]
 block fluid property bulk [K_w] density 1000 viscosity [mu]
@@ -28,16 +28,17 @@ block fluid property bulk [K_w] density 1000 viscosity [mu]
 [global k_n = 200e9]
 ; shear stiffness
 [global k_s = 200e9]
+; constant stiffness (elastic) constituve model for fracture
+block contact jmodel assign elastic
+block contact property stiffness-normal [k_n] &
+                        stiffness-shear [k_s]
+
 ; initial aperture
 [global w_i = 1e-5]
 ; maximum aperture
 [global w_max = 2e-4]
 ; minimum aperture
 [global w_min = 1e-6]
-; constant stiffness (elastic) constituve model for fracture
-block contact jmodel assign elastic
-block contact property stiffness-normal [k_n] &
-                        stiffness-shear [k_s]
 flowplane vertex property aperture-initial [w_i]    &
                           aperture-minimum [w_min] &
                           aperture-maximum [w_max]

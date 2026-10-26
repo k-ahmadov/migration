@@ -1,0 +1,20 @@
+; ---------------------------------------------------------------------
+; Flow mesh test: export flow-plane zone areas and flow knot volumes /
+; timesteps for the current area-minimum and volume-minimum (set in
+; properties.dat). Compare runs with analysis/flow_mesh_hist.py.
+; ---------------------------------------------------------------------
+program call 'scripts/initial.dat'
+
+program threads 12
+
+model fluid      active on
+model mechanical active on
+model mechanical substep 10
+model mechanical slave on
+
+; set up the fluid step (knot volumes and timesteps) without advancing
+model step 0
+
+; one results folder per setting, e.g. results/flow_mesh/amin-0.1_vmin-2e-06
+;[global flow_mesh_tag = "amin-" + string(area_min) + "_vmin-" + string(vol_min)]
+program call 'scripts/export_flow_mesh.py'
