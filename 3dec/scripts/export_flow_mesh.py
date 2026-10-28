@@ -19,7 +19,7 @@ try:
     tag = str(it.fish.get("flow_mesh_tag"))
 except Exception:
     tag = "base"
-OUT_DIR = Path("/home/kahmadov/phd/explore/slip/results/flow_mesh") / tag
+OUT_DIR = Path("/home/kahmadov/phd/migration/3dec/data/flow_mesh") / tag
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 zones = np.array(

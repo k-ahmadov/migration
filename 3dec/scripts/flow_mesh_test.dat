@@ -3,7 +3,8 @@
 ; timesteps for the current area-minimum and volume-minimum (set in
 ; properties.dat). Compare runs with analysis/flow_mesh_hist.py.
 ; ---------------------------------------------------------------------
-program call 'scripts/initial.dat'
+;program call 'scripts/initial.dat'
+model restore 'saves/initial.sav'
 
 program threads 12
 
