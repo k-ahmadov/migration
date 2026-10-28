@@ -24,11 +24,11 @@ class RunData:
     x_vert: Vector  # (n_vert,)
     w: Field  # (n_time, n_vert)
     x_sc: Vector  # (n_sc,)
-    x_fz: Vector
     sn: Field  # (n_time, n_sc)
     p: Field  # (n_time, n_sc)
-    q: Field
     params: Parameters
+    q: Field | None = None
+    x_fz: Vector | None = None
     tau: Field | None = None  # (n_time, n_sc)
 
 
