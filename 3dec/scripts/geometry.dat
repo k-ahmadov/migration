@@ -6,20 +6,20 @@ model large-strain off
 program threads 12
 
 [global L=100]
-[global dx=0.5]
+[global dx=1]
 ; pseudo-2D slice: y in [-W, W] (plane strain via rollers in bc.dat)
-[global W=dx]
+[global W=4*dx]
 ; model: x in [0, L] (x = 0 is the symmetry plane carrying the injection line),
-;        z in [-L, L]; the fault is the plane z = 0
+;        z in [-L/2, L/2]; the fault is the plane z = 0
 
 ; glued slab boundaries |z| = z1 < z2 < z3 < L, zone size doubling at each:
 ;   dx in |z| < z1, 2dx in z1..z2, 4dx in z2..z3 (4 zones across each slab),
 ;   8dx in z3..L. With dx = 0.5: z1, z2, z3 = 2, 6, 14 m
-[global z1 = 4*(1*dx)]
-[global z2 = z1 + 4*(2*dx)]
-[global z3 = z2 + 4*(4*dx)]
+[global z1 = 4*dx]
+[global z2 = z1 + 8*dx]
+[global z3 = z2 + 16*dx]
 
-block create brick [0] [L] [-W] [W] [-L/2] [L/2]
+block create brick 0 [L] [-W] [W] [-L/2] [L/2]
 
 ; the fault (real contact)
 block cut joint-set dip 0 dip-direction 0 origin 0, 0, 0
@@ -41,12 +41,25 @@ block zone generate edgelength [2*dx] range pos-z [z1]  [z2]
 block zone generate edgelength [2*dx] range pos-z [-z2] [-z1]
 block zone generate edgelength [4*dx] range pos-z [z2]  [z3]
 block zone generate edgelength [4*dx] range pos-z [-z3] [-z2]
-block zone generate edgelength [8*dx] range pos-z [z3]  [L]
-block zone generate edgelength [8*dx] range pos-z [-L]  [-z3]
+block zone generate edgelength [8*dx] range pos-z [z3]  [L/2]
+block zone generate edgelength [8*dx] range pos-z [-L/2]  [-z3]
 
 ; old (graded generate-new) meshing: slivers in the flow plane for dx < 1.5
 ;block zone size edge [dx] range pos-z 0 by block-bface
 ;block zone generate-new min-edge [dx] max-edge [dx_max] number-control-points 100
 ;flowzone-new on gradation-surface 0.1
 
-model save "./saves/geometry"
+; block densify segments 1 1 2 join range pos-z [-L/2] [L/2]
+; block densify segments 1 1 2 join range pos-z [-L/4] [L/4]
+; block densify segments 1 1 2 join range pos-z [-L/8] [L/8]
+; block densify segments 1 1 2 join range pos-z [-L/16] [L/16]
+; block zone generate edgelength [dx]   range pos-z [-L/32] [L/32]
+; block zone generate edgelength [2*dx] range pos-z [-L/16]  [L/16]
+; block zone generate edgelength [4*dx] range pos-z [-L/8] [L/8]
+; block zone generate edgelength [8*dx] range pos-z [-L/4] [L/4]
+; block zone generate edgelength [16*dx] range pos-z [-L/2]  [L/2]
+
+; block zone size edgelength [dx] range pos-z [-L/32] [L/32]
+; block zone generate-new min-edge [dx] max-edge [10*dx] number-control-points 10
+
+model save "../saves/geometry"

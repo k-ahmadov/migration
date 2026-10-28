@@ -44,7 +44,7 @@ fish define injection_start
     injection_setup
     if inj_mode = 'pressure' then
         command
-            flowknot apply pore-pressure [inj_value] range pos-x 0; fish inj_history  pos-z 0
+            flowknot apply pore-pressure [inj_value] range pos-x 0
         endcommand
     else
         command
@@ -54,12 +54,11 @@ fish define injection_start
 end
 
 
-fish define front_time(x)
-    ; soft-regime (n = 3) time for the front to reach x, no O(1) prefactor
+fish define front_time(x, n)
+    ;   time for the front to reach x, no O(1) prefactor
     ;   rate/ramp : x^(n+2) ~ a q^n t^(n(1+i)+1)
     ;   pressure  : x^2     ~ a w_inj^n t,  w_inj = w_i + DP/k_n
     local a = k_n / (12 * mu)
-    local n = 3
     if inj_mode = 'pressure' then
         front_time = x^2 / (a * (w_i + inj_value / k_n)^n)
     else

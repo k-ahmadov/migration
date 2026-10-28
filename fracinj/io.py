@@ -24,8 +24,10 @@ class RunData:
     x_vert: Vector  # (n_vert,)
     w: Field  # (n_time, n_vert)
     x_sc: Vector  # (n_sc,)
+    x_fz: Vector
     sn: Field  # (n_time, n_sc)
     p: Field  # (n_time, n_sc)
+    q: Field
     params: Parameters
     tau: Field | None = None  # (n_time, n_sc)
 
@@ -35,10 +37,12 @@ FIELD_PATHS = {
     "t": "coordinates/t",
     "x_vert": "coordinates/x_vertices",
     "x_sc": "coordinates/x_subcontacts",
+    "x_fz": "coordinates/x_flowzones",
     "w": "fields/aperture",
     "sn": "fields/stress_normal",
     "p": "fields/fluid_pressure",
     "tau": "fields/stress_shear",
+    "q": "fields/flow_rate"
 }
 OPTIONAL_FIELDS = {"tau"}
 

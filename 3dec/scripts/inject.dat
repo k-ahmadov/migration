@@ -1,7 +1,8 @@
 ; ============================================================
 ; Geometry, properties, boundary and initial conditions
 ; ============================================================
-program call "scripts/initial.dat"
+;program call "scripts/initial.dat"
+model restore "saves/initial.sav"
 
 ; ============================================================
 ; Solver configuration
@@ -21,13 +22,13 @@ model mechanical slave on
 ; ============================================================
 
 [global inj_mode  = 'ramp']   ; 'rate' | 'ramp' | 'pressure'
-[global inj_value = 1e-12]    ; q_0 [m2/s] | m_q [m2/s2] | DP [Pa]
+[global inj_value = 1e-8]    ; q_0 [m2/s] | m_q [m2/s2] | DP [Pa]
 
 program call 'scripts/injection.dat'
 [injection_start]
 
 ; stop when the (soft-regime) diffusion front reaches the fracture end x = L
-[global T_fin = front_time(L)]
+[global T_fin = 2*front_time(L, 3)]
 
 ; ============================================================
 ; Output
@@ -39,12 +40,8 @@ program call 'scripts/injection.dat'
 ; Initialise the HDF5 file and write coordinate arrays and parameters
 program call 'scripts/store_coordinates.py'
 
-; snapshots log-spaced in fluid time: n_store states from T_fin/10^n_decades
-; to T_fin, so the early (rigid) and late (soft) windows are both resolved
 [global n_store   = 200]
-[global n_decades = 4]
-[global t_next    = T_fin / 10.0^n_decades]
-[global r_store   = (10.0^n_decades)^(1.0 / (n_store - 1))]
+[global t_next    = T_fin / n_store]
 
 fish define store_now
     ; append the current state to the HDF5 file
@@ -62,16 +59,11 @@ fish define store_results
         exit
     endif
     store_now
-    t_next = t_next * r_store
-    ; if a fluid step jumped over several scheduled times, restart the
-    ; schedule from now instead of storing at every step to catch up
-    if t_next <= t_now then
-        t_next = t_now * r_store
-    endif
+    t_next = t_next + T_fin / n_store
 end
 
 ; runs after the fluid step (sequence position > 80)
 fish callback add store_results 81 process fluid
 
 model solve fluid time-total [T_fin]
-[store_now]
+;[store_now]

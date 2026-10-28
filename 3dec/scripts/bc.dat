@@ -5,6 +5,8 @@ block gridpoint apply velocity-y 0    range position-y [-W]
 ; roller boundary at injection face to symmetry
 block gridpoint apply velocity-x 0    range position-x 0
 
+block gridpoint apply velocity-z 0 range position-z [-L/2]
+block gridpoint apply velocity-z 0 range position-z [L/2]
 
 [global sigma0=-10e6]
 ;[global p0=2e6]
@@ -17,7 +19,7 @@ block face apply stress-zz [sigma0] range pos-z [L/2]
 block face apply stress-zz [sigma0] range pos-z [-L/2]
 ; both z faces carry stress, so pin one gridpoint (bottom far
 ; corner) to remove the rigid-body translation in z
-block gridpoint apply velocity-z 0 range pos-x [L] pos-y [-W] pos-z [-L/2]
+;block gridpoint apply velocity-z 0 range pos-x [L] pos-y [-W] pos-z [-L/2]
 
 
 ; solving for the initial state
@@ -36,5 +38,5 @@ model cycle 1000
 ; reset the fluid clock so the injection starts at t = 0
 model fluid time-total 0
 
-block gridpoint initialize displacement 0 0 0
-block contact reset displacement
+;block gridpoint initialize displacement 0 0 0
+;block contact reset displacement

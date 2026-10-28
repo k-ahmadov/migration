@@ -2,3 +2,5 @@ model restore 'saves/geometry.sav'
 
 program call 'scripts/properties.dat'
 program call 'scripts/bc.dat'
+
+model save '../saves/initial.sav'
