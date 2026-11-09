@@ -26,3 +26,11 @@ def solve_linear_radial_diffusion(
 ) -> NDArray[np.float64]:
     """Axisymmetric linear diffusion, constant-aperture BC, uniform initial aperture."""
     return 1 + (theta_inf - 1) * (1 - exp1(zeta**2) / exp1(zeta_b**2))
+
+
+def solve_nonlinear_diffusion_ramp_flux(n: int = 2**10, extend: float = 1.0):
+    """ "First order polynomial expansion solution for the self-similar nonlinear diffusion"""
+    zf = ((5 / 7) ** (1 / 5) * 2 ** (3 / 5)) / 3 ** (4 / 5)
+    zeta = np.linspace(-extend * zf, extend * zf, int(n * extend))
+    theta = ((21 / 5) * zf * np.clip(zf - np.abs(zeta), 0, None)) ** (1 / 3)
+    return zf, zeta, theta
