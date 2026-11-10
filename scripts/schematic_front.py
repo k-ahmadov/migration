@@ -35,11 +35,14 @@ x_max = 2 * xf  # right edge of the plot, relative to the front
 
 # %%
 # --- schematic plot ---
-# Included at 1:1 in overleaf/figures/model-schematic-tikz.tex, so text (10 pt)
+# Included at 1:1 in overleaf/figures/model-schematic.tex, so text (10 pt)
 # and line widths (0.8 pt = TikZ "thick") match the TikZ panel; the width is
-# chosen so the whole schematic is 5.5 in wide (the AGU text width).
-W_FIG, H_FIG = 2.137, 1.9  # in
+# chosen so the whole schematic is 6.5 in wide (the column width).
+W_FIG, H_FIG = 3.158, 2.24  # in
 LW = 0.8  # pt
+# serif Computer Modern, like the TikZ text (the "science" style sets sans-serif)
+plt.rcParams.update({"font.family": "serif", "font.size": 10,
+                     "text.latex.preamble": r"\usepackage{amsmath}"})
 fig, ax = plt.subplots(figsize=(W_FIG, H_FIG), layout="constrained")
 
 CLW = 1.5 * LW  # curve line width
