@@ -1,7 +1,7 @@
 """Read and write run data (HDF5, legacy pickle)."""
 
 import pickle
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Literal, cast
 
@@ -20,6 +20,9 @@ FIELD_DATA = {
 
 @dataclass
 class RunData:
+    """One run. Aperture is on ``x_vert``; pressure and stresses on ``x_sc``;
+    flow rate on ``x_fz``. Check with ``validate``; the readers do."""
+
     t: Vector  # (n_time,)
     x_vert: Vector  # (n_vert,)
     w: Field  # (n_time, n_vert)
@@ -30,6 +33,43 @@ class RunData:
     q: Field | None = None
     x_fz: Vector | None = None
     tau: Field | None = None  # (n_time, n_sc)
+
+
+# field -> name of the RunData grid it lives on
+FIELD_GRIDS = {"w": "x_vert", "p": "x_sc", "sn": "x_sc", "tau": "x_sc", "q": "x_fz"}
+
+
+def validate(run: RunData) -> RunData:
+    """Raise ``ValueError`` unless ``t`` is strictly increasing and every field
+    has shape ``(len(t), len(its grid))``. Returns ``run`` for chaining."""
+    t = run.t
+    if t.ndim != 1:
+        raise ValueError(f"t must be 1-D, got shape {t.shape}")
+    bad = np.flatnonzero(np.diff(t) <= 0)
+    if bad.size:
+        i = bad[0]
+        raise ValueError(
+            f"t is not strictly increasing at index {i} ({t[i]:.6g} -> {t[i + 1]:.6g}); "
+            f"{bad.size} such step(s). A 3DEC restart appending to an old file?"
+        )
+    for name, grid_name in FIELD_GRIDS.items():
+        field, grid = getattr(run, name), getattr(run, grid_name)
+        if field is None:
+            continue
+        if grid is None:
+            raise ValueError(f"{name} is present but its grid {grid_name} is not")
+        if grid.ndim != 1:
+            raise ValueError(f"{grid_name} must be 1-D, got shape {grid.shape}")
+        expected = (t.size, grid.size)
+        if field.shape != expected:
+            hint = ""
+            if name == "p" and field.shape[-1] == run.x_vert.size:
+                hint = "; p is on the aperture grid: a surrogate run? use read_halfspace"
+            raise ValueError(
+                f"{name} has shape {field.shape}, expected (len(t), len({grid_name})) "
+                f"= {expected}{hint}"
+            )
+    return run
 
 
 # name -> HDF5 path, for the canonical layout written by ``save_run``.
@@ -44,9 +84,12 @@ FIELD_PATHS = {
     "tau": "fields/stress_shear",
     "q": "fields/flow_rate"
 }
-OPTIONAL_FIELDS = {"tau"}
+OPTIONAL_FIELDS = {"tau", "x_fz", "q"}
 
-# Legacy half-space runs used different coordinate names and no shear stress.
+# Pure-Python surrogate runs (scripts/run_simulation.py): aperture and pressure
+# on the FVM grid, normal stress on the elastic grid, no shear stress. Older
+# files name those two grids x_fvm / x_elastic (and the oldest call the
+# pressure field "pressure").
 HALFSPACE_PATHS = {
     "t": "coordinates/t",
     "x_vert": "coordinates/x_vertices",
@@ -54,6 +97,11 @@ HALFSPACE_PATHS = {
     "w": "fields/aperture",
     "sn": "fields/stress_normal",
     "p": "fields/fluid_pressure",
+}
+LEGACY_HALFSPACE_PATHS = {
+    **HALFSPACE_PATHS,
+    "x_vert": "coordinates/x_fvm",
+    "x_sc": "coordinates/x_elastic",
 }
 
 
@@ -78,24 +126,57 @@ def _read_group(f: h5py.File, field_paths: dict[str, str]) -> dict[str, np.ndarr
     return arrays
 
 
-def read_hdf5(filepath: Path, field_paths: dict[str, str] = FIELD_PATHS) -> RunData:
-    """Read a run written in the canonical layout (see ``FIELD_PATHS``)."""
+def _put_on_pressure_grid(run: RunData, x_p: Vector) -> RunData:
+    """Sort every field along x and linearly interpolate ``sn`` onto the
+    pressure grid ``x_p``, which becomes ``x_sc``. Outside the stress grid's
+    range ``np.interp`` holds the end values."""
+    x_vert, w = sort_fields(run.x_vert, run.w)
+    x, p = sort_fields(x_p, run.p)
+    x_sn, sn_old = sort_fields(run.x_sc, run.sn)
+    sn = np.stack([np.interp(x, x_sn, row) for row in sn_old])
+    return replace(run, x_vert=x_vert, w=w, x_sc=x, p=p, sn=sn)
+
+
+def read_hdf5(
+    filepath: Path, field_paths: dict[str, str] = FIELD_PATHS, check: bool = True
+) -> RunData:
+    """Read a run written in the canonical layout (see ``FIELD_PATHS``).
+
+    For pure-Python surrogate runs written before the FFT stress solve, use
+    ``read_halfspace``: their pressure is on the aperture grid, which fails the
+    shape check here.
+    """
     with h5py.File(str(filepath), "r") as f:
         arrays = _read_group(f, field_paths)
         raw = {k: cast(h5py.Dataset, f[f"parameters/{k}"])[()] for k in f["parameters"]}
-    return RunData(**arrays, params=_params_from_mapping(raw))
+    run = RunData(**arrays, params=_params_from_mapping(raw))
+    return validate(run) if check else run
 
 
 def read_halfspace(filepath: Path) -> RunData:
-    """Read a legacy half-space run (``x_fvm`` / ``x_elastic`` coordinates)."""
-    return read_hdf5(filepath, HALFSPACE_PATHS)
+    """Read a pure-Python surrogate run, in the current or the legacy layout.
+
+    These runs keep pressure on the FVM grid (``x_vert``) and stress on a
+    separate elastic grid. To match the 3DEC convention (``p`` and ``sn`` both
+    on ``x_sc``), ``sn`` is interpolated onto the FVM grid and ``x_sc = x_vert``.
+    """
+    with h5py.File(str(filepath), "r") as f:
+        field_paths = LEGACY_HALFSPACE_PATHS if "coordinates/x_fvm" in f else HALFSPACE_PATHS
+        if "fields/pressure" in f:
+            field_paths = {**field_paths, "p": "fields/pressure"}
+    run = read_hdf5(filepath, field_paths, check=False)
+    return validate(_put_on_pressure_grid(run, run.x_vert))
 
 
 def read_pickle(filepath: Path) -> RunData:
-    """Read a legacy pickled result dict."""
+    """Read a legacy pickled 3DEC result dict.
+
+    Each array's first row is x and first column is t. Pressure there is on the
+    vertex grid, so ``sn`` is interpolated onto it, as in ``read_halfspace``.
+    """
     with open(filepath, "rb") as f:
         results = pickle.load(f)
-    return RunData(
+    run = RunData(
         t=results["w"][1:, 0],
         x_vert=results["w"][0, 1:],
         w=results["w"][1:, 1:],
@@ -104,6 +185,7 @@ def read_pickle(filepath: Path) -> RunData:
         sn=results["sn"][1:, 1:],
         params=_params_from_mapping(results["parameters"]),
     )
+    return validate(_put_on_pressure_grid(run, results["P"][0, 1:]))
 
 
 def save_run(
@@ -113,12 +195,13 @@ def save_run(
     x_vert: Vector,
     w: Field,
     p: Field,
+    x_sc: Vector,
+    sn: Field,
     params: Parameters,
-    x_sc: Vector | None = None,
-    sn: Field | None = None,
     tau: Field | None = None,
 ) -> None:
     """Write a run in the canonical layout read back by ``read_hdf5``."""
+    validate(RunData(t=t, x_vert=x_vert, w=w, x_sc=x_sc, sn=sn, p=p, params=params, tau=tau))
     filepath.parent.mkdir(parents=True, exist_ok=True)
     gzip = {"compression": "gzip", "compression_opts": 4}
 
@@ -126,14 +209,12 @@ def save_run(
         coords = f.create_group("coordinates")
         coords.create_dataset("t", data=t).attrs["unit"] = "s"
         coords.create_dataset("x_vertices", data=x_vert).attrs["unit"] = "m"
-        if x_sc is not None:
-            coords.create_dataset("x_subcontacts", data=x_sc).attrs["unit"] = "m"
+        coords.create_dataset("x_subcontacts", data=x_sc).attrs["unit"] = "m"
 
         fields = f.create_group("fields")
         fields.create_dataset("aperture", data=w, **gzip).attrs["unit"] = "m"
         fields.create_dataset("fluid_pressure", data=p, **gzip).attrs["unit"] = "Pa"
-        if sn is not None:
-            fields.create_dataset("stress_normal", data=sn, **gzip).attrs["unit"] = "Pa"
+        fields.create_dataset("stress_normal", data=sn, **gzip).attrs["unit"] = "Pa"
         if tau is not None:
             fields.create_dataset("stress_shear", data=tau, **gzip).attrs["unit"] = "Pa"
 

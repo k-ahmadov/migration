@@ -38,7 +38,7 @@ run = io.read_pickle(paths.results_dir("3dec", "constant-pressure") / "soft.pkl"
 it = np.argmin(np.abs(run.t - t))
 x_3dec, sn_3dec = io.sort_fields(run.x_sc, run.sn)
 sn_3dec = sn_3dec[it]
-x_3dec_p, p_3dec = io.sort_fields(run.x_vert, run.p)
+x_3dec_p, p_3dec = io.sort_fields(run.x_sc, run.p)
 p_3dec = p_3dec[it]
 
 # %%

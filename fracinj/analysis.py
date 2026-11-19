@@ -214,16 +214,15 @@ def _front_series(
         )
         return run.t[slc][:idx_cut], x_front
     if threshold is not None:
-        # p lives on the FVM grid (x_vert, Nx_p), not the elastic grid (x_sc).
         x_front, has_crossing = detection.find_field_front(
-            run.x_vert, run.p[slc], threshold
+            run.x_sc, run.p[slc], threshold
         )
         return run.t[slc][has_crossing], x_front
     raise ValueError("provide `threshold` or set stress_front=True")
 
 
 def _p_inj_series(run: io.RunData, slc: slice) -> tuple[Vector, Vector]:
-    _, p = io.sort_fields(run.x_vert, run.p)
+    _, p = io.sort_fields(run.x_sc, run.p)
     return run.t[slc], p[slc, 0]
 
 
