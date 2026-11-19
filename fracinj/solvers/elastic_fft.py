@@ -36,6 +36,8 @@ Input : Pi(X) on a uniform grid, decaying to ~0 at both ends (an isolated pulse)
 Output: Sigma(X) and V(X) on the same grid.
 """
 
+import warnings
+
 import numpy as np
 
 
@@ -57,7 +59,7 @@ def solve_elastic_joint(X: np.ndarray, Pi: np.ndarray, eps: float, pad=4):
         raise ValueError("X must be strictly increasing")
     # Warn if the pulse is cut off at the domain edges
     if max(abs(Pi[0]), abs(Pi[-1])) > 1e-3 * np.max(np.abs(Pi)):
-        print("warning: Pi has not decayed at the domain ends; extend the domain")
+        warnings.warn("Pi has not decayed at the domain ends; extend the domain", stacklevel=2)
 
     n = len(X)           # number of grid points
     h = X[1] - X[0]      # grid spacing

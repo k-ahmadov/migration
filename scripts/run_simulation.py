@@ -5,14 +5,14 @@ python scripts/run_simulation.py            # single run, constant rate
 Set ``SHUT_IN`` in ``main`` to stop injection at that fraction of t_c.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
 
 from fracinj import paths, physics
 from fracinj.io import save_run
-from fracinj.solvers import aperture, elastic
+from fracinj.solvers import aperture, elastic_fft
 from fracinj.types import Field, Parameters, Vector
 
 
@@ -58,48 +58,47 @@ def run_fvm(params: Parameters) -> FVMResult:
     )
 
 
-class _InterpRHS:
-    """Stateful forcing term for ``elastic.FIE_log_sing`` (pressure on [-1, 1])."""
-
-    def __init__(self, x_mirror: Vector, L: float) -> None:
-        self.x_mirror = x_mirror
-        self.L = L
-        self.y: Vector | None = None
-
-    def __call__(self, s: np.ndarray) -> np.ndarray:
-        assert self.y is not None
-        return np.interp(s * self.L, self.x_mirror, self.y)
-
-
 def run_elastic(params: Parameters, x_fvm: Vector, p_tx: Field) -> ElasticResult:
+    """Induced normal stress via the FFT elastic-joint solver, on the FVM grid.
+
+    The pressure is mirrored onto [-L, L] (symmetric about the injection point)
+    and the half-space problem is solved spectrally, then the x >= 0 half is kept.
+    """
     nt = int(p_tx.shape[0])
     if x_fvm.ndim != 1 or p_tx.ndim != 2 or p_tx.shape[1] != x_fvm.size:
         raise ValueError("expected p_tx of shape (Nt, Nx) with Nx == x_fvm.size")
 
-    E_plane = physics.plane_strain_modulus(params)
-    lam = (4.0 / np.pi) * params.k_n * params.L / E_plane
-    sn_char = physics.cubic_scales(params, pin="length").sn_c
+    # eps = L_k / L_p = E' / (4 k_n L), with the fracture half-length as L_p
+    eps = physics.plane_strain_modulus(params) / (4.0 * params.k_n * params.L)
 
-    x_mirror = np.concatenate((-x_fvm[:0:-1], x_fvm))  # avoid double-counting x=0
-    rhs = _InterpRHS(x_mirror, params.L)
+    X = np.concatenate((-x_fvm[:0:-1], x_fvm)) / params.L  # avoid double-counting x=0
+    n_half = x_fvm.size - 1  # index of x=0 in the mirrored grid
 
-    def set_pressure(p_x: np.ndarray) -> None:
-        rhs.y = np.concatenate((p_x[:0:-1], p_x)) / sn_char
-
-    set_pressure(p_tx[0])
-    x_hat, sn_hat, _ = elastic.FIE_log_sing(lam, rhs, int(params.Nx_sn))
-    x_out = x_hat * params.L
-
-    sn_tx = np.empty((nt, sn_hat.size))
-    sn_tx[0] = sn_hat * sn_char
-    for i in range(1, nt):
-        set_pressure(p_tx[i])
-        _, sn_hat, _ = elastic.FIE_log_sing(lam, rhs, int(params.Nx_sn))
-        sn_tx[i] = sn_hat * sn_char
+    sn_tx = np.empty_like(p_tx)
+    for i in range(nt):
+        Pi = np.concatenate((p_tx[i, :0:-1], p_tx[i]))  # Pa; the solve is linear
+        Sigma, _ = elastic_fft.solve_elastic_joint(X, Pi, eps)
+        sn_tx[i] = Sigma[n_half:]
 
     t = np.linspace(params.T / nt, params.T, nt)
-    keep = x_out >= 0
-    return ElasticResult(x=x_out[keep], t=t, sn=sn_tx[:, keep])
+    return ElasticResult(x=x_fvm.copy(), t=t, sn=sn_tx)
+
+
+TIP_TOL = 1e-3  # same threshold as elastic_fft's "not decayed" warning
+
+
+def truncate_at_tip(fvm: FVMResult, tol: float = TIP_TOL) -> FVMResult:
+    """Drop every step from the first one where the pressure at x = L exceeds
+    ``tol * max(p)``: beyond it the FFT stress solve (infinite fracture,
+    zero pressure past +-L) is no longer valid."""
+    reached = fvm.p[:, -1] > tol * fvm.p.max(axis=1)
+    if not reached.any():
+        return fvm
+    n_keep = int(np.argmax(reached))
+    if n_keep == 0:
+        raise ValueError("pressure is at x = L from the first step; increase L")
+    print(f"Front reached x = L at t = {fvm.t[n_keep]:.3g} s; truncating")
+    return FVMResult(x=fvm.x, t=fvm.t[:n_keep], p=fvm.p[:n_keep], w=fvm.w[:n_keep])
 
 
 def run_simulation(
@@ -116,7 +115,14 @@ def run_simulation(
     fvm = run_fvm(params)
     print("FVM simulation finished")
 
-    el = run_elastic(params, fvm.x, fvm.p)
+    fvm = truncate_at_tip(fvm)
+    # record what is actually stored; a copy, so a sweep's shared `params` keeps
+    # its requested Nt (t has Nt - 1 entries, see run_fvm)
+    saved = replace(params, T=float(fvm.t[-1]), Nt=float(fvm.t.size + 1))
+    if params.t_stop > saved.T:
+        print(f"warning: run ends at t = {saved.T:.3g} s, before shut-in")
+
+    el = run_elastic(saved, fvm.x, fvm.p)
     print("Elastic half-space solution finished")
 
     save_run(
@@ -127,7 +133,7 @@ def run_simulation(
         p=fvm.p,
         x_sc=el.x,
         sn=el.sn,
-        params=params,
+        params=saved,
     )
     print(f"Results stored in {out_filepath}")
 
@@ -153,37 +159,33 @@ def sweep(
 def default_parameters(bc_param: str) -> Parameters:
     params = Parameters(
         k_n=200e9,
-        L=1000.0,
+        L=100.0,
         mu=1e-3,
         w_i=1e-5,
         E=60e9,
         nu=0.25,
         Nx_p=1024,
-        Nx_sn=512,
-        Nt=2000,
+        Nx_sn=1024,
+        Nt=10000,
         # T=500.0,
     )
     setattr(params, bc_param, 1e-13)
     return params
 
 
-SHUT_IN = 0.25  # stop injection at SHUT_IN * t_c (t_c pinned to L); None: never
-
-
 def main() -> None:
     bc = "m_q"
     params = default_parameters(bc)
-    sub = "long" if SHUT_IN is None else f"shut-in-{SHUT_IN:g}tc"
-    out_dir = paths.results_dir("halfspace", "ramp", sub)
+    out_dir = paths.results_dir("halfspace", "ramp")
 
     # q0_values = np.geomspace(1e-10, 1e-6, 5)
     # sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
 
-    # m_q_values = np.geomspace(1e-14, 1e-7, 8)
-    # sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir, bc=bc)
+    m_q_values = np.geomspace(1e-14, 1e-7, 8)
+    sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir)
 
-    out_file = out_dir / f"{bc}-{getattr(params, bc):.0e}.hdf5"
-    run_simulation(params, out_file, shut_in=SHUT_IN)
+    # out_file = out_dir / f"{bc}-{getattr(params, bc):.0e}.hdf5"
+    # run_simulation(params, out_file, shut_in=SHUT_IN)
 
 
 if __name__ == "__main__":
