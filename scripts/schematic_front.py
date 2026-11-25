@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from fracinj import io, paths, physics, plotting
-from fracinj.solvers.elastic_fft import solve_elastic_joint
+from fracinj.solvers.elastic import solve_elastic_joint
 
 # %%
 # --- data: pressure snapshot at mid-run, then the induced normal stress ---
