@@ -12,7 +12,7 @@ from fracinj.solvers.similarity import solve_neumann_ramp_n3
 from fracinj.types import Parameters
 
 M_TO_MICRON = 1e6
-COLUMN_WIDTH = 3.4
+COLUMN_WIDTH = 3.25
 GOLDEN_RATIO = (1 + 5**0.5) / 2
 
 # %%
@@ -26,10 +26,12 @@ SOFT = analysis.Regime(
     name="soft", rate="ramp", n=3, i=1, coefficient=physics.mobility, theta0=None
 )
 
-zeta_ana = np.linspace(0, 4, 200)
-theta_ana = solve_linear_diffusion_ramp_flux(zeta_ana)
+# Early-time similarity variable eta = x / (2 sqrt(D0 t)).
+# solve_linear_diffusion_ramp_flux takes x / sqrt(D0 t) = 2 * eta.
+eta_ana = np.linspace(0, 2, 200)
+theta_ana = solve_linear_diffusion_ramp_flux(eta_ana)
 
-zeta_semi_soft, theta_semi_soft = solve_neumann_ramp_n3(zeta_max=2.0)
+zeta_semi_soft, theta_semi_soft = solve_neumann_ramp_n3(zeta_max=0.60, n_points=2000)
 
 # %% zoom inside main
 
@@ -63,8 +65,9 @@ def plot_aperture_profiles(
     t_targets = np.geomspace(run.t[start], run.t[stop - 1], n_profiles)
     idx = np.unique(np.searchsorted(run.t, t_targets).clip(start, stop - 1))
 
-    norm = mpl.colors.LogNorm(vmin=run.t[idx[0]], vmax=run.t[idx[-1]])
-    colors = mpl.colormaps[cmap](norm(run.t[idx]))  # pyright: ignore
+    t_hours = run.t / 3600  # for the colour scale only
+    norm = mpl.colors.LogNorm(vmin=t_hours[idx[0]], vmax=t_hours[idx[-1]]) # pyright: ignore
+    colors = mpl.colormaps[cmap](norm(t_hours[idx]))  # pyright: ignore
     p = run.params
 
     for k, color in zip(idx, colors):
@@ -73,7 +76,8 @@ def plot_aperture_profiles(
         zeta, theta = dimensionless(
             run.w[k] - run.params.w_i, run.x_vert, float(run.t[k]), rigid, p
         )
-        ax_similarity_early.plot(zeta, theta, color=color, zorder=-k, lw=0.6)
+        # rigid distance scale is sqrt(D0 t); divide by 2 to get eta
+        ax_similarity_early.plot(zeta / 2, theta, color=color, zorder=-k, lw=0.6)
         zeta, theta = dimensionless(
             run.w[k] - run.params.w_i, run.x_vert, float(run.t[k]), soft, p
         )
@@ -84,7 +88,7 @@ def plot_aperture_profiles(
 # %%
 mosaic: list = [["main", "similarity-early"], ["main", "similarity-late"]]
 fig = plt.figure(
-    figsize=(1.9 * COLUMN_WIDTH, 1.3 * COLUMN_WIDTH / GOLDEN_RATIO),
+    figsize=(2 * COLUMN_WIDTH, 1.2 * COLUMN_WIDTH / GOLDEN_RATIO),
     layout="constrained",
     dpi=200,
     num=1,
@@ -94,7 +98,8 @@ axes: dict[str, plt.Axes] = fig.subplot_mosaic(mosaic, width_ratios=[GOLDEN_RATI
 
 x0, x1, y0, y1 = -3, 100, 9.95, 12.1
 ax_zoom = axes["main"].inset_axes(
-    [0.22, 0.2, 0.45, 0.45 / GOLDEN_RATIO], transform=axes["main"].transAxes
+    [0.22, 0.2, 0.45, 0.45 / GOLDEN_RATIO], # pyright: ignore
+    transform=axes["main"].transAxes,  # pyright: ignore
 )
 
 sm = plot_aperture_profiles(
@@ -110,12 +115,10 @@ sm = plot_aperture_profiles(
     cmap="viridis_r",
 )
 
-axes["similarity-early"].plot(zeta_ana, theta_ana, "k-", label="Rigid $(n=0)$")
+axes["similarity-early"].plot(eta_ana, theta_ana, "k-", label="Early-time")
 axes["similarity-early"].legend()
 
-axes["similarity-late"].plot(
-    zeta_semi_soft, theta_semi_soft, "k-", label="Soft $(n=3)$"
-)
+axes["similarity-late"].plot(zeta_semi_soft, theta_semi_soft, "k-", label="Late-time")
 axes["similarity-late"].legend(loc="upper right")
 
 numerical = tuple(
@@ -141,21 +144,27 @@ axes["main"].set(
     yticks=[10, 20, 40, 60, 80],
     xticks=[0, 1000, 2000],
 )
-axes["main"].set_xticklabels([int(t / 1000) for t in axes["main"].get_xticks()])
+axes["main"].set_xticklabels(
+    [int(t / 1000) for t in axes["main"].get_xticks()] # pyright: ignore
+)  # # pyright: ignore
 axes["main"].yaxis.set_minor_locator(AutoMinorLocator(2))
 
-axes["similarity-early"].set(
-    xlabel=r"$x / \sqrt{ D t }$",
-    ylabel=r"$w / m_{\mathrm{q}} \sqrt{ t^{3}/D } $",
-    xlim=(0, 3),
-    yticks=[0, 1],
-)
-axes["similarity-late"].set(
-    xlabel=r"$x / \left( a m_{\mathrm{q}}^{3} t^{7} \right) ^{1/5}$",
-    ylabel=r"$w / \left( m_{\mathrm{q}}^{2} t^{3} / a \right)^{1/5}$",
-    xlim=(0, 1.5),
-    yticks=[0, 1],
-)
+for key, xlabel, ylabel in [
+    (
+        "similarity-early",
+        r"$x  /  (2\sqrt{ D_{0} t })$",
+        r"$ \dfrac{\sqrt{D_{0}} \Delta w }{m_{\mathrm{q}}\, t^{3/2}} $",
+    ),
+    (
+        "similarity-late",
+        r"$x / \left( a\, m_{\mathrm{q}}^{3}\, t^{7} \right)^{1/5}$",
+        r"$\dfrac{\Delta w }{\left( m_{\mathrm{q}}^{2}\, t^{3} / a \right)^{1/5}} $",
+    ),
+]:
+    ax = axes[key]
+    ax.set(xlim=(0, 1.5), yticks=[0, 1])
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
 
 axes["similarity-early"].sharey(axes["similarity-late"])
 
@@ -176,7 +185,7 @@ plotting.connect_rectangle_to_zoom(
 fig.colorbar(
     sm,
     ax=list(axes.values()),
-    label="Time $t$ (s)",
+    label="Time $t$ (h)",
     location="right",
 )
 
@@ -189,6 +198,6 @@ fig.canvas.draw_idle()
 plt.pause(0.01)
 
 # %%
-# plotting.save_figure(fig, "similarity-inset", overleaf=True)
+plotting.save_figure(fig, "similarity-inset", ext="pdf")
 
 # fig.savefig("similarity-inset.eps")

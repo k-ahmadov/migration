@@ -1,13 +1,9 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import scienceplots  # noqa: F401
 
 from fracinj import io, paths, physics
 from fracinj.analysis import Regime
-
-plt.style.use(["science", "bright", "latex-sans"])  # pyright: ignore[reportAttributeAccessIssue]
-plt.rcParams["font.family"] = "sans-serif"
 
 COLUMN_WIDTH = 3.25  # in
 
