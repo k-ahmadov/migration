@@ -1,8 +1,15 @@
 """Run the FVM aperture solve + elastic half-space solve and store the result.
 
-python scripts/run_simulation.py            # single run, constant rate
+python scripts/run_simulation.py            # settings in ``main``
 
-Set ``SHUT_IN`` in ``main`` to stop injection at that fraction of t_c.
+Two geometries, chosen by ``params.radial``:
+
+- plane strain (``radial = 0``): line source at x = 0, ``q_0`` / ``m_q`` per unit
+  length (m^2/s, m^2/s^2); FFT stress solve on the mirrored domain [-L, L].
+- axisymmetric (``radial = 1``): point source at r = 0, ``q_0`` / ``m_q`` total
+  volume rate (m^3/s, m^3/s^2); Hankel-transform stress solve on [0, L].
+
+Pass ``shut_in`` to ``run_simulation`` to stop injection at that fraction of t_c.
 """
 
 from dataclasses import dataclass, replace
@@ -12,7 +19,7 @@ import numpy as np
 
 from fracinj import paths, physics
 from fracinj.io import save_run
-from fracinj.solvers import aperture, elastic_fft
+from fracinj.solvers import aperture, elastic
 from fracinj.types import Field, Parameters, Vector
 
 
@@ -24,20 +31,14 @@ class FVMResult:
     w: Field
 
 
-@dataclass(frozen=True)
-class ElasticResult:
-    x: Vector
-    t: Vector
-    sn: Field
-
-
 def run_fvm(params: Parameters) -> FVMResult:
     nx, nt = int(params.Nx_p), int(params.Nt)
-    if nx <= 0 or nt <= 0 or params.T < 0:
-        raise ValueError("need Nx_p > 0, Nt > 0, T >= 0")
+    if nx <= 1 or nt <= 1 or params.T <= 0:
+        raise ValueError("need Nx_p > 1, Nt > 1, T > 0")
 
     scales = physics.cubic_scales(params, pin="length")
-    w_hat = aperture.solve_diffusion(
+    solve = aperture.solve_radial_diffusion if physics.is_radial(params) else aperture.solve_diffusion
+    w_hat = solve(
         num_nodes=nx,
         num_steps=nt,
         w_initial=params.w_i / scales.w_c,
@@ -47,9 +48,10 @@ def run_fvm(params: Parameters) -> FVMResult:
         t_stop=params.t_stop / scales.t_c if params.t_stop > 0 else None,
     )
     w = w_hat * scales.w_c
+    # the solvers drop the initial condition: rows are t = dt, 2 dt, ..., T
     t = np.linspace(params.T / (nt - 1), params.T, nt - 1)
     if w.shape[0] != t.size:
-        raise ValueError("Time array size does not patch solver size")
+        raise ValueError("time array size does not match solver output")
     return FVMResult(
         x=np.linspace(0, params.L, nx),
         t=t,
@@ -58,40 +60,38 @@ def run_fvm(params: Parameters) -> FVMResult:
     )
 
 
-def run_elastic(params: Parameters, x_fvm: Vector, p_tx: Field) -> ElasticResult:
-    """Induced normal stress via the FFT elastic-joint solver, on the FVM grid.
+def run_elastic(params: Parameters, x: Vector, p_tx: Field) -> Field:
+    """Induced normal stress change on the FVM grid, shape ``(n_t, n_x)``, in Pa.
 
-    The pressure is mirrored onto [-L, L] (symmetric about the injection point)
-    and the half-space problem is solved spectrally, then the x >= 0 half is kept.
+    The solves are linear, so the pressure goes in dimensional (Pa) and the
+    stress comes out in Pa; only the lengths are scaled, by L. Plane strain
+    mirrors the pressure onto [-L, L] (symmetric about the injection point)
+    and keeps the x >= 0 half; the axisymmetric solve works on r in [0, L].
     """
-    nt = int(p_tx.shape[0])
-    if x_fvm.ndim != 1 or p_tx.ndim != 2 or p_tx.shape[1] != x_fvm.size:
-        raise ValueError("expected p_tx of shape (Nt, Nx) with Nx == x_fvm.size")
+    if x.ndim != 1 or p_tx.ndim != 2 or p_tx.shape[1] != x.size:
+        raise ValueError("expected p_tx of shape (Nt, Nx) with Nx == x.size")
 
-    # eps = L_k / L_p = E' / (4 k_n L), with the fracture half-length as L_p
+    # eps = L_k / L_p = E' / (4 k_n L), with the fracture (half-)length as L_p
     eps = physics.plane_strain_modulus(params) / (4.0 * params.k_n * params.L)
 
-    X = np.concatenate((-x_fvm[:0:-1], x_fvm)) / params.L  # avoid double-counting x=0
-    n_half = x_fvm.size - 1  # index of x=0 in the mirrored grid
+    if physics.is_radial(params):
+        sn, _ = elastic.solve_elastic_joint_axisym(x / params.L, p_tx, eps)
+        return sn
 
-    sn_tx = np.empty_like(p_tx)
-    for i in range(nt):
-        Pi = np.concatenate((p_tx[i, :0:-1], p_tx[i]))  # Pa; the solve is linear
-        Sigma, _ = elastic_fft.solve_elastic_joint(X, Pi, eps)
-        sn_tx[i] = Sigma[n_half:]
-
-    t = np.linspace(params.T / nt, params.T, nt)
-    return ElasticResult(x=x_fvm.copy(), t=t, sn=sn_tx)
+    X = np.concatenate((-x[:0:-1], x)) / params.L  # avoid double-counting x=0
+    Pi = np.concatenate((p_tx[:, :0:-1], p_tx), axis=1)
+    sn, _ = elastic.solve_elastic_joint(X, Pi, eps)
+    return sn[:, x.size - 1 :]  # x >= 0 half
 
 
-TIP_TOL = 1e-3  # same threshold as elastic_fft's "not decayed" warning
+TIP_TOL = elastic.DECAY_TOL  # the stress solvers' "not decayed" threshold
 
 
 def truncate_at_tip(fvm: FVMResult, tol: float = TIP_TOL) -> FVMResult:
     """Drop every step from the first one where the pressure at x = L exceeds
-    ``tol * max(p)``: beyond it the FFT stress solve (infinite fracture,
-    zero pressure past +-L) is no longer valid."""
-    reached = fvm.p[:, -1] > tol * fvm.p.max(axis=1)
+    ``tol * max(p)``: beyond it the stress solve (unbounded fracture, zero
+    pressure past L) is no longer valid."""
+    reached = np.abs(fvm.p[:, -1]) > tol * np.abs(fvm.p).max(axis=1)
     if not reached.any():
         return fvm
     n_keep = int(np.argmax(reached))
@@ -102,13 +102,24 @@ def truncate_at_tip(fvm: FVMResult, tol: float = TIP_TOL) -> FVMResult:
 
 
 def run_simulation(
-    params: Parameters, out_filepath: Path, shut_in: float | None = None
+    params: Parameters,
+    out_filepath: Path,
+    shut_in: float | None = None,
+    duration: float = 2.0,
 ) -> None:
-    """``shut_in``: stop injecting at ``shut_in * t_c`` (``None``: inject throughout)."""
+    """Simulate ``duration * t_c`` and save to ``out_filepath``.
+
+    ``shut_in``: stop injecting at ``shut_in * t_c`` (``None``: inject throughout).
+    ``params`` is not modified; the saved copy records what was actually run.
+    """
     t_c = physics.cubic_scales(params, pin="length").t_c
-    params.T = t_c * 2
-    params.t_stop = shut_in * t_c if shut_in is not None else 0.0
-    print(f"Simulation duration: {params.T:.3g} s")
+    params = replace(
+        params,
+        T=duration * t_c,
+        t_stop=shut_in * t_c if shut_in is not None else 0.0,
+    )
+    geometry = "axisymmetric" if physics.is_radial(params) else "plane strain"
+    print(f"{geometry}: simulation duration {params.T:.3g} s (t_c = {t_c:.3g} s)")
     if params.t_stop > 0:
         print(f"Shut-in at t = {params.t_stop:.3g} s")
 
@@ -116,13 +127,12 @@ def run_simulation(
     print("FVM simulation finished")
 
     fvm = truncate_at_tip(fvm)
-    # record what is actually stored; a copy, so a sweep's shared `params` keeps
-    # its requested Nt (t has Nt - 1 entries, see run_fvm)
+    # record what is actually stored (t has Nt - 1 entries, see run_fvm)
     saved = replace(params, T=float(fvm.t[-1]), Nt=float(fvm.t.size + 1))
     if params.t_stop > saved.T:
         print(f"warning: run ends at t = {saved.T:.3g} s, before shut-in")
 
-    el = run_elastic(saved, fvm.x, fvm.p)
+    sn = run_elastic(saved, fvm.x, fvm.p)
     print("Elastic half-space solution finished")
 
     save_run(
@@ -131,8 +141,8 @@ def run_simulation(
         x_vert=fvm.x,
         w=fvm.w,
         p=fvm.p,
-        x_sc=el.x,
-        sn=el.sn,
+        x_sc=fvm.x,
+        sn=sn,
         params=saved,
     )
     print(f"Results stored in {out_filepath}")
@@ -143,49 +153,43 @@ def sweep(
     field: str,
     values: np.ndarray,
     out_dir: Path,
+    **kwargs,
 ) -> None:
-    """Run one simulation per value of ``params.<field>``.
-
-    ``run_simulation`` recomputes ``params.T`` unconditionally on every call:
-    since `params` is shared across iterations, a "only set T if unset" guard
-    would freeze T at the first value's duration for the rest of the sweep.
-    """
+    """Run one simulation per value of ``params.<field>`` (``params`` is not modified)."""
     for value in values:
-        setattr(params, field, float(value))
+        run_params = replace(params, **{field: float(value)})
         print(f"running {field}={value:.1e}")
-        run_simulation(params, out_dir / f"{field}-{value:.0e}.hdf5")
+        run_simulation(run_params, out_dir / f"{field}-{value:.0e}.hdf5", **kwargs)
 
 
-def default_parameters(bc_param: str) -> Parameters:
+def default_parameters(bc_param: str, value: float, radial: bool = False) -> Parameters:
     params = Parameters(
         k_n=200e9,
-        L=100.0,
+        L=3000.0,
         mu=1e-3,
         w_i=1e-5,
         E=60e9,
         nu=0.25,
-        Nx_p=1024,
-        Nx_sn=1024,
-        Nt=10000,
-        # T=500.0,
+        Nx_p=2**12,
+        Nx_sn=2**12,
+        Nt=20000,
+        radial=1.0 if radial else 0.0,
     )
-    setattr(params, bc_param, 1e-13)
+    setattr(params, bc_param, value)
     return params
 
 
 def main() -> None:
     bc = "m_q"
-    params = default_parameters(bc)
-    out_dir = paths.results_dir("halfspace", "ramp")
+    radial = True
+    params = default_parameters(bc, 1e-10, radial=radial)
+    out_dir = paths.results_dir("halfspace", "radial", "ramp")
 
-    # q0_values = np.geomspace(1e-10, 1e-6, 5)
-    # sweep(params=params, field="q_0", values=q0_values, out_dir=out_dir)
+    run_simulation(params, out_dir / f"{bc}-{getattr(params, bc):.0e}.hdf5")
 
-    m_q_values = np.geomspace(1e-14, 1e-7, 8)
-    sweep(params=params, field="m_q", values=m_q_values, out_dir=out_dir)
-
-    # out_file = out_dir / f"{bc}-{getattr(params, bc):.0e}.hdf5"
-    # run_simulation(params, out_file, shut_in=SHUT_IN)
+    # sweep(params, "q_0", np.geomspace(1e-10, 1e-6, 5), out_dir)
+    # sweep(params, "m_q", np.geomspace(1e-14, 1e-7, 8), out_dir)
+    # run_simulation(params, out_dir / "shut-in.hdf5", shut_in=0.5)
 
 
 if __name__ == "__main__":
