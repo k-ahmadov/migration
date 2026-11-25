@@ -11,7 +11,6 @@ __pycache__/
 .archive/
 data/
 results/
-figures/
 3dec/saves/
 3dec/autosave-*.sav
 overleaf/
