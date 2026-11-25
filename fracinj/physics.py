@@ -225,15 +225,28 @@ def is_constant_rate(params: Parameters) -> bool:
     return i == 0.0
 
 
+def is_radial(params: Parameters) -> bool:
+    """Axisymmetric (point source) run rather than plane strain (line source)."""
+    return params.radial != 0.0
+
+
 
 def cubic_scales(
-    params: Parameters, *, pin: str = "aperture", ramp: bool | None = None
+    params: Parameters,
+    *,
+    pin: str = "aperture",
+    ramp: bool | None = None,
+    radial: bool | None = None,
 ) -> Scales:
     """Characteristic scales for the cubic (n=3) prescribed-rate problem.
 
-    pin  : 'aperture' pins w_c = w_i, 'length' pins x_c = L.
-    ramp : force the ramp (i=1) or constant (i=0) branch. ``None`` infers it
-           from whichever of ``q_0`` / ``m_q`` is set.
+    pin    : 'aperture' pins w_c = w_i, 'length' pins x_c = L.
+    ramp   : force the ramp (i=1) or constant (i=0) branch. ``None`` infers it
+             from whichever of ``q_0`` / ``m_q`` is set.
+    radial : axisymmetric point source (``None``: ``params.radial``). The rate is
+             then the total volume rate Q (m^3/s, or m^3/s^2 for a ramp), and the
+             flux balance ``-r a w^3 w_r = Q t^i / (2 pi)`` evaluated at ``r = x_c``
+             is the planar one with ``q = Q / (2 pi x_c)``. Only ``pin='length'``.
     """
     if ramp is None:
         q, i = _rate_bc(params)
@@ -241,6 +254,13 @@ def cubic_scales(
         q, i = params.m_q, 1.0
     else:
         q, i = params.q_0, 0.0
+
+    if radial is None:
+        radial = is_radial(params)
+    if radial:
+        if pin != "length":
+            raise ValueError("radial scales are only defined with pin='length'")
+        q = q / (2 * math.pi * params.L)
 
     if pin == "aperture":
         pinned = {"w_i": params.w_i}

@@ -35,10 +35,11 @@ class Parameters:
     nu: float = _p("-", "Poisson's ratio")
     w_i: float = _p("m", "Initial aperture")
     sigma0: float = _p("Pa", "In-situ normal stress sigma_zz (compression < 0)")
+    radial: float = _p("-", "1: axisymmetric point source, 0: plane-strain line source")
 
     # --- injection driver (regime dependent) ------------------------------
-    q_0: float = _p("m^2/s", "Constant injection rate")
-    m_q: float = _p("m^2/s^2", "Injection-rate ramp slope")
+    q_0: float = _p("m^2/s", "Constant injection rate (radial: m^3/s)")
+    m_q: float = _p("m^2/s^2", "Injection-rate ramp slope (radial: m^3/s^2)")
     DP: float = _p("Pa", "Constant overpressure")
     t_stop: float = _p("s", "Shut-in time (0: inject throughout)")
 

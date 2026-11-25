@@ -29,6 +29,7 @@ import numpy as np
 
 from fracinj import detection, io, math_utils, physics
 from fracinj.math_utils import fit_power_law
+from fracinj.solvers import closed_form
 from fracinj.types import Parameters, Vector
 
 Quantity = Literal["front", "p_inj"]
@@ -99,6 +100,18 @@ class Regime:
         a = self._coefficient(params)
         return (a * rate_of(params, self.i) ** self.n) ** (1.0 / self._np2)
 
+    @property
+    def zeta_front(self) -> float:
+        """Analytical front prefactor in units of the similarity length.
+
+        Rigid: the most tensile point of the stress induced by the exact linear
+        pressure (long-pulse elastic limit). Soft: the n = 3 front-form
+        approximation, which the stress front converges to at late times.
+        """
+        if self.n == 0:
+            return closed_form.rigid_stress_front("neumann", i=self.i)
+        return closed_form.front_approximation(self.n, "neumann", i=self.i).zeta_front
+
     def aperture_amplitude(self, params: Parameters) -> float:
         """Similarity aperture amplitude ``(q^2/a)^(1/(n+2))``."""
         a = self._coefficient(params)
@@ -122,8 +135,6 @@ REGIME_DISPATCH: dict[tuple[RegimeName, Rate], Regime] = {
         coefficient=physics.mobility,
         theta0=THETA0_SOFT_CONST,
     ),
-    # Ramp exponents are exact; the amplitudes are not yet derived, so theta0
-    # is None. Front fits still work -- zeta is estimated from the data.
     ("rigid", "ramp"): Regime(
         name="rigid",
         rate="ramp",
@@ -181,7 +192,8 @@ class Fit:
 class AnalyticalFit(Fit):
     """A :class:`Fit` that also carries the analytical model for a regime.
 
-    ``zeta`` stays optional: only front fits estimate it, p_inj fits don't.
+    ``zeta`` stays optional: only front fits carry it (the analytical
+    ``Regime.zeta_front``), p_inj fits don't.
     """
 
     regime: Regime
@@ -229,17 +241,15 @@ def _p_inj_series(run: io.RunData, slc: slice) -> tuple[Vector, Vector]:
 # --- analytical amplitudes ---------------------------------------------------
 
 
-def _front_amplitude(
-    regime: Regime, p: Parameters, t: Vector, x: Vector
-) -> tuple[float, float]:
-    """Return ``(A_ana, zeta)`` for the front position ``x_f = zeta * scale(t)``."""
-    mask = t != 0
-    if not np.any(mask):
-        raise ValueError("no non-zero front times -- cannot estimate zeta")
-    amp_unit = regime.distance_amplitude(p)
-    scale = amp_unit * t[mask] ** regime.distance_exponent
-    zeta = float(np.mean(x[mask] / scale))
-    return zeta * amp_unit, zeta
+def _front_amplitude(regime: Regime, p: Parameters) -> tuple[float, float]:
+    """Return ``(A_ana, zeta)`` for the front ``x_f = A_ana * t**distance_exponent``.
+
+    Both are analytical: ``zeta = regime.zeta_front`` and ``A_ana = zeta *
+    distance_amplitude``. The rigid value is that of the stress front, so it
+    does not apply to threshold fronts.
+    """
+    zeta = regime.zeta_front
+    return zeta * regime.distance_amplitude(p), zeta
 
 
 def _p_inj_amplitude(regime: Regime, p: Parameters) -> float:
@@ -285,7 +295,7 @@ def front_regime(run: io.RunData, regime: Regime, **kw) -> AnalyticalFit:
     Extra keyword arguments go to :func:`analyze_front`.
     """
     fit = analyze_front(run, **kw)
-    A_ana, zeta = _front_amplitude(regime, run.params, fit.t, fit.y)
+    A_ana, zeta = _front_amplitude(regime, run.params)
     return AnalyticalFit(
         **_empirical_fields(fit),
         regime=regime,

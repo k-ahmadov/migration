@@ -120,7 +120,6 @@ def click_slope(ax: plt.Axes, triangle: bool = False, **text_kwargs) -> list[flo
 
     return slopes
 
-
 def annotate_panel_labels(
     axes: list[plt.Axes], xy: tuple[float, float] = (0.25, 0.95), **kwargs
 ) -> None:
@@ -130,11 +129,24 @@ def annotate_panel_labels(
             f"({chr(ascii_value + i)})",
             xy,
             xycoords="axes fraction",
-            backgroundcolor="white",
+            bbox=dict(facecolor="white", edgecolor="none", pad=0),
             **kwargs,
         )
 
-
+# def annotate_panel_labels(
+#     axes: list[plt.Axes], xy: tuple[float, float] = (0.25, 0.95), **kwargs
+# ) -> None:
+#     ascii_value = ord("a")
+#     for i, ax in enumerate(axes):
+#         ax.annotate(
+#             f"({chr(ascii_value + i)})",
+#             xy,
+#             xycoords="axes fraction",
+#             backgroundcolor="white",
+#             **kwargs,
+#         )
+#
+#
 def add_rectangle(
     ax: plt.Axes, xlim: tuple[float, float], ylim: tuple[float, float], **kwargs
 ) -> None:
