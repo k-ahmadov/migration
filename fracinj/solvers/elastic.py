@@ -1,11 +1,197 @@
-# code for numerically integrating Fredholm Integral Equation of second kind
-# initially made to find the induced normal stress along the fracture during fluid injection
-# but can be used for an FIE with logarithmic singularity
+"""
+Normal stress change on a fluid-pressurized fracture: an elastic joint (normal
+stiffness k_n) between two elastic half-spaces (modulus E' = E/(1-nu^2)),
+normal loading only, no shear traction.
+
+    Terzaghi + linear joint law:   dsigma_n - dp = -k_n v          (v = opening)
+
+Three solvers, all for the same physics:
+
+1. ``solve_elastic_joint``          plane strain, Fourier transform (FFT)
+2. ``solve_elastic_joint_axisym``   axisymmetric, quasi-discrete Hankel transform
+3. ``FIE_log_sing``                 plane strain, product-integration solve of
+                                    the log-kernel Fredholm equation (legacy,
+                                    bounded domain [-1, 1])
+
+NONDIMENSIONALIZATION (shared by 1 and 2)
+-----------------------------------------
+    X = x/L_p (or R = r/L_p),  Pi = dp/P,  Sigma = dsigma_n/P,  V = k_n v/P
+    eps = L_k/L_p = E' / (4 k_n L_p)    (L_k = E'/(4 k_n): elasto-joint length,
+                                         L_p = length scale of the pressure pulse)
+
+In transform space both geometries reduce to the same exact multipliers:
+
+    Sigma~ = eps k / (1 + eps k) * Pi~,     V~ = Pi~ / (1 + eps k)
+
+with k = |xi| (Fourier wavenumber) in plane strain and the Hankel wavenumber in
+the axisymmetric case. For eps << 1, Sigma ~ eps * Hilbert[dPi/dX] and V ~ Pi.
+
+Both transform solvers are linear in Pi and accept Pi of shape (n,) or
+(n_t, n): the last axis is space, so a whole time history is solved at once.
+"""
+
+import warnings
 from functools import lru_cache
 
 import numpy as np
+from scipy.interpolate import PchipInterpolator
+from scipy.special import j0, j1, jn_zeros
+
+DECAY_TOL = 1e-3  # |Pi| at the domain end, relative to max|Pi|, above which we warn
 
 
+def _warn_if_not_decayed(Pi_end: np.ndarray, Pi: np.ndarray, where: str) -> None:
+    peak = np.max(np.abs(Pi), axis=-1)
+    if np.any(np.abs(Pi_end) > DECAY_TOL * peak):
+        warnings.warn(f"Pi has not decayed at {where}; extend the domain", stacklevel=3)
+
+
+# ============================================================
+# 1. Plane strain: FFT
+# ============================================================
+def solve_elastic_joint(X: np.ndarray, Pi: np.ndarray, eps: float, pad=4):
+    """
+    Plane strain. Elasticity (both walls):
+
+        v(x) = -4/(pi E') Int dsigma_n(s) ln|x-s| ds
+
+    so that  eps*Sigma(X) - (1/pi) Int Sigma(S) ln|X-S| dS = eps*Pi(X),  V = Pi - Sigma.
+    The net load is zero: Int Sigma dX = 0.
+
+    X   : uniform grid in units of L_p (increasing)
+    Pi  : dimensionless pressure change on that grid, shape (n,) or (n_t, n);
+          must decay to ~0 at both ends (an isolated pulse)
+    eps : L_k / L_p = E' / (4 k_n L_p)
+    pad : the FFT box is at least `pad` times the length of the data
+
+    Returns Sigma, V with the shape of Pi.
+    """
+    X = np.asarray(X, dtype=float)
+    Pi = np.asarray(Pi, dtype=float)
+    if X.ndim != 1 or Pi.shape[-1] != X.size:
+        raise ValueError("X must be 1-D and match the last axis of Pi")
+    if np.any(np.diff(X) <= 0):
+        raise ValueError("X must be strictly increasing")
+    _warn_if_not_decayed(np.maximum(abs(Pi[..., 0]), abs(Pi[..., -1])), Pi, "the domain ends")
+
+    n = X.size           # number of grid points
+    h = X[1] - X[0]      # grid spacing
+
+    # Zero-padded FFT length: long enough for the data AND for the kernel width
+    # (about eps), rounded up to a power of 2 for speed
+    n_needed = max(pad * n, 50 * eps / h)
+    nfft = int(2 ** np.ceil(np.log2(n_needed)))
+
+    # Angular wavenumbers matching the FFT output
+    k = 2 * np.pi * np.fft.rfftfreq(nfft, d=h)
+
+    # Transform Pi (numpy appends the zeros up to nfft)
+    Pi_hat = np.fft.rfft(Pi, nfft, axis=-1)
+
+    # Multiply by the exact solution operators, then transform back
+    Sigma_hat = eps * k / (1 + eps * k) * Pi_hat
+    V_hat = Pi_hat / (1 + eps * k)
+
+    # Keep only the first n points, which is the original (unpadded) domain
+    Sigma = np.fft.irfft(Sigma_hat, nfft, axis=-1)[..., :n]
+    V = np.fft.irfft(V_hat, nfft, axis=-1)[..., :n]
+    return Sigma, V
+
+
+# ============================================================
+# 2. Axisymmetric: quasi-discrete Hankel transform
+# ============================================================
+def solve_elastic_joint_axisym(r, Pi, eps, r_eval=None, pad=4, n_max=8000, chunk=512):
+    """
+    Axisymmetric (radially symmetric pressure change). Elasticity (two
+    half-spaces, Murdoch & Germanovich 2012, eq. 11):
+
+        v(r) = 8/(pi E') Int_0^inf dsigma_n(lam) * lam/(lam+r) * K(2 sqrt(lam r)/(lam+r)) dlam
+
+    Zero-order Hankel transform f~(k) = Int_0^inf f(R) J0(kR) R dR turns this
+    into the plane-strain multipliers with |xi| -> k.
+
+    Numerics: quasi-discrete Hankel transform (Guizar-Sicairos & Gutierrez-Vega
+    2004). Pi is sampled at the Bessel-zero radii R_n = j_n R_box / j_{N+1},
+    transformed by a matrix product, multiplied, and summed back as a
+    Fourier-Bessel series, which can be evaluated at any radius (also beyond
+    the pressurized zone). The whole chain is one linear operator, built once
+    and applied to every row of Pi.
+
+    r      : increasing radii from (or near) 0 to r_max, in units of L_p
+    Pi     : dimensionless pressure on r, shape (n,) or (n_t, n) (must decay
+             to ~0 at r_max) -- or a function Pi(R), which is then evaluated exactly
+    eps    : L_k / L_p = E' / (4 k_n L_p)
+    r_eval : radii where Sigma, V are returned (default: r); may go beyond r_max
+    pad    : Bessel box radius R_box = max(pad * r_max, 50 * eps)
+    n_max  : cap on the number of modes (memory ~ 8 n_max^2 bytes)
+    chunk  : rows of Pi interpolated at a time (bounds memory for long histories)
+
+    Returns Sigma, V of shape (len(r_eval),) or (n_t, len(r_eval)).
+    """
+    r = np.asarray(r, float)
+    Pi_func = Pi if callable(Pi) else None
+    Pi_r = np.asarray(Pi_func(r) if Pi_func is not None else Pi, float)
+    if Pi_r.shape[-1] != r.size:
+        raise ValueError("the last axis of Pi must match r")
+    _warn_if_not_decayed(Pi_r[..., -1], Pi_r, "r_max")
+
+    h = np.min(np.diff(r))                      # resolution to keep
+    R_box = max(pad * r[-1], 50 * eps)          # Pi = 0 for R > r_max (zero padding)
+    N = int(R_box / h)                          # number of Bessel modes
+    if N > n_max:
+        N, R_box = n_max, n_max * h
+        warnings.warn(
+            f"box capped at R = {R_box:.3g} (< 50 eps); V far from the pulse loses "
+            "accuracy, Sigma near it is fine. Coarsen r or raise n_max.",
+            stacklevel=2,
+        )
+    Sig_op, V_op, R_n = _hankel_operators(N, R_box, eps, r if r_eval is None else r_eval)
+
+    # Pi at the Bessel-zero radii; zero outside r_max
+    if Pi_func is not None:
+        Pi_n = np.nan_to_num(np.asarray(Pi_func(R_n), float))
+        return Pi_n @ Sig_op, Pi_n @ V_op
+
+    rows = Pi_r.reshape(-1, r.size)
+    Sigma = np.empty((rows.shape[0], Sig_op.shape[1]))
+    V = np.empty_like(Sigma)
+    for i in range(0, rows.shape[0], chunk):
+        block = rows[i : i + chunk]
+        interp = PchipInterpolator(r, block, axis=-1, extrapolate=False)
+        Pi_n = np.nan_to_num(interp(R_n))
+        Sigma[i : i + chunk] = Pi_n @ Sig_op
+        V[i : i + chunk] = Pi_n @ V_op
+    out_shape = Pi_r.shape[:-1] + (Sig_op.shape[1],)
+    return Sigma.reshape(out_shape), V.reshape(out_shape)
+
+
+def _hankel_operators(N, R_box, eps, r_eval):
+    """Matrices mapping Pi at the sampling radii R_n to Sigma, V at r_eval.
+
+    Forward transform  Pi~_m = (2/K^2) sum_n J0(j_m j_n / S) Pi_n / J1(j_n)^2,
+    multiplier, then the series  f(r) = sum_m f~_m J0(k_m r) 2 / (R_box^2 J1(j_m)^2).
+    """
+    j = jn_zeros(0, N + 1)
+    S, jN = j[-1], j[:-1]
+    R_n = jN * R_box / S                        # sampling radii
+    k = jN / R_box                              # wavenumbers (1/L_p)
+    K = S / R_box                               # max wavenumber
+    J1sq = j1(jN) ** 2
+
+    r_eval = np.asarray(r_eval, float)
+    # series rows, scaled by the multipliers: (N, n_eval)
+    B_T = j0(np.outer(k, r_eval)) * (2 / (R_box**2 * J1sq))[:, None]
+    T = j0(np.outer(jN, jN) / S)                # symmetric forward kernel
+    pre = (2 / K**2) / J1sq                     # forward weights on Pi_n
+    Sig_op = pre[:, None] * (T @ ((eps * k / (1 + eps * k))[:, None] * B_T))
+    V_op = pre[:, None] * (T @ ((1 / (1 + eps * k))[:, None] * B_T))
+    return Sig_op, V_op, R_n
+
+
+# ============================================================
+# 3. Plane strain, bounded domain: Fredholm integral equation (legacy)
+# ============================================================
 def FIE_log_sing(lam, RHS, n=2**9, check_cond=True):
     """
     Solve a general Fredholm Integral Equation (FIE) of the second kind
@@ -40,7 +226,7 @@ def FIE_log_sing(lam, RHS, n=2**9, check_cond=True):
 
     n : int, optional
         Number of intervals along [-1, 1] (n+1 collocation nodes).
-        Default: 1024.
+        Default: 512.
 
     check_cond : bool, optional
         Whether to compute np.linalg.cond(M) and warn if ill-conditioned.
@@ -100,9 +286,6 @@ def _product_trapz_weights_cached(n):
     return product_trapz_weights(x)
 
 
-# ============================================================
-# Product trapezoidal rule weights for logarithmic kernel integrals
-# ============================================================
 def product_trapz_weights(x):
     """
     Compute product-integration weights for integrals of the form:

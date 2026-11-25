@@ -1,18 +1,23 @@
 """Control-volume solvers for the aperture (nonlinear) diffusion equation."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from scipy.linalg import solve_banded
-from scipy.stats import hmean
 
 KFunc = Callable[[np.ndarray], np.ndarray]
 
 
 def _face_conductivity(w: np.ndarray, k_func: KFunc) -> np.ndarray:
-    """Harmonic mean of ``k(w)`` at adjacent nodes -> face values."""
+    """Arithmetic mean of ``k(w)`` at adjacent nodes -> face values.
+
+    Not the harmonic mean: that is exact only for a material jump at the face
+    (``w`` piecewise constant), but here ``w`` is continuous because the pressure
+    is. At a wet/dry face, ``hmean(k_wet, k(w0)) ~ 2 k(w0) ~ 0`` for ``k = w^3``,
+    which stalls the front once ``w0`` is small.
+    """
     kw = k_func(w)
-    return hmean(np.array([kw[:-1], kw[1:]]), axis=0)
+    return 0.5 * (kw[:-1] + kw[1:])
 
 
 def _to_banded(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
@@ -56,11 +61,15 @@ def _assemble(
     b[-1] = 1 - a[-1]
 
     d = np.zeros(num_nodes)
-    q = 1.0 if left_bc_constant_rate else t_new
-    if t_stop is not None and t_new > t_stop:
-        q = 0.0  # shut-in: the left node becomes no-flux
-    d[0] = dt / dx * q
+    d[0] = dt / dx * _injection_rate(t_new, left_bc_constant_rate, t_stop)
     return a, b, c, d
+
+
+def _injection_rate(t: float, constant_rate: bool, t_stop: float | None) -> float:
+    """Dimensionless rate: ``1`` (constant) or ``t`` (ramp); ``0`` after shut-in."""
+    if t_stop is not None and t > t_stop:
+        return 0.0
+    return 1.0 if constant_rate else t
 
 
 def solve_diffusion(
@@ -93,6 +102,58 @@ def solve_diffusion(
             num_nodes, w_n, k_func, dt, (n + 1) * dt, left_bc_constant_rate, t_stop
         )
         w[n + 1, :] = solve_banded((1, 1), _to_banded(a, b, c), d + w_n)
+    return w[1:, :]
+
+
+def solve_radial_diffusion(
+    num_nodes: int,
+    num_steps: int,
+    w_initial: float,
+    t_final: float,
+    k_func: KFunc,
+    left_bc_constant_rate: bool = True,
+    t_stop: float | None = None,
+) -> np.ndarray:
+    """Solve ``dw/dt = (1/r) d/dr (r k(w) dw/dr)`` on ``r in [0, 1]`` (implicit Euler).
+
+    Point source at ``r = 0``: ``lim_{r->0} -r k(w) dw/dr = q`` with ``q = 1``
+    (constant rate) or ``q = t`` (linear ramp); ``q = 0`` after ``t_stop``. No flux
+    at ``r = 1``. Scaling: ``r = L R``, ``w = w_c W``, ``t = L^2/(a w_c^3) T`` with
+    ``w_c = (Q / 2 pi a)^(1/4)`` (constant) or ``(m_q L^2 / 2 pi a^2)^(1/7)`` (ramp).
+
+    Node 0 sits on the source, so its value is a cell average of the
+    log-singular aperture and depends on the grid; nodes away from ``r = 0``
+    converge to the ``r_b -> 0`` solution.
+
+    Returns
+    -------
+    w : ndarray, shape (num_steps - 1, num_nodes)
+        Solution at each time step after the initial condition.
+    """
+    dr = 1.0 / (num_nodes - 1)
+    r_faces = (np.arange(num_nodes - 1) + 0.5) * dr
+    # control volumes int r dr: [0, dr/2], [r_i -/+ dr/2], [1 - dr/2, 1]
+    V = np.arange(num_nodes) * dr**2
+    V[0] = dr**2 / 8
+    V[-1] = 0.5 * (1.0 - r_faces[-1] ** 2)
+
+    dt = t_final / (num_steps - 1)
+    face_geom = dt * r_faces / dr  # times k_face -> face transmissibility * dt
+    ab = np.zeros((3, num_nodes))
+    w = np.zeros((num_steps, num_nodes))
+    w[0, :] = w_initial
+
+    for n in range(num_steps - 1):
+        g = face_geom * _face_conductivity(w[n, :], k_func)
+        ab[0, 1:] = -g / V[:-1]  # superdiagonal: c_i, coupling of node i to i+1
+        ab[2, :-1] = -g / V[1:]  # subdiagonal: a_i, coupling of node i to i-1
+        ab[1, :] = 1.0
+        ab[1, :-1] += g / V[:-1]
+        ab[1, 1:] += g / V[1:]
+
+        rhs = w[n, :].copy()
+        rhs[0] += dt / V[0] * _injection_rate((n + 1) * dt, left_bc_constant_rate, t_stop)
+        w[n + 1, :] = solve_banded((1, 1), ab, rhs)
     return w[1:, :]
 
 
