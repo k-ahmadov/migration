@@ -1,6 +1,7 @@
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 import h5py
 import itasca as it  # pyright: ignore[reportMissingImports]

@@ -8,41 +8,43 @@ program threads 12
 [global L=100]
 [global dx=1]
 ; pseudo-2D slice: y in [-W, W] (plane strain via rollers in bc.dat)
-[global W=4*dx]
+[global W=dx]
 ; model: x in [0, L] (x = 0 is the symmetry plane carrying the injection line),
 ;        z in [-L/2, L/2]; the fault is the plane z = 0
 
 ; glued slab boundaries |z| = z1 < z2 < z3 < L, zone size doubling at each:
 ;   dx in |z| < z1, 2dx in z1..z2, 4dx in z2..z3 (4 zones across each slab),
 ;   8dx in z3..L. With dx = 0.5: z1, z2, z3 = 2, 6, 14 m
-[global z1 = 4*dx]
-[global z2 = z1 + 8*dx]
-[global z3 = z2 + 16*dx]
-
+; [global z1 = 4*dx]
+; [global z2 = z1 + 8*dx]
+; [global z3 = z2 + 16*dx]
+;
 block create brick 0 [L] [-W] [W] [-L/2] [L/2]
 
 ; the fault (real contact)
 block cut joint-set dip 0 dip-direction 0 origin 0, 0, 0
 
+block zone generate edgelength [dx]
+
 ; mesh grading by cutting and joining: horizontal cuts, glued with join, so
 ; no glued plane crosses the fault; jointset-id 2 tags the joined planes
-block cut joint-set dip 0 dip-direction 0 origin 0, 0, [z1]  join jointset-id 2
-block cut joint-set dip 0 dip-direction 0 origin 0, 0, [-z1] join jointset-id 2
-block cut joint-set dip 0 dip-direction 0 origin 0, 0, [z2]  join jointset-id 2
-block cut joint-set dip 0 dip-direction 0 origin 0, 0, [-z2] join jointset-id 2
-block cut joint-set dip 0 dip-direction 0 origin 0, 0, [z3]  join jointset-id 2
-block cut joint-set dip 0 dip-direction 0 origin 0, 0, [-z3] join jointset-id 2
+; block cut joint-set dip 0 dip-direction 0 origin 0, 0, [z1]  join jointset-id 2
+; block cut joint-set dip 0 dip-direction 0 origin 0, 0, [-z1] join jointset-id 2
+; block cut joint-set dip 0 dip-direction 0 origin 0, 0, [z2]  join jointset-id 2
+; block cut joint-set dip 0 dip-direction 0 origin 0, 0, [-z2] join jointset-id 2
+; block cut joint-set dip 0 dip-direction 0 origin 0, 0, [z3]  join jointset-id 2
+; block cut joint-set dip 0 dip-direction 0 origin 0, 0, [-z3] join jointset-id 2
 
 ; uniform size per slab, exactly 2x per interface so the old zoner can match
 ; gridpoints across the glued planes; each range holds only the centroids of
 ; one slab pair (centroids at +-z1/2, +-(z1+z2)/2, +-(z2+z3)/2, +-(z3+L)/2)
-block zone generate edgelength [dx]   range pos-z [-z1] [z1]
-block zone generate edgelength [2*dx] range pos-z [z1]  [z2]
-block zone generate edgelength [2*dx] range pos-z [-z2] [-z1]
-block zone generate edgelength [4*dx] range pos-z [z2]  [z3]
-block zone generate edgelength [4*dx] range pos-z [-z3] [-z2]
-block zone generate edgelength [8*dx] range pos-z [z3]  [L/2]
-block zone generate edgelength [8*dx] range pos-z [-L/2]  [-z3]
+; block zone generate edgelength [dx]   range pos-z [-z1] [z1]
+; block zone generate edgelength [2*dx] range pos-z [z1]  [z2]
+; block zone generate edgelength [2*dx] range pos-z [-z2] [-z1]
+; block zone generate edgelength [4*dx] range pos-z [z2]  [z3]
+; block zone generate edgelength [4*dx] range pos-z [-z3] [-z2]
+; block zone generate edgelength [8*dx] range pos-z [z3]  [L/2]
+; block zone generate edgelength [8*dx] range pos-z [-L/2]  [-z3]
 
 ; old (graded generate-new) meshing: slivers in the flow plane for dx < 1.5
 ;block zone size edge [dx] range pos-z 0 by block-bface

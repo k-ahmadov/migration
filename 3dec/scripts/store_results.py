@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, cast
+from typing import cast
 
 import h5py
 import itasca as it  # pyright: ignore[reportMissingImports]
