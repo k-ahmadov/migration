@@ -34,9 +34,10 @@ migration, and the seismicity-rate response. Outputs are the figures in `overlea
    `store_coordinates.py` writes `coordinates/` + `parameters/` once at init,
    `store_results.py` appends field snapshots on an adaptive schedule.
 2. **`scripts/run_simulation.py`**: a pure-Python surrogate — an implicit FVM solve of the
-   nonlinear aperture diffusion (`fracinj.solvers.aperture`) followed by a Fredholm
-   integral-equation solve for the induced half-space normal stress
-   (`fracinj.solvers.elastic`), saved through `fracinj.io.save_run`.
+   nonlinear aperture diffusion (`fracinj.solvers.aperture`) followed by a spectral
+   solve for the induced half-space normal stress (`fracinj.solvers.elastic`: FFT in
+   plane strain, Hankel transform when `Parameters.radial = 1`), saved through
+   `fracinj.io.save_run`.
 
 **Stage B — analyse.** `fracinj.io.read_hdf5` → `RunData` → `fracinj.analysis` /
 `fracinj.detection` → `scripts/figN_*.py`.
@@ -84,7 +85,7 @@ spatial operation (the detection functions already do).
 
 - **`fracinj/paths.py`**: all filesystem access is anchored to the repo root via
   `Path(__file__).parents[1]`. Do not reintroduce `Path.cwd()` in scripts. `data/`,
-  `results/`, `figures/`, `overleaf/` are gitignored (large / generated).
+  `results/`, `overleaf/` are gitignored (large / generated); `figures/` is tracked.
 
 ## Gotchas
 
