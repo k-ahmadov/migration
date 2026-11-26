@@ -162,7 +162,7 @@ def marker_style(i, p):
         "mew": 0.7,
         "ms": 3.5,
         "ls": "none",
-        "markevery": 0.1,
+        "markevery": 0.09,
         "label": rf"${plotting.sci_latex(p.m_q)}$",
     }
 
@@ -234,4 +234,4 @@ plt.pause(0.01)
 
 # %%
 
-# plotting.save_figure(fig, "front-dimensionless-radial", ext="pdf")
+plotting.save_figure(fig, "front-dimensionless-radial", ext="pdf")

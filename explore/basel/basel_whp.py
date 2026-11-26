@@ -10,7 +10,7 @@ table, p_inj = (1 + 2i)/(n + 2) with i = 1)
 (no log factors in 1D, unlike the radial case). Here the wellhead pressure
 (WHP) is fitted with a power law in an early and a late window chosen from the
 WHP itself, with time counted from the start of injection; the t_* found from
-the seismicity front (``basel_crossover.py``, ~3.7 d) is only shown for
+the seismicity front (``basel_crossover.py``, ~3.2 d) is only shown for
 reference. It need not match, and does not: by the seismic t_* most of the late
 window would still be rigid (t^(3/2)), but the WHP already grows as ~t^(3/5).
 
@@ -24,7 +24,8 @@ Caveats, not modelled: WHP is not the downhole overpressure (no hydrostatic
 or friction correction; friction grows with rate, so the downhole pressure
 grows even more slowly); the rate is a staircase, not a ramp, so each step adds
 a fast pressure jump; the data are digitized from Haring et al. (2008, Fig. 5),
-~18 min and ~1.3 bar resolution; brief stops (WHP drops) are removed.
+~18 min and ~1.3 bar resolution; brief stops are not removed (only samples
+with zero rate are dropped), so the pressure dips at stops enter the fits.
 """
 
 import matplotlib.pyplot as plt
@@ -35,15 +36,12 @@ import pandas as pd
 from fracinj import paths, plotting  # noqa: F401
 
 HYDRAULIC = paths.DATA / "basel1_2006_digitized_WHP_and_rate.csv"
-# first event used by io.load("basel"): 2006-12-02T22:05:17.608 UTC; the
-# hydraulic record is in local time (CET = UTC+1)
-CATALOGUE_T0 = pd.Timestamp("2006-12-02 22:05:17.608") + pd.Timedelta(hours=1)
-T_STAR_SEISMIC = 3.69  # days since injection start, from basel_crossover.py
+T_STAR_SEISMIC = 3.15  # days since injection start, from basel_crossover.py
 EARLY = (0.0, 0.3)  # days since injection start: steep early rise
 LATE_START = 0.75  # days since injection start: slow growth from here
 RATE_CUT_FRACTION = 0.7  # rate cut = first drop below this x peak rate
 
-# %% data: time since injection start, injection phase only, drop brief stops
+# %% data: time since injection start, injection phase only, drop zero-rate samples
 
 hyd = pd.read_csv(HYDRAULIC, comment="#", parse_dates=["datetime"])
 t = hyd["hours_since_injection_start"].to_numpy() / 24
@@ -52,23 +50,13 @@ whp = hyd["whp_bar"].to_numpy()
 injection_start = (
     hyd["datetime"] - pd.to_timedelta(hyd["hours_since_injection_start"], unit="h")
 ).median()
-T_START = (injection_start - CATALOGUE_T0).total_seconds() / 86_400  # < 0
 
 injecting = (hyd["phase"] == "injection").to_numpy() & (t > 0) & (q > 0)
 i_peak = np.argmax(np.where(injecting, q, 0))
 rate_cut = t[i_peak:][q[i_peak:] < RATE_CUT_FRACTION * q[i_peak]].min()
-# a brief stop drops WHP far below its maximum over the preceding 12 h (the
-# digitized samples are irregular, so the window is in time, not samples)
-recent = (
-    pd.Series(np.where(injecting, whp, 0.0), index=hyd["datetime"])
-    .rolling("12h", min_periods=1).max().to_numpy()
-)
-injecting &= whp > 0.8 * recent
 
-t_star = T_STAR_SEISMIC
-print(f"injection start = {injection_start:%Y-%m-%d %H:%M} local "
-      f"({-T_START:.3f} d before the first event)")
-print(f"rate cut = {rate_cut:.2f} d, seismic t_* = {t_star:.2f} d since start")
+print(f"injection start = {injection_start:%Y-%m-%d %H:%M:%S} local")
+print(f"rate cut = {rate_cut:.2f} d, seismic t_* = {T_STAR_SEISMIC:.2f} d since start")
 
 # %% power-law fits in the early and late windows
 
@@ -109,8 +97,8 @@ for name, model_slope, text, dx, ha in [("early", 1.5, r"$t^{3/2}$", -4, "right"
     ax.annotate(text, (tm, pref * tm**slope), xytext=(dx, -8),
                 textcoords="offset points", ha=ha, va="center", color="r")
 
-ax.axvline(t_star, color="0.1", ls="--", lw=0.8)
-ax.annotate(rf"$t_* = {t_star:.1f}$ d", (t_star, 15), color="0.1", ha="right",
+ax.axvline(T_STAR_SEISMIC, color="0.1", ls="--", lw=0.8)
+ax.annotate(rf"$t_* = {T_STAR_SEISMIC:.2f}$ d", (T_STAR_SEISMIC, 15), color="0.1", ha="right",
             backgroundcolor="1")
 
 ax.set(xscale="log", yscale="log", xlim=(0.005, 8), ylim=(5, 400),

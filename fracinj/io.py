@@ -232,13 +232,23 @@ SOULTZ_MAX_DISTANCE = 1100
 
 
 def _load_soultz(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
+    """Soultz 1993 events: (seconds since the first event, distance in m).
+
+    Times come from the UTC columns, converted to local time (Europe/Paris:
+    CEST = UTC+2, CET = UTC+1 from 1993-09-26), to match the local-time
+    hydraulic record. The local columns are not used: two events (rows
+    12218-12219) carry a local date one day late (17/09 instead of 16/09).
+    """
     # load data file
     df = pd.read_csv(filepath, sep=";")
     # formatting string for date and time format
     fmt = "%d/%m/%Y %H:%M:%S.%f"
-    # import time
-    timestamps = pd.to_datetime(
-        df["Date (local)"] + " " + df["Time (local)"], format=fmt
+    # import time (UTC -> local, naive)
+    timestamps = (
+        pd.to_datetime(df["Date (UTC)"] + " " + df["Time (UTC)"], format=fmt)
+        .dt.tz_localize("UTC")
+        .dt.tz_convert("Europe/Paris")
+        .dt.tz_localize(None)
     )
     # cut data to injection period
     date_mask = timestamps < timestamps.iloc[0] + pd.Timedelta(days=18)
@@ -256,7 +266,19 @@ def _load_soultz(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
     return t.values[keep], distance.values[keep]
 
 
+# Basel-1 stimulation started 2006-12-02 18:00 local time (CET = UTC+1), i.e.
+# 17:00 UTC (https://doi.org/10.5194/npg-23-107-2016; the digitized hydraulic
+# record of Haring et al. 2008 gives 17:59:30 local, within 1 min).
+BASEL_INJECTION_START_UTC = pd.Timestamp(2006, 12, 2, 17)
+
+
 def _load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
+    """Basel 2006 events: (seconds since injection start, distance in m).
+
+    Catalogue times are UTC. Events from the injection start to 2006-12-09 are
+    kept (this drops 4 pre-stimulation events of 2006-11-25); distance is from
+    the median location of the first 10 kept events.
+    """
     df = pd.read_csv(
         filepath,
         comment="#",
@@ -288,13 +310,11 @@ def _load_basel(filepath: str | Path) -> tuple[np.ndarray, np.ndarray]:
     df["SourceDateTime"] = pd.to_datetime(df["SourceDateTime"])
     for col in ["Lat", "Lon", "Dep", "X", "Y", "Z", "Mwx", "MwGEL", "MwSED", "MLSED"]:
         df[col] = pd.to_numeric(df[col])
-    # injection started at 2006-12-2T18:00, source https://doi.org/10.5194/npg-23-107-2016
-    date_mask = (df["SourceDateTime"] > pd.Timestamp(2006, 12, 2, 18)) & (
+    date_mask = (df["SourceDateTime"] > BASEL_INJECTION_START_UTC) & (
         df["SourceDateTime"] < pd.Timestamp(2006, 12, 9)
     )
     df = df.loc[date_mask].reset_index(drop=True)
-    timestamps = df["SourceDateTime"]
-    t = (timestamps - timestamps.iloc[0]).dt.total_seconds()
+    t = (df["SourceDateTime"] - BASEL_INJECTION_START_UTC).dt.total_seconds()
     x, y, z = df["X"], df["Y"], df["Z"]
     x0, y0, z0 = x.iloc[:10].median(), y.iloc[:10].median(), z.iloc[:10].median()
     distance = np.sqrt((x - x0) ** 2 + (y - y0) ** 2 + (z - z0) ** 2)

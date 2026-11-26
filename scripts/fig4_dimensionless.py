@@ -1,4 +1,3 @@
-
 import sys
 
 import matplotlib.pyplot as plt
@@ -61,7 +60,9 @@ for m_q in LONG_MQ:
     # soft front reaches L at t_hat = (L / (ZETA_N x_c))^(5/7); run_simulation
     # truncates once the pressure gets there
     t_end = 1.3 * sc.t_c * (LONG_L / (ZETA_N * sc.x_c)) ** (1 / BETA)
-    run_simulation(params, path, duration=t_end / physics.cubic_scales(params, pin="length").t_c)
+    run_simulation(
+        params, path, duration=t_end / physics.cubic_scales(params, pin="length").t_c
+    )
 
 # %%
 
@@ -70,15 +71,8 @@ runs = [io.read_halfspace(result_dir / f"m_q-{m_q:.0e}.hdf5") for m_q in MQ_VALU
 runs += [io.read_halfspace(LONG_DIR / f"m_q-{m_q:.0e}.hdf5") for m_q in LONG_MQ]
 
 # early runs: keep only the early part (late-time front detection is noisy)
-keep_fraction = {0: 1 / 1, 1: 1 / 1, 2: 1 / 1}
-slices = [
-    slice(int(len(run.t) * keep_fraction.get(i, 1.0))) for i, run in enumerate(runs)
-]
 
-results_front = [
-    analysis.analyze_front(run, stress_front=True, slc=slc)
-    for run, slc in zip(runs, slices)
-]
+results_front = [analysis.analyze_front(run, stress_front=True) for run in runs]
 # pool every run onto dimensionless axes (t / t_c, x_f / x_c); drop points
 # where the front sits within two cells of the source (not resolved)
 scales = [physics.ramp_rate_fixed_aperture_cubic(run.params) for run in runs]
@@ -99,8 +93,10 @@ rigid_front = ZETA_F * t_nd**ALPHA
 soft_front = ZETA_N * t_nd**BETA
 x_front_sum = rigid_front + soft_front
 T_CROSS = (ZETA_F / ZETA_N) ** (1 / (BETA - ALPHA))  # asymptotes intersect
-print(f"front: ell/x_c = {ZETA_F:.4g} t^1/2 + {ZETA_N:.4g} t^7/5, "
-      f"asymptotes cross at t_hat = {T_CROSS:.3g}")
+print(
+    f"front: ell/x_c = {ZETA_F:.4g} t^1/2 + {ZETA_N:.4g} t^7/5, "
+    f"asymptotes cross at t_hat = {T_CROSS:.3g}"
+)
 
 # %%
 
@@ -118,8 +114,9 @@ ax = fig.subplots()
 handles = []
 for i, (run, rf, sc) in enumerate(zip(runs, results_front, scales)):
     resolved = (rf.t > 0) & (rf.y > 2 * abs(run.x_sc[1] - run.x_sc[0]))  # as in the fit
-    (h,) = ax.plot(rf.t[resolved] / sc.t_c, rf.y[resolved] / sc.x_c,
-                   **marker_style(i, run.params))
+    (h,) = ax.plot(
+        rf.t[resolved] / sc.t_c, rf.y[resolved] / sc.x_c, **marker_style(i, run.params)
+    )
     handles.append(h)
 
 (l_cross,) = ax.plot(
@@ -182,4 +179,4 @@ plt.pause(0.01)
 
 # %%
 
-plotting.save_figure(fig, "front-dimensionless", ext='pdf')
+plotting.save_figure(fig, "fig4-front-dimensionless-1d", ext="pdf")
